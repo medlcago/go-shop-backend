@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"errors"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/logger"
@@ -33,6 +34,18 @@ func ErrorHandler() fiber.ErrorHandler {
 		if errors.As(err, &validationErrs) {
 			status = http.StatusBadRequest
 			message = err.Error()
+		}
+
+		var jsonUnmarshalTypeErr *json.UnmarshalTypeError
+		if errors.As(err, &jsonUnmarshalTypeErr) {
+			status = http.StatusBadRequest
+			message = http.StatusText(status)
+		}
+
+		var jsonSyntaxErr *json.SyntaxError
+		if errors.As(err, &jsonSyntaxErr) {
+			status = http.StatusBadRequest
+			message = http.StatusText(status)
 		}
 
 		slog.Error("error handler", slog.Int("code", status), logger.Err(err))
