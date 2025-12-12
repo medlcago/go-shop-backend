@@ -19,17 +19,18 @@ func NewHandler(authService service.AuthService) *Handler {
 }
 
 // Login godoc
-// @Summary Login
-// @Description Login
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body dto.UserLoginRequest true "Request body for login"
-// @Success 200 {object} response.Response[dto.LoginResponse]
-// @Failure 400 {object} response.Response[any]
-// @Failure 401 {object} response.Response[any]
-// @Failure 500 {object} response.Response[any]
-// @Router /auth/login [post]
+//
+//	@Summary		Login
+//	@Description	Login
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.UserLoginRequest	true	"Request body for login"
+//	@Success		200		{object}	response.Response[dto.LoginResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/auth/login [post]
 func (h *Handler) Login(ctx fiber.Ctx) error {
 	var req dto.UserLoginRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
@@ -45,17 +46,18 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 }
 
 // Register godoc
-// @Summary Register
-// @Description Register
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body dto.UserRegisterRequest true "Request body for registration"
-// @Success 201 {object} response.Response[dto.RegisterResponse]
-// @Failure 400 {object} response.Response[any]
-// @Failure 409 {object} response.Response[any] "The user already exists"
-// @Failure 500 {object} response.Response[any]
-// @Router /auth/register [post]
+//
+//	@Summary		Register
+//	@Description	Register
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.UserRegisterRequest	true	"Request body for registration"
+//	@Success		201		{object}	response.Response[dto.RegisterResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		409		{object}	response.Response[any]	"The user already exists"
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/auth/register [post]
 func (h *Handler) Register(ctx fiber.Ctx) error {
 	var req dto.UserRegisterRequest
 	if err := ctx.Bind().JSON(&req); err != nil {

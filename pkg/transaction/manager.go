@@ -47,29 +47,25 @@ func (m *sqlxManager) Rollback(ctx context.Context) error {
 	return errors.New("no transaction in context")
 }
 
-func (m *sqlxManager) Wrap(ctx context.Context, f func(context.Context) error) error {
+func (m *sqlxManager) Wrap(ctx context.Context, f func(context.Context) error) (err error) {
 	txCtx, err := m.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	defer func() {
-		_ = m.Rollback(txCtx)
-	}()
-
-	defer func() {
 		if p := recover(); p != nil {
-			defer func() {
-				_ = m.Rollback(txCtx)
-			}()
+			err = m.Rollback(txCtx)
 			panic(p) // re-panic after rollback
+		} else if err != nil {
+			err = m.Rollback(txCtx)
+		} else {
+			err = m.Commit(txCtx)
 		}
 	}()
 
-	if err := f(txCtx); err != nil {
-		return fmt.Errorf("failed to wrap transaction: %w", err)
-	}
-	return nil
+	err = f(txCtx)
+	return err
 }
 
 func GetQueryer(ctx context.Context, queryer Queryer) Queryer {

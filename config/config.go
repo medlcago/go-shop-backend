@@ -26,9 +26,10 @@ type Config struct {
 	AuthSecret  string `env:"AUTH_SECRET" mapstructure:"auth_secret" validate:"required"`
 	DatabaseURI string `env:"APP_+DATABASE_URI" mapstructure:"database_uri" validate:"required"`
 
-	ServerReadTimeout  time.Duration `env:"SERVER_READ_TIMEOUT" mapstructure:"server_read_timeout" validate:"required"`
-	ServerWriteTimeout time.Duration `env:"SERVER_WRITE_TIMEOUT" mapstructure:"server_write_timeout" validate:"required"`
-	ServerIdleTimeout  time.Duration `env:"SERVER_IDLE_TIMEOUT" mapstructure:"server_idle_timeout" validate:"required"`
+	ServerReadTimeout     time.Duration `env:"SERVER_READ_TIMEOUT" mapstructure:"server_read_timeout" validate:"required"`
+	ServerWriteTimeout    time.Duration `env:"SERVER_WRITE_TIMEOUT" mapstructure:"server_write_timeout" validate:"required"`
+	ServerIdleTimeout     time.Duration `env:"SERVER_IDLE_TIMEOUT" mapstructure:"server_idle_timeout" validate:"required"`
+	ServerShutdownTimeout time.Duration `env:"SERVER_SHUTDOWN_TIMEOUT" mapstructure:"server_shutdown_timeout" validate:"required"`
 
 	CorsConfig `mapstructure:",squash"`
 }
@@ -38,7 +39,7 @@ func (cfg *Config) Validate() error {
 	return v.Validate(cfg)
 }
 
-func LoadConfig() (*Config, error) {
+func Load() (*Config, error) {
 	v := viper.New()
 
 	v.AddConfigPath(".")
@@ -64,8 +65,8 @@ func LoadConfig() (*Config, error) {
 	return &cfg, nil
 }
 
-func MustLoadConfig() *Config {
-	cfg, err := LoadConfig()
+func MustLoad() *Config {
+	cfg, err := Load()
 	if err != nil {
 		panic(fmt.Errorf("failed to load config: %w", err))
 	}
