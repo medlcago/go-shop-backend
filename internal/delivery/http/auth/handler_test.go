@@ -5,9 +5,9 @@ import (
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service/mocks"
-	"go-shop-backend/internal/testutils"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
+	"go-shop-backend/pkg/testutils"
 	"net/http"
 	"testing"
 
@@ -33,7 +33,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				}).Return(&dto.LoginResponse{}, nil)
 			},
 			expectedCode: http.StatusOK,
-			exceptedBody: response.NewResponse(&dto.LoginResponse{}, ""),
+			exceptedBody: response.NewResponse(&dto.LoginResponse{}),
 			email:        "superuser@test.com",
 			password:     "test123",
 		},
@@ -98,7 +98,118 @@ func TestAuthHandler_Login(t *testing.T) {
 
 			err := authHandler.Login(ctx)
 			if err != nil {
-				_ = app.Config().ErrorHandler(ctx, err)
+				assert.NoError(t, app.Config().ErrorHandler(ctx, err))
+			}
+
+			exceptedBody, _ := json.Marshal(tt.exceptedBody)
+
+			assert.Equal(t, tt.expectedCode, ctx.Response().StatusCode())
+			assert.Equal(t, exceptedBody, ctx.Response().Body())
+
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAuthHandler_Register(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupMock    func(serviceMock *mocks.AuthServiceMock)
+		expectedCode int
+		exceptedBody any
+		email        string
+		password     string
+	}{
+		{
+			name: "register success",
+			setupMock: func(serviceMock *mocks.AuthServiceMock) {
+				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+					Email:    "superuser@test.com",
+					Password: "test123",
+				}).Return(&dto.RegisterResponse{}, nil).Once()
+			},
+			expectedCode: http.StatusCreated,
+			exceptedBody: response.NewResponse(&dto.RegisterResponse{}),
+			email:        "superuser@test.com",
+			password:     "test123",
+		},
+		{
+			name: "register failed",
+			setupMock: func(serviceMock *mocks.AuthServiceMock) {
+				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+					Email:    "test@test.com",
+					Password: "123123",
+				}).Return(&dto.RegisterResponse{}, apperrors.ErrEmailTaken).Once()
+			},
+			expectedCode: http.StatusConflict,
+			exceptedBody: response.NewResponse(struct{}{}, apperrors.ErrEmailTaken.Message),
+			email:        "test@test.com",
+			password:     "123123",
+		},
+		{
+			name: "register failed (internal server error)",
+			setupMock: func(serviceMock *mocks.AuthServiceMock) {
+				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+					Email:    "test@test.com",
+					Password: "123123",
+				}).Return(&dto.RegisterResponse{}, errors.New("unexpected error")).Once()
+			},
+			expectedCode: http.StatusInternalServerError,
+			exceptedBody: response.NewResponse(struct{}{}, http.StatusText(http.StatusInternalServerError)),
+			email:        "test@test.com",
+			password:     "123123",
+		},
+		{
+			name: "register failed (invalid email)",
+			setupMock: func(serviceMock *mocks.AuthServiceMock) {
+				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+					Email:    "test",
+					Password: "123123",
+				}).
+					Panic("Register should not be called in this test case").Maybe()
+			},
+			expectedCode: http.StatusBadRequest,
+			exceptedBody: response.NewResponse(struct{}{}, "Key: 'UserRegisterRequest.Email' Error:Field validation for 'Email' failed on the 'email' tag"),
+			email:        "test",
+			password:     "123123",
+		},
+		{
+			name: "register failed (invalid password)",
+			setupMock: func(serviceMock *mocks.AuthServiceMock) {
+				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+					Email:    "test@test.com",
+					Password: "123",
+				}).
+					Panic("Register should not be called in this test case").Maybe()
+			},
+			expectedCode: http.StatusBadRequest,
+			exceptedBody: response.NewResponse(struct{}{}, "Key: 'UserRegisterRequest.Password' Error:Field validation for 'Password' failed on the 'min' tag"),
+			email:        "test@test.com",
+			password:     "123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p1 := &dto.UserRegisterRequest{
+				Email:    tt.email,
+				Password: tt.password,
+			}
+
+			mockService := new(mocks.AuthServiceMock)
+			if tt.setupMock != nil {
+				tt.setupMock(mockService)
+			}
+
+			authHandler := NewHandler(mockService)
+
+			app := testutils.CreateTestApp()
+			ctx, cleanup := testutils.PrepareTestContext(app, "/", p1)
+			defer cleanup()
+
+			err := authHandler.Register(ctx)
+			if err != nil {
+				assert.NoError(t, app.Config().ErrorHandler(ctx, err))
 			}
 
 			exceptedBody, _ := json.Marshal(tt.exceptedBody)
