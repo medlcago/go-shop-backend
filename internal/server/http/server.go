@@ -22,7 +22,7 @@ type Server struct {
 
 func NewServer(deps *core.Dependencies) *Server {
 	return &Server{
-		app:  SetupApp(deps.Cfg),
+		app:  SetupApp(deps.Cfg, deps.Logger, deps.Validator),
 		deps: deps,
 	}
 }

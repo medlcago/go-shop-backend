@@ -3,10 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
-	"go-shop-backend/pkg/validator"
 	"strings"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 )
 
@@ -36,7 +36,7 @@ type Config struct {
 
 func (cfg *Config) Validate() error {
 	v := validator.New()
-	return v.Validate(cfg)
+	return v.Struct(cfg)
 }
 
 func Load() (*Config, error) {

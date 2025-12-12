@@ -3,21 +3,24 @@ package http
 import (
 	"go-shop-backend/config"
 	"go-shop-backend/pkg/middleware"
-	"go-shop-backend/pkg/validator"
+	"log/slog"
 
+	structValidator "go-shop-backend/pkg/validator"
+
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
-func SetupApp(cfg *config.Config) *fiber.App {
+func SetupApp(cfg *config.Config, log *slog.Logger, validate *validator.Validate) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:         "Go Shop API",
 		ReadTimeout:     cfg.ServerReadTimeout,
 		WriteTimeout:    cfg.ServerWriteTimeout,
 		IdleTimeout:     cfg.ServerIdleTimeout,
-		ErrorHandler:    middleware.ErrorHandler(),
-		StructValidator: validator.New(),
+		ErrorHandler:    middleware.ErrorHandler(log),
+		StructValidator: structValidator.New(validate),
 	})
 
 	app.Use(recover.New())

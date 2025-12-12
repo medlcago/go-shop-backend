@@ -11,12 +11,14 @@ import (
 	"go-shop-backend/pkg/transaction"
 	"log/slog"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/jmoiron/sqlx"
 )
 
 type Dependencies struct {
-	Cfg    *config.Config
-	Logger *slog.Logger
+	Cfg       *config.Config
+	Logger    *slog.Logger
+	Validator *validator.Validate
 
 	DB        *sqlx.DB
 	TxManager transaction.Manager
@@ -28,6 +30,8 @@ type Dependencies struct {
 func NewDependencies(cfg *config.Config) *Dependencies {
 	l := logger.NewSlog(logger.Env(cfg.Environment))
 	slog.SetDefault(l)
+
+	validate := validator.New()
 
 	pgDB, err := postgres.New(cfg.DatabaseURI)
 	if err != nil {
@@ -46,6 +50,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	return &Dependencies{
 		Cfg:            cfg,
 		Logger:         l,
+		Validator:      validate,
 		DB:             pgDB,
 		TxManager:      txManager,
 		UserRepository: userRepo,

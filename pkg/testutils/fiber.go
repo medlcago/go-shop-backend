@@ -2,10 +2,6 @@ package testutils
 
 import (
 	"encoding/json"
-	"go-shop-backend/pkg/logger"
-	"go-shop-backend/pkg/middleware"
-	"go-shop-backend/pkg/validator"
-	"log/slog"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/valyala/fasthttp"
@@ -29,14 +25,7 @@ func PrepareTestContext(app *fiber.App, path string, body any) (fiber.Ctx, func(
 	}
 }
 
-func CreateTestApp() *fiber.App {
-	l := logger.NewSlog(logger.EnvProduction)
-	slog.SetDefault(l)
-
-	app := fiber.New(fiber.Config{
-		ErrorHandler:    middleware.ErrorHandler(),
-		StructValidator: validator.New(),
-	})
-
+func CreateTestApp(cfg ...fiber.Config) *fiber.App {
+	app := fiber.New(cfg...)
 	return app
 }

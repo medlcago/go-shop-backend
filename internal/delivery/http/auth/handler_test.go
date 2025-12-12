@@ -6,11 +6,15 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
+	structValidator "go-shop-backend/pkg/validator"
 	"net/http"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -92,7 +96,9 @@ func TestAuthHandler_Login(t *testing.T) {
 
 			authHandler := NewHandler(mockService)
 
-			app := testutils.CreateTestApp()
+			app := testutils.CreateTestApp(fiber.Config{
+				ErrorHandler: middleware.ErrorHandler(testutils.DiscardSlog),
+			})
 			ctx, cleanup := testutils.PrepareTestContext(app, "/", p1)
 			defer cleanup()
 
@@ -203,7 +209,10 @@ func TestAuthHandler_Register(t *testing.T) {
 
 			authHandler := NewHandler(mockService)
 
-			app := testutils.CreateTestApp()
+			app := testutils.CreateTestApp(fiber.Config{
+				ErrorHandler:    middleware.ErrorHandler(testutils.DiscardSlog),
+				StructValidator: structValidator.New(validator.New()),
+			})
 			ctx, cleanup := testutils.PrepareTestContext(app, "/", p1)
 			defer cleanup()
 

@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func ErrorHandler() fiber.ErrorHandler {
+func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 	return func(ctx fiber.Ctx, err error) error {
 		status := fiber.StatusInternalServerError
 		message := http.StatusText(status)
@@ -48,7 +48,7 @@ func ErrorHandler() fiber.ErrorHandler {
 			message = http.StatusText(status)
 		}
 
-		slog.Error("error handler", slog.Int("code", status), logger.Err(err))
+		log.Error("error handler", slog.Int("code", status), logger.Err(err))
 
 		return response.Error(ctx, status, message)
 	}
