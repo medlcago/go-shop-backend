@@ -62,6 +62,10 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal schema: %w", err)
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("failed to validate config: %w", err)
+	}
+
 	return &cfg, nil
 }
 
@@ -69,10 +73,6 @@ func MustLoad() *Config {
 	cfg, err := Load()
 	if err != nil {
 		panic(fmt.Errorf("failed to load config: %w", err))
-	}
-
-	if err := cfg.Validate(); err != nil {
-		panic(fmt.Errorf("failed to validate config: %w", err))
 	}
 
 	return cfg
