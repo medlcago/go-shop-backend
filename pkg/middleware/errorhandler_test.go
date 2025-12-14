@@ -5,9 +5,11 @@ import (
 	"errors"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
-	"go-shop-backend/pkg/testutils"
 	structValidator "go-shop-backend/pkg/validator"
+	"io"
+	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -83,18 +85,32 @@ func TestErrorHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := testutils.CreateTestApp(fiber.Config{
-				ErrorHandler: ErrorHandler(testutils.DiscardSlog),
-			})
-			testCtx, cleanup := testutils.PrepareTestContext(app, "/", []byte("data"))
-			defer cleanup()
+			t.Parallel()
 
-			assert.NoError(t, app.Config().ErrorHandler(testCtx, tt.err))
+			app := newTestApp(t)
+
+			app.Post("/", func(c fiber.Ctx) error {
+				return c.App().ErrorHandler(c, tt.err)
+			})
+
+			req := httptest.NewRequest(http.MethodPost, "/", nil)
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
 
 			exceptedBody, _ := json.Marshal(tt.exceptedBody)
+			actualBody, _ := io.ReadAll(resp.Body)
 
-			assert.Equal(t, tt.expectedStatus, testCtx.Response().StatusCode())
-			assert.Equal(t, exceptedBody, testCtx.Response().Body())
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+			assert.Equal(t, exceptedBody, actualBody)
 		})
 	}
+}
+
+func newTestApp(t *testing.T) *fiber.App {
+	t.Helper()
+
+	return fiber.New(fiber.Config{
+		ErrorHandler: ErrorHandler(slog.New(slog.DiscardHandler)),
+	})
 }

@@ -1,20 +1,19 @@
 package auth
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
-	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
-	structValidator "go-shop-backend/pkg/validator"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,7 +33,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
 					Email:    "superuser@test.com",
 					Password: "test123",
-				}).Return(&dto.LoginResponse{}, nil)
+				}).Return(&dto.LoginResponse{}, nil).Once()
 			},
 			expectedCode: http.StatusOK,
 			exceptedBody: response.NewResponse(&dto.LoginResponse{}),
@@ -47,7 +46,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
 					Email:    "superuser@test.com",
 					Password: "123123",
-				}).Return(&dto.LoginResponse{}, apperrors.ErrInvalidCredentials)
+				}).Return(&dto.LoginResponse{}, apperrors.ErrInvalidCredentials).Once()
 			},
 			expectedCode: http.StatusUnauthorized,
 			exceptedBody: response.NewResponse(struct{}{}, apperrors.ErrInvalidCredentials.Message),
@@ -60,7 +59,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
 					Email:    "superuser@test.com",
 					Password: "123123",
-				}).Return(&dto.LoginResponse{}, errors.New("unexpected error"))
+				}).Return(&dto.LoginResponse{}, errors.New("unexpected error")).Once()
 			},
 			expectedCode: http.StatusInternalServerError,
 			exceptedBody: response.NewResponse(struct{}{}, http.StatusText(http.StatusInternalServerError)),
@@ -73,7 +72,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
 					Email:    "test",
 					Password: "123123",
-				}).Return(&dto.LoginResponse{}, apperrors.ErrInvalidCredentials)
+				}).Return(&dto.LoginResponse{}, apperrors.ErrInvalidCredentials).Once()
 			},
 			expectedCode: http.StatusUnauthorized,
 			exceptedBody: response.NewResponse(struct{}{}, apperrors.ErrInvalidCredentials.Message),
@@ -84,6 +83,8 @@ func TestAuthHandler_Login(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			p1 := &dto.UserLoginRequest{
 				Email:    tt.email,
 				Password: tt.password,
@@ -96,21 +97,22 @@ func TestAuthHandler_Login(t *testing.T) {
 
 			authHandler := NewHandler(mockService)
 
-			app := testutils.CreateTestApp(fiber.Config{
-				ErrorHandler: middleware.ErrorHandler(testutils.DiscardSlog),
-			})
-			ctx, cleanup := testutils.PrepareTestContext(app, "/", p1)
-			defer cleanup()
+			app := testutils.CreateTestApp()
 
-			err := authHandler.Login(ctx)
-			if err != nil {
-				assert.NoError(t, app.Config().ErrorHandler(ctx, err))
-			}
+			app.Post("/", authHandler.Login)
+
+			body, _ := json.Marshal(p1)
+
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
 
 			exceptedBody, _ := json.Marshal(tt.exceptedBody)
+			actualBody, _ := io.ReadAll(resp.Body)
 
-			assert.Equal(t, tt.expectedCode, ctx.Response().StatusCode())
-			assert.Equal(t, exceptedBody, ctx.Response().Body())
+			assert.Equal(t, tt.expectedCode, resp.StatusCode)
+			assert.Equal(t, exceptedBody, actualBody)
 
 			mockService.AssertExpectations(t)
 		})
@@ -127,7 +129,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		password     string
 	}{
 		{
-			name: "register success",
+			name: "success",
 			setupMock: func(serviceMock *mocks.AuthServiceMock) {
 				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
 					Email:    "superuser@test.com",
@@ -140,7 +142,7 @@ func TestAuthHandler_Register(t *testing.T) {
 			password:     "test123",
 		},
 		{
-			name: "register failed",
+			name: "email already in use",
 			setupMock: func(serviceMock *mocks.AuthServiceMock) {
 				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
 					Email:    "test@test.com",
@@ -153,7 +155,7 @@ func TestAuthHandler_Register(t *testing.T) {
 			password:     "123123",
 		},
 		{
-			name: "register failed (internal server error)",
+			name: "internal server error",
 			setupMock: func(serviceMock *mocks.AuthServiceMock) {
 				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
 					Email:    "test@test.com",
@@ -166,28 +168,16 @@ func TestAuthHandler_Register(t *testing.T) {
 			password:     "123123",
 		},
 		{
-			name: "register failed (invalid email)",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
-					Email:    "test",
-					Password: "123123",
-				}).
-					Panic("Register should not be called in this test case").Maybe()
-			},
+			name:         "invalid email",
+			setupMock:    nil,
 			expectedCode: http.StatusBadRequest,
 			exceptedBody: response.NewResponse(struct{}{}, "Key: 'UserRegisterRequest.Email' Error:Field validation for 'Email' failed on the 'email' tag"),
 			email:        "test",
 			password:     "123123",
 		},
 		{
-			name: "register failed (invalid password)",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
-					Email:    "test@test.com",
-					Password: "123",
-				}).
-					Panic("Register should not be called in this test case").Maybe()
-			},
+			name:         "invalid password",
+			setupMock:    nil,
 			expectedCode: http.StatusBadRequest,
 			exceptedBody: response.NewResponse(struct{}{}, "Key: 'UserRegisterRequest.Password' Error:Field validation for 'Password' failed on the 'min' tag"),
 			email:        "test@test.com",
@@ -197,6 +187,8 @@ func TestAuthHandler_Register(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			p1 := &dto.UserRegisterRequest{
 				Email:    tt.email,
 				Password: tt.password,
@@ -209,22 +201,22 @@ func TestAuthHandler_Register(t *testing.T) {
 
 			authHandler := NewHandler(mockService)
 
-			app := testutils.CreateTestApp(fiber.Config{
-				ErrorHandler:    middleware.ErrorHandler(testutils.DiscardSlog),
-				StructValidator: structValidator.New(validator.New()),
-			})
-			ctx, cleanup := testutils.PrepareTestContext(app, "/", p1)
-			defer cleanup()
+			app := testutils.CreateTestApp()
 
-			err := authHandler.Register(ctx)
-			if err != nil {
-				assert.NoError(t, app.Config().ErrorHandler(ctx, err))
-			}
+			app.Post("/", authHandler.Register)
+
+			body, _ := json.Marshal(p1)
+
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
 
 			exceptedBody, _ := json.Marshal(tt.exceptedBody)
+			actualBody, _ := io.ReadAll(resp.Body)
 
-			assert.Equal(t, tt.expectedCode, ctx.Response().StatusCode())
-			assert.Equal(t, exceptedBody, ctx.Response().Body())
+			assert.Equal(t, tt.expectedCode, resp.StatusCode)
+			assert.Equal(t, exceptedBody, actualBody)
 
 			mockService.AssertExpectations(t)
 		})
