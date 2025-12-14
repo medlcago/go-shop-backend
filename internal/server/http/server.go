@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"go-shop-backend/internal/core"
 	authHttp "go-shop-backend/internal/delivery/http/auth"
+	userHttp "go-shop-backend/internal/delivery/http/user"
 	"go-shop-backend/pkg/logger"
+	"go-shop-backend/pkg/middleware"
 	"log/slog"
 	"os/signal"
 	"syscall"
@@ -98,6 +100,11 @@ func (s *Server) Init() {
 
 	v1 := s.app.Group("/api/v1")
 
+	authMiddleware := middleware.JWTAuth(s.deps.Cfg.AuthSecret)
+
 	authHandler := authHttp.NewHandler(s.deps.AuthService)
 	authHttp.RegisterRoutes(v1, authHandler)
+
+	userHandler := userHttp.NewHandler(s.deps.UserService)
+	userHttp.RegisterRoutes(v1, userHandler, authMiddleware)
 }

@@ -24,7 +24,9 @@ type Dependencies struct {
 	TxManager transaction.Manager
 
 	UserRepository repository.UserRepository
-	AuthService    service.AuthService
+
+	AuthService service.AuthService
+	UserService service.UserService
 }
 
 func NewDependencies(cfg *config.Config) *Dependencies {
@@ -45,7 +47,9 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	txManager := transaction.NewManager(pgDB)
 
 	userRepo := postgresRepo.NewUserRepository(getQueryer)
+
 	authService := service.NewAuthService(userRepo, txManager, cfg.AuthSecret)
+	userService := service.NewUserService(userRepo)
 
 	return &Dependencies{
 		Cfg:            cfg,
@@ -55,5 +59,6 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		TxManager:      txManager,
 		UserRepository: userRepo,
 		AuthService:    authService,
+		UserService:    userService,
 	}
 }

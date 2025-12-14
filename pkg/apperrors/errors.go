@@ -8,6 +8,7 @@ import (
 var (
 	ErrEmailTaken         = New(http.StatusConflict, "email already in use")
 	ErrInvalidCredentials = New(http.StatusUnauthorized, "invalid credentials")
+	ErrUserNotFound       = New(http.StatusNotFound, "user not found")
 )
 
 type AppError struct {

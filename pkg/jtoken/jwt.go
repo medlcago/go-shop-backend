@@ -3,7 +3,6 @@ package jtoken
 import (
 	"fmt"
 	"go-shop-backend/pkg/utils"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -48,10 +47,9 @@ func GenerateRefreshToken(payload map[string]any, secretKey string) (string, err
 	return token, nil
 }
 
-func ValidateToken(jwtToken string, secretKey string) (map[string]interface{}, error) {
-	cleanJWT := strings.Replace(jwtToken, "Bearer ", "", -1)
+func ValidateToken(tokenString string, secretKey string) (map[string]interface{}, error) {
 	tokenData := jwt.MapClaims{}
-	token, err := jwt.ParseWithClaims(cleanJWT, &tokenData, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &tokenData, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secretKey), nil
 	})
 

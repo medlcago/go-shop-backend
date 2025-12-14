@@ -70,6 +70,22 @@ definitions:
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.RegisterResponse'
     type: object
+  go-shop-backend_pkg_response.Response-internal_dto_UserResponse:
+    properties:
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/internal_dto.UserResponse'
+    type: object
+  internal_dto.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -144,6 +160,35 @@ paths:
       summary: Register
       tags:
       - auth
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get Me
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-internal_dto_UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get Me
+      tags:
+      - users
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token. "Bearer {token}"

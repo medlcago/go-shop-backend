@@ -1,0 +1,40 @@
+package service
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"go-shop-backend/internal/dto"
+	"go-shop-backend/internal/repository"
+	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/utils"
+)
+
+type userService struct {
+	userRepo repository.UserRepository
+}
+
+func NewUserService(userRepo repository.UserRepository) UserService {
+	return &userService{
+		userRepo: userRepo,
+	}
+}
+
+func (u *userService) GetUserByID(ctx context.Context, userID string) (*dto.UserResponse, error) {
+	const op = "userService.GetUserByID"
+
+	user, err := u.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperrors.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var resp dto.UserResponse
+	if err := utils.Copy(&resp, user); err != nil {
+		return nil, fmt.Errorf("%s: failed to copy user: %w", op, err)
+	}
+
+	return &resp, nil
+}

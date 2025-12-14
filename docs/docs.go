@@ -118,6 +118,52 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get Me",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get Me",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-internal_dto_UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -225,6 +271,31 @@ const docTemplate = `{
                 },
                 "result": {
                     "$ref": "#/definitions/go-shop-backend_internal_dto.RegisterResponse"
+                }
+            }
+        },
+        "go-shop-backend_pkg_response.Response-internal_dto_UserResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/internal_dto.UserResponse"
+                }
+            }
+        },
+        "internal_dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
                 }
             }
         }

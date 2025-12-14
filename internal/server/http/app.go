@@ -3,9 +3,8 @@ package http
 import (
 	"go-shop-backend/config"
 	"go-shop-backend/pkg/middleware"
-	"log/slog"
-
 	structValidator "go-shop-backend/pkg/validator"
+	"log/slog"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"

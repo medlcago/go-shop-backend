@@ -9,3 +9,7 @@ type AuthService interface {
 	Login(ctx context.Context, req dto.UserLoginRequest) (*dto.LoginResponse, error)
 	Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.RegisterResponse, error)
 }
+
+type UserService interface {
+	GetUserByID(ctx context.Context, userID string) (*dto.UserResponse, error)
+}
