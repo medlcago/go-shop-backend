@@ -28,7 +28,7 @@ func NewAuthService(userRepo repository.UserRepository, txManager transaction.Ma
 	}
 }
 
-func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto.LoginResponse, error) {
+func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto.UserTokenResponse, error) {
 	const op = "authService.Login"
 
 	user, err := a.userRepo.GetByEmail(ctx, req.Email)
@@ -49,19 +49,10 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	resp := &dto.LoginResponse{
-		TokenResponse: token,
-		User:          &dto.UserResponse{},
-	}
-
-	if err := utils.Copy(&resp.User, user); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy user: %w", op, err)
-	}
-
-	return resp, nil
+	return buildUserTokenResponse(user, token)
 }
 
-func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.RegisterResponse, error) {
+func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error) {
 	const op = "authService.Register"
 
 	_, err := a.userRepo.GetByEmail(ctx, req.Email)
@@ -88,16 +79,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	resp := &dto.RegisterResponse{
-		TokenResponse: token,
-		User:          &dto.UserResponse{},
-	}
-
-	if err := utils.Copy(&resp.User, user); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy user: %w", op, err)
-	}
-
-	return resp, nil
+	return buildUserTokenResponse(user, token)
 }
 
 func (a *authService) createTokens(userID string) (*dto.TokenResponse, error) {
@@ -130,4 +112,17 @@ func (a *authService) createTokens(userID string) (*dto.TokenResponse, error) {
 		RefreshToken: refreshToken,
 		TokenType:    tokenType,
 	}, nil
+}
+
+func buildUserTokenResponse(user *models.User, token *dto.TokenResponse) (*dto.UserTokenResponse, error) {
+	resp := &dto.UserTokenResponse{
+		TokenResponse: token,
+		User:          &dto.UserResponse{},
+	}
+
+	if err := utils.Copy(&resp.User, user); err != nil {
+		return nil, fmt.Errorf("failed to copy user: %w", err)
+	}
+
+	return resp, nil
 }

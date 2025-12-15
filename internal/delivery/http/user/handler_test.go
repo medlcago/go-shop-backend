@@ -1,14 +1,12 @@
 package user
 
 import (
-	"encoding/json"
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +22,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 		setupMock    func(serviceMock *mocks.UserServiceMock)
 		userID       string
 		expectedCode int
-		exceptedBody any
+		expectedBody any
 	}{
 		{
 			name: "success",
@@ -37,7 +35,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			},
 			userID:       "c2f72e02-98b6-4cef-9a80-616f820fed31",
 			expectedCode: http.StatusOK,
-			exceptedBody: response.NewResponse(
+			expectedBody: response.NewResponse(
 				&dto.UserResponse{
 					ID:    "c2f72e02-98b6-4cef-9a80-616f820fed31",
 					Email: "test@test.com",
@@ -47,7 +45,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			setupMock:    nil,
 			userID:       "",
 			expectedCode: http.StatusUnauthorized,
-			exceptedBody: response.NewResponse(struct{}{}, apperrors.ErrInvalidCredentials.Message),
+			expectedBody: response.NewError(apperrors.ErrInvalidCredentials.Message),
 		},
 		{
 			name: "user not found",
@@ -57,7 +55,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			},
 			userID:       "c2f72e02-98b6-4cef-9a80-616f820fed31",
 			expectedCode: http.StatusNotFound,
-			exceptedBody: response.NewResponse(struct{}{}, apperrors.ErrUserNotFound.Message),
+			expectedBody: response.NewError(apperrors.ErrUserNotFound.Message),
 		},
 		{
 			name: "internal server error",
@@ -67,7 +65,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			},
 			userID:       "c2f72e02-98b6-4cef-9a80-616f820fed31",
 			expectedCode: http.StatusInternalServerError,
-			exceptedBody: response.NewResponse(struct{}{}, http.StatusText(http.StatusInternalServerError)),
+			expectedBody: response.NewError(http.StatusText(http.StatusInternalServerError)),
 		},
 	}
 
@@ -94,11 +92,9 @@ func TestUserHandler_GetMe(t *testing.T) {
 			resp, err := app.Test(req)
 			assert.NoError(t, err)
 
-			exceptedBody, _ := json.Marshal(tt.exceptedBody)
-			actualBody, _ := io.ReadAll(resp.Body)
+			expectedJSON := testutils.StringJSON(tt.expectedBody)
 
-			assert.Equal(t, tt.expectedCode, resp.StatusCode)
-			assert.Equal(t, exceptedBody, actualBody)
+			testutils.AssertJSONResponse(t, tt.expectedCode, expectedJSON, resp)
 
 			mockService.AssertExpectations(t)
 		})

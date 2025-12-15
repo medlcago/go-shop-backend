@@ -23,31 +23,31 @@ func TestErrorHandler(t *testing.T) {
 		name           string
 		err            error
 		expectedStatus int
-		exceptedBody   *response.Response[struct{}]
+		expectedBody   *response.Response[struct{}]
 	}{
 		{
 			name:           "Fiber Error - Not Found",
 			err:            fiber.ErrNotFound,
 			expectedStatus: http.StatusNotFound,
-			exceptedBody:   response.NewResponse(struct{}{}, http.StatusText(http.StatusNotFound)),
+			expectedBody:   response.NewError(http.StatusText(http.StatusNotFound)),
 		},
 		{
 			name:           "Fiber Error - Bad Request",
 			err:            fiber.ErrBadRequest,
 			expectedStatus: http.StatusBadRequest,
-			exceptedBody:   response.NewResponse(struct{}{}, http.StatusText(http.StatusBadRequest)),
+			expectedBody:   response.NewError(http.StatusText(http.StatusBadRequest)),
 		},
 		{
 			name:           "Fiber Error with custom message",
 			err:            fiber.NewError(http.StatusForbidden, "access denied"),
 			expectedStatus: http.StatusForbidden,
-			exceptedBody:   response.NewResponse(struct{}{}, "access denied"),
+			expectedBody:   response.NewError("access denied"),
 		},
 		{
 			name:           "AppError",
 			err:            apperrors.New(http.StatusConflict, "resource already exists"),
 			expectedStatus: http.StatusConflict,
-			exceptedBody:   response.NewResponse(struct{}{}, "resource already exists"),
+			expectedBody:   response.NewError("resource already exists"),
 		},
 		{
 			name: "Validator ValidationErrors",
@@ -61,25 +61,25 @@ func TestErrorHandler(t *testing.T) {
 				return err
 			}(),
 			expectedStatus: http.StatusBadRequest,
-			exceptedBody:   response.NewResponse(struct{}{}, "Key: 'TestStruct.Name' Error:Field validation for 'Name' failed on the 'required' tag"),
+			expectedBody:   response.NewError("Key: 'TestStruct.Name' Error:Field validation for 'Name' failed on the 'required' tag"),
 		},
 		{
 			name:           "JSON UnmarshalTypeError",
 			err:            &json.UnmarshalTypeError{Field: "age", Type: reflect.TypeOf(struct{}{}), Offset: 10},
 			expectedStatus: http.StatusBadRequest,
-			exceptedBody:   response.NewResponse(struct{}{}, http.StatusText(http.StatusBadRequest)),
+			expectedBody:   response.NewError(http.StatusText(http.StatusBadRequest)),
 		},
 		{
 			name:           "JSON SyntaxError",
 			err:            &json.SyntaxError{Offset: 5},
 			expectedStatus: http.StatusBadRequest,
-			exceptedBody:   response.NewResponse(struct{}{}, http.StatusText(http.StatusBadRequest)),
+			expectedBody:   response.NewError(http.StatusText(http.StatusBadRequest)),
 		},
 		{
 			name:           "Generic error",
 			err:            errors.New("something went wrong"),
 			expectedStatus: http.StatusInternalServerError,
-			exceptedBody:   response.NewResponse(struct{}{}, http.StatusText(http.StatusInternalServerError)),
+			expectedBody:   response.NewError(http.StatusText(http.StatusInternalServerError)),
 		},
 	}
 
@@ -98,11 +98,11 @@ func TestErrorHandler(t *testing.T) {
 			resp, err := app.Test(req)
 			assert.NoError(t, err)
 
-			exceptedBody, _ := json.Marshal(tt.exceptedBody)
+			expectedBody, _ := json.Marshal(tt.expectedBody)
 			actualBody, _ := io.ReadAll(resp.Body)
 
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			assert.Equal(t, exceptedBody, actualBody)
+			assert.JSONEq(t, string(expectedBody), string(actualBody))
 		})
 	}
 }

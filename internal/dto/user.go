@@ -18,12 +18,7 @@ type UserResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type LoginResponse struct {
-	*TokenResponse
-	User *UserResponse `json:"user"`
-}
-
-type RegisterResponse struct {
+type UserTokenResponse struct {
 	*TokenResponse
 	User *UserResponse `json:"user"`
 }
