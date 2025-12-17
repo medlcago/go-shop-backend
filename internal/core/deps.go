@@ -23,10 +23,14 @@ type Dependencies struct {
 	DB        *sqlx.DB
 	TxManager transaction.Manager
 
-	UserRepository repository.UserRepository
+	UserRepository     repository.UserRepository
+	ProductRepository  repository.ProductRepository
+	CategoryRepository repository.CategoryRepository
 
-	AuthService service.AuthService
-	UserService service.UserService
+	AuthService     service.AuthService
+	UserService     service.UserService
+	ProductService  service.ProductService
+	CategoryService service.CategoryService
 }
 
 func NewDependencies(cfg *config.Config) *Dependencies {
@@ -47,18 +51,26 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	txManager := transaction.NewManager(pgDB)
 
 	userRepo := postgresRepo.NewUserRepository(getQueryer)
+	productRepo := postgresRepo.NewProductRepository(getQueryer)
+	categoryRepo := postgresRepo.NewCategoryRepository(getQueryer)
 
 	authService := service.NewAuthService(userRepo, txManager, cfg.AuthSecret)
 	userService := service.NewUserService(userRepo)
+	productService := service.NewProductService(productRepo)
+	categoryService := service.NewCategoryService(categoryRepo)
 
 	return &Dependencies{
-		Cfg:            cfg,
-		Logger:         l,
-		Validator:      validate,
-		DB:             pgDB,
-		TxManager:      txManager,
-		UserRepository: userRepo,
-		AuthService:    authService,
-		UserService:    userService,
+		Cfg:                cfg,
+		Logger:             l,
+		Validator:          validate,
+		DB:                 pgDB,
+		TxManager:          txManager,
+		UserRepository:     userRepo,
+		ProductRepository:  productRepo,
+		CategoryRepository: categoryRepo,
+		AuthService:        authService,
+		UserService:        userService,
+		ProductService:     productService,
+		CategoryService:    categoryService,
 	}
 }

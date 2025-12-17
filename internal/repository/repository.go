@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 )
 
@@ -27,4 +28,13 @@ type UserRepository interface {
 	Save(ctx context.Context, user *models.User) error
 	GetByID(ctx context.Context, id string) (*models.User, error)
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
+}
+
+type ProductRepository interface {
+	GetByID(ctx context.Context, id string) (*models.Product, error)
+	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
+}
+
+type CategoryRepository interface {
+	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.ProductCategory, int64, error)
 }

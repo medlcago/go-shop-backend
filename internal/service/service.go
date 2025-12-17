@@ -13,3 +13,12 @@ type AuthService interface {
 type UserService interface {
 	GetUserByID(ctx context.Context, userID string) (*dto.UserResponse, error)
 }
+
+type ProductService interface {
+	GetProductByID(ctx context.Context, productID string) (*dto.ProductResponse, error)
+	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*dto.ProductResponse, int64, error)
+}
+
+type CategoryService interface {
+	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error)
+}
