@@ -15,6 +15,10 @@ definitions:
     type: object
   go-shop-backend_internal_dto.ProductResponse:
     properties:
+      categories:
+        items:
+          type: string
+        type: array
       created_at:
         type: string
       description:

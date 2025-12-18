@@ -16,6 +16,8 @@ type ProductResponse struct {
 	IsActive    bool      `json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+
+	Categories []string `json:"categories"`
 }
 
 type ListProductRequest struct {

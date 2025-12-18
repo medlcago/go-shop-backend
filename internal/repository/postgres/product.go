@@ -43,19 +43,23 @@ func (p productRepository) ListProducts(ctx context.Context, req dto.ListProduct
 	db := p.getQueryer(ctx)
 
 	productBuilder := p.flavor.NewSelectBuilder()
-	productBuilder.Select("p.*").From("products p")
+	productBuilder.Select(`
+		p.*,
+		COALESCE(array_agg(pc.category_id) FILTER (WHERE pc.category_id IS NOT NULL), '{}') AS categories`).
+		From("products p")
+	productBuilder.JoinWithOption(
+		sqlbuilder.LeftJoin, "product_categories pc", "p.id = pc.product_id",
+	)
+	productBuilder.GroupBy("p.id")
 
 	countBuilder := p.flavor.NewSelectBuilder()
 	countBuilder.Select("COUNT(p.id)").From("products p")
 
 	if req.CategoryID != uuid.Nil {
-		productBuilder.JoinWithOption(
-			sqlbuilder.LeftJoin, "product_categories pc", "p.id = pc.product_id",
-		).Where(productBuilder.EQ("pc.category_id", req.CategoryID))
+		productBuilder.Where(productBuilder.EQ("pc.category_id", req.CategoryID))
 
-		countBuilder.JoinWithOption(
-			sqlbuilder.LeftJoin, "product_categories pc", "p.id = pc.product_id",
-		).Where(countBuilder.EQ("pc.category_id", req.CategoryID))
+		countBuilder.Join("product_categories pc", "p.id = pc.product_id")
+		countBuilder.Where(countBuilder.EQ("pc.category_id", req.CategoryID))
 	}
 
 	productBuilder.Where(

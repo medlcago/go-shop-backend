@@ -444,6 +444,12 @@ const docTemplate = `{
         "go-shop-backend_internal_dto.ProductResponse": {
             "type": "object",
             "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "created_at": {
                     "type": "string"
                 },
