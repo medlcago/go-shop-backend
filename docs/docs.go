@@ -134,6 +134,7 @@ const docTemplate = `{
                 "summary": "List categories or subcategories",
                 "parameters": [
                     {
+                        "minimum": 1,
                         "type": "integer",
                         "default": 50,
                         "description": "Maximum number of items to return",
@@ -141,6 +142,7 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "minimum": 0,
                         "type": "integer",
                         "default": 0,
                         "description": "Number of items to skip",
@@ -192,11 +194,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Parent category ID (UUID format). If provided, returns subcategories of this category. If omitted, returns all root categories.",
+                        "format": "uuid",
+                        "description": "Parent category ID. If provided, returns subcategories of this category. If omitted, returns all root categories.",
                         "name": "id",
                         "in": "path"
                     },
                     {
+                        "minimum": 1,
                         "type": "integer",
                         "default": 50,
                         "description": "Maximum number of items to return",
@@ -204,6 +208,7 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "minimum": 0,
                         "type": "integer",
                         "default": 0,
                         "description": "Number of items to skip",
@@ -254,6 +259,7 @@ const docTemplate = `{
                 "summary": "List products with filtering and pagination",
                 "parameters": [
                     {
+                        "minimum": 1,
                         "type": "integer",
                         "default": 50,
                         "description": "Maximum number of items to return",
@@ -261,6 +267,7 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "minimum": 0,
                         "type": "integer",
                         "default": 0,
                         "description": "Number of items to skip",
@@ -287,7 +294,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by category ID (UUID format)",
+                        "format": "uuid",
+                        "description": "Filter by category ID",
                         "name": "category_id",
                         "in": "query"
                     }
@@ -330,7 +338,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Product ID (UUID format)",
+                        "format": "uuid",
+                        "description": "Product ID",
                         "name": "id",
                         "in": "path",
                         "required": true

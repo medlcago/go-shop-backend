@@ -48,7 +48,7 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 			message = http.StatusText(status)
 		}
 
-		log.Error("error handler", slog.Int("code", status), logger.Err(err))
+		log.Error("error handler", slog.Int("status_code", status), logger.Err(err))
 
 		return response.Error(ctx, status, message)
 	}

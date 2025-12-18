@@ -25,7 +25,7 @@ func NewHandler(productService service.ProductService) *Handler {
 //	@Tags			products
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		string	true	"Product ID (UUID format)"
+//	@Param			id	path		string	true	"Product ID"	Format(uuid)
 //	@Success		200	{object}	response.Response[dto.ProductResponse]
 //	@Failure		400	{object}	response.Response[any]
 //	@Failure		404	{object}	response.Response[any]
@@ -49,11 +49,11 @@ func (h *Handler) GetProductByID(ctx fiber.Ctx) error {
 //	@Tags			products
 //	@Accept			json
 //	@Produce		json
-//	@Param			limit		query		int		false	"Maximum number of items to return"	default(50)
-//	@Param			offset		query		int		false	"Number of items to skip"			default(0)
+//	@Param			limit		query		int		false	"Maximum number of items to return"	minimum(1)	default(50)
+//	@Param			offset		query		int		false	"Number of items to skip"			minimum(0)	default(0)
 //	@Param			order_by	query		string	false	"Field to sort by"					Enums(name, created_at, price)
 //	@Param			order_desc	query		bool	false	"Sort in descending order"			default(false)
-//	@Param			category_id	query		string	false	"Filter by category ID (UUID format)"
+//	@Param			category_id	query		string	false	"Filter by category ID"				Format(uuid)
 //	@Success		200			{object}	response.Response[response.PaginatedResponse[[]dto.ProductResponse]]
 //	@Failure		400			{object}	response.Response[any]
 //	@Failure		500			{object}	response.Response[any]

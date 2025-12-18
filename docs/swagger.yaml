@@ -226,11 +226,13 @@ paths:
       - default: 50
         description: Maximum number of items to return
         in: query
+        minimum: 1
         name: limit
         type: integer
       - default: 0
         description: Number of items to skip
         in: query
+        minimum: 0
         name: offset
         type: integer
       produces:
@@ -263,19 +265,22 @@ paths:
         category. If ID is provided in the path, returns subcategories of that category.
         Otherwise returns all root categories.
       parameters:
-      - description: Parent category ID (UUID format). If provided, returns subcategories
-          of this category. If omitted, returns all root categories.
+      - description: Parent category ID. If provided, returns subcategories of this
+          category. If omitted, returns all root categories.
+        format: uuid
         in: path
         name: id
         type: string
       - default: 50
         description: Maximum number of items to return
         in: query
+        minimum: 1
         name: limit
         type: integer
       - default: 0
         description: Number of items to skip
         in: query
+        minimum: 0
         name: offset
         type: integer
       produces:
@@ -310,11 +315,13 @@ paths:
       - default: 50
         description: Maximum number of items to return
         in: query
+        minimum: 1
         name: limit
         type: integer
       - default: 0
         description: Number of items to skip
         in: query
+        minimum: 0
         name: offset
         type: integer
       - description: Field to sort by
@@ -330,7 +337,8 @@ paths:
         in: query
         name: order_desc
         type: boolean
-      - description: Filter by category ID (UUID format)
+      - description: Filter by category ID
+        format: uuid
         in: query
         name: category_id
         type: string
@@ -358,7 +366,8 @@ paths:
       - application/json
       description: Get detailed information about a specific product by its UUID
       parameters:
-      - description: Product ID (UUID format)
+      - description: Product ID
+        format: uuid
         in: path
         name: id
         required: true

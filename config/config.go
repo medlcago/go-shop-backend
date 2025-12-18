@@ -24,7 +24,7 @@ type Config struct {
 	Environment string `env:"ENVIRONMENT" mapstructure:"environment" validate:"required,oneof=production development"`
 	HttpPort    int    `env:"HTTP_PORT" mapstructure:"http_port" validate:"required"`
 	AuthSecret  string `env:"AUTH_SECRET" mapstructure:"auth_secret" validate:"required"`
-	DatabaseURI string `env:"APP_+DATABASE_URI" mapstructure:"database_uri" validate:"required"`
+	DatabaseURI string `env:"DATABASE_URI" mapstructure:"database_uri" validate:"required"`
 
 	ServerReadTimeout     time.Duration `env:"SERVER_READ_TIMEOUT" mapstructure:"server_read_timeout" validate:"required"`
 	ServerWriteTimeout    time.Duration `env:"SERVER_WRITE_TIMEOUT" mapstructure:"server_write_timeout" validate:"required"`
@@ -59,7 +59,7 @@ func Load() (*Config, error) {
 
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal schema: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	if err := cfg.Validate(); err != nil {

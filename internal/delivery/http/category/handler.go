@@ -25,9 +25,9 @@ func NewHandler(categoryService service.CategoryService) *Handler {
 //	@Tags			categories
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string	false	"Parent category ID (UUID format). If provided, returns subcategories of this category. If omitted, returns all root categories."
-//	@Param			limit	query		int		false	"Maximum number of items to return"	default(50)
-//	@Param			offset	query		int		false	"Number of items to skip"			default(0)
+//	@Param			id		path		string	false	"Parent category ID. If provided, returns subcategories of this category. If omitted, returns all root categories."	Format(uuid)
+//	@Param			limit	query		int		false	"Maximum number of items to return"																					minimum(1)	default(50)
+//	@Param			offset	query		int		false	"Number of items to skip"																							minimum(0)	default(0)
 //	@Success		200		{object}	response.Response[response.PaginatedResponse[[]dto.ProductCategoryResponse]]
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		404		{object}	response.Response[any]
