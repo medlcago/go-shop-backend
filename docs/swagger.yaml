@@ -1,5 +1,39 @@
 basePath: /api/v1
 definitions:
+  go-shop-backend_internal_dto.ProductCategoryResponse:
+    properties:
+      has_children:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+      parent_id:
+        type: string
+      slug:
+        type: string
+    type: object
+  go-shop-backend_internal_dto.ProductResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      price:
+        type: number
+      slug:
+        type: string
+      stock:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   go-shop-backend_internal_dto.UserLoginRequest:
     properties:
       email:
@@ -39,11 +73,36 @@ definitions:
       user:
         $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
     type: object
+  go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ProductCategoryResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ProductResponse'
+        type: array
+      total:
+        type: integer
+    type: object
   go-shop-backend_pkg_response.Response-any:
     properties:
       error:
         type: string
       result: {}
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse:
+    properties:
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.ProductResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
@@ -51,6 +110,20 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.UserTokenResponse'
+    type: object
+  ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse
+  : properties:
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse'
+    type: object
+  ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse
+  : properties:
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse'
     type: object
   go-shop-backend_pkg_response.Response-internal_dto_UserResponse:
     properties:
@@ -142,6 +215,176 @@ paths:
       summary: Register
       tags:
       - auth
+  /categories/:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of all categories or subcategories of a specific
+        category. If ID is provided in the path, returns subcategories of that category.
+        Otherwise returns all root categories.
+      parameters:
+      - default: 50
+        description: Maximum number of items to return
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: List categories or subcategories
+      tags:
+      - categories
+  /categories/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of all categories or subcategories of a specific
+        category. If ID is provided in the path, returns subcategories of that category.
+        Otherwise returns all root categories.
+      parameters:
+      - description: Parent category ID (UUID format). If provided, returns subcategories
+          of this category. If omitted, returns all root categories.
+        in: path
+        name: id
+        type: string
+      - default: 50
+        description: Maximum number of items to return
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: List categories or subcategories
+      tags:
+      - categories
+  /products/:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of products with optional filtering by category
+        and sorting
+      parameters:
+      - default: 50
+        description: Maximum number of items to return
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        name: offset
+        type: integer
+      - description: Field to sort by
+        enum:
+        - name
+        - created_at
+        - price
+        in: query
+        name: order_by
+        type: string
+      - default: false
+        description: Sort in descending order
+        in: query
+        name: order_desc
+        type: boolean
+      - description: Filter by category ID (UUID format)
+        in: query
+        name: category_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: List products with filtering and pagination
+      tags:
+      - products
+  /products/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific product by its UUID
+      parameters:
+      - description: Product ID (UUID format)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Get product by ID
+      tags:
+      - products
   /users/me:
     get:
       consumes:

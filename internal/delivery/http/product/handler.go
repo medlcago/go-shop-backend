@@ -18,6 +18,19 @@ func NewHandler(productService service.ProductService) *Handler {
 	}
 }
 
+// GetProductByID godoc
+//
+//	@Summary		Get product by ID
+//	@Description	Get detailed information about a specific product by its UUID
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"Product ID (UUID format)"
+//	@Success		200	{object}	response.Response[dto.ProductResponse]
+//	@Failure		400	{object}	response.Response[any]
+//	@Failure		404	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/products/{id} [get]
 func (h *Handler) GetProductByID(ctx fiber.Ctx) error {
 	id := ctx.Params("id")
 
@@ -29,11 +42,27 @@ func (h *Handler) GetProductByID(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// ListProducts godoc
+//
+//	@Summary		List products with filtering and pagination
+//	@Description	Get a paginated list of products with optional filtering by category and sorting
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			limit		query		int		false	"Maximum number of items to return"	default(50)
+//	@Param			offset		query		int		false	"Number of items to skip"			default(0)
+//	@Param			order_by	query		string	false	"Field to sort by"					Enums(name, created_at, price)
+//	@Param			order_desc	query		bool	false	"Sort in descending order"			default(false)
+//	@Param			category_id	query		string	false	"Filter by category ID (UUID format)"
+//	@Success		200			{object}	response.Response[response.PaginatedResponse[[]dto.ProductResponse]]
+//	@Failure		400			{object}	response.Response[any]
+//	@Failure		500			{object}	response.Response[any]
+//	@Router			/products/ [get]
 func (h *Handler) ListProducts(ctx fiber.Ctx) error {
 	var req dto.ListProductRequest
 
 	if err := ctx.Bind().Query(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid query params")
+		return fiber.ErrBadRequest
 	}
 
 	resp, total, err := h.productService.ListProducts(ctx, req)

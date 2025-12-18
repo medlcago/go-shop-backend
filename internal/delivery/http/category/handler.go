@@ -18,10 +18,26 @@ func NewHandler(categoryService service.CategoryService) *Handler {
 	}
 }
 
+// ListCategories godoc
+//
+//	@Summary		List categories or subcategories
+//	@Description	Get a paginated list of all categories or subcategories of a specific category. If ID is provided in the path, returns subcategories of that category. Otherwise returns all root categories.
+//	@Tags			categories
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string	false	"Parent category ID (UUID format). If provided, returns subcategories of this category. If omitted, returns all root categories."
+//	@Param			limit	query		int		false	"Maximum number of items to return"	default(50)
+//	@Param			offset	query		int		false	"Number of items to skip"			default(0)
+//	@Success		200		{object}	response.Response[response.PaginatedResponse[[]dto.ProductCategoryResponse]]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/categories/{id} [get]
+//	@Router			/categories/ [get]
 func (h *Handler) ListCategories(ctx fiber.Ctx) error {
 	var req dto.ListCategoryRequest
 	if err := ctx.Bind().Query(&req); err != nil {
-		return err
+		return fiber.ErrBadRequest
 	}
 
 	id := ctx.Params("id")
