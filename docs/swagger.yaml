@@ -1,27 +1,5 @@
 basePath: /api/v1
 definitions:
-  go-shop-backend_internal_dto.LoginResponse:
-    properties:
-      access_token:
-        type: string
-      refresh_token:
-        type: string
-      token_type:
-        type: string
-      user:
-        $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
-    type: object
-  go-shop-backend_internal_dto.RegisterResponse:
-    properties:
-      access_token:
-        type: string
-      refresh_token:
-        type: string
-      token_type:
-        type: string
-      user:
-        $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
-    type: object
   go-shop-backend_internal_dto.UserLoginRequest:
     properties:
       email:
@@ -50,25 +28,29 @@ definitions:
       id:
         type: string
     type: object
+  go-shop-backend_internal_dto.UserTokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+      user:
+        $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
+    type: object
   go-shop-backend_pkg_response.Response-any:
     properties:
       error:
         type: string
       result: {}
     type: object
-  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_LoginResponse:
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
       error:
         type: string
       result:
-        $ref: '#/definitions/go-shop-backend_internal_dto.LoginResponse'
-    type: object
-  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_RegisterResponse:
-    properties:
-      error:
-        type: string
-      result:
-        $ref: '#/definitions/go-shop-backend_internal_dto.RegisterResponse'
+        $ref: '#/definitions/go-shop-backend_internal_dto.UserTokenResponse'
     type: object
   go-shop-backend_pkg_response.Response-internal_dto_UserResponse:
     properties:
@@ -110,7 +92,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_LoginResponse'
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
         "400":
           description: Bad Request
           schema:
@@ -144,7 +126,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_RegisterResponse'
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
         "400":
           description: Bad Request
           schema:

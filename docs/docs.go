@@ -43,7 +43,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_LoginResponse"
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
                         }
                     },
                     "400": {
@@ -95,7 +95,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_RegisterResponse"
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
                         }
                     },
                     "400": {
@@ -167,40 +167,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "go-shop-backend_internal_dto.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "token_type": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.UserResponse"
-                }
-            }
-        },
-        "go-shop-backend_internal_dto.RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "token_type": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.UserResponse"
-                }
-            }
-        },
         "go-shop-backend_internal_dto.UserLoginRequest": {
             "type": "object",
             "properties": {
@@ -243,6 +209,23 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.UserTokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "token_type": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.UserResponse"
+                }
+            }
+        },
         "go-shop-backend_pkg_response.Response-any": {
             "type": "object",
             "properties": {
@@ -252,25 +235,14 @@ const docTemplate = `{
                 "result": {}
             }
         },
-        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_LoginResponse": {
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse": {
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.LoginResponse"
-                }
-            }
-        },
-        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_RegisterResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.RegisterResponse"
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.UserTokenResponse"
                 }
             }
         },
