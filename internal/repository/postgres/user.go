@@ -5,6 +5,8 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/transaction"
+
+	"github.com/google/uuid"
 )
 
 type userRepository struct {
@@ -25,7 +27,7 @@ func (u userRepository) Save(ctx context.Context, user *models.User) error {
 	return repository.HandleSQLError(err)
 }
 
-func (u userRepository) GetByID(ctx context.Context, id string) (*models.User, error) {
+func (u userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	db := u.getQueryer(ctx)
 	query := `SELECT * FROM users WHERE id=$1`
 

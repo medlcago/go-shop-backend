@@ -27,18 +27,3 @@ type ListProductRequest struct {
 	OrderDesc  bool      `query:"order_desc"`
 	CategoryID uuid.UUID `query:"category_id"`
 }
-
-type ProductCategoryResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	ParentID    string `json:"parent_id"`
-	HasChildren bool   `json:"has_children"`
-}
-
-type ListCategoryRequest struct {
-	ID string `json:"-"`
-
-	Limit  int `query:"limit"`
-	Offset int `query:"offset"`
-}

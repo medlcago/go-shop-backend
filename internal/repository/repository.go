@@ -31,7 +31,7 @@ type UserRepository interface {
 }
 
 type ProductRepository interface {
-	GetByID(ctx context.Context, id string) (*models.Product, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error)
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
 }
 

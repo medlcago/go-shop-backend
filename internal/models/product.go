@@ -8,14 +8,6 @@ import (
 	"github.com/lib/pq"
 )
 
-type ProductCategory struct {
-	ID          uuid.UUID           `db:"id"`
-	Name        string              `db:"name"`
-	Slug        string              `db:"slug"`
-	ParentID    sql.Null[uuid.UUID] `db:"parent_id"`
-	HasChildren bool                `db:"has_children"`
-}
-
 type Product struct {
 	ID          uuid.UUID      `db:"id"`
 	Name        string         `db:"name"`

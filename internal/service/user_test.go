@@ -37,10 +37,10 @@ func TestUserServiceTestSuite(t *testing.T) {
 
 func (suite *UserServiceTestSuite) TestGetUserByID_Success() {
 	ctx := context.Background()
-	userID := uuid.NewString()
+	userID := uuid.New()
 
 	mockUser := &models.User{
-		ID:        uuid.MustParse(userID),
+		ID:        userID,
 		Email:     "test@example.com",
 		CreatedAt: time.Now(),
 	}
@@ -52,14 +52,14 @@ func (suite *UserServiceTestSuite) TestGetUserByID_Success() {
 
 	suite.NoError(err)
 	suite.NotNil(user)
-	suite.Equal(userID, user.ID)
+	suite.Equal(userID.String(), user.ID)
 	suite.Equal("test@example.com", user.Email)
 	suite.NotZero(user.CreatedAt)
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
 	ctx := context.Background()
-	userID := uuid.NewString()
+	userID := uuid.New()
 
 	suite.mockRepo.On("GetByID", ctx, userID).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
@@ -73,7 +73,7 @@ func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
 
 func (suite *UserServiceTestSuite) TestGetUserByID_RepositoryError() {
 	ctx := context.Background()
-	userID := uuid.NewString()
+	userID := uuid.New()
 
 	repoErr := errors.New("database error")
 	suite.mockRepo.On("GetByID", ctx, userID).

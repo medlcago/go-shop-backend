@@ -28,3 +28,8 @@ func (u *UserRepositoryMock) GetByEmail(ctx context.Context, email string) (*mod
 	args := u.Called(ctx, email)
 	return args.Get(0).(*models.User), args.Error(1)
 }
+
+func (u *UserRepositoryMock) IsDeleted(ctx context.Context, id uuid.UUID) (bool, error) {
+	args := u.Called(ctx, id)
+	return args.Bool(0), args.Error(1)
+}

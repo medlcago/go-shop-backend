@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/pkg/paging"
 	"go-shop-backend/pkg/transaction"
 
+	"github.com/google/uuid"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -44,7 +45,7 @@ func (c categoryRepository) ListCategories(ctx context.Context, req dto.ListCate
 	countBuilder := c.flavor.NewSelectBuilder()
 	countBuilder.Select("COUNT(c.id)").From("categories c")
 
-	if req.ID != "" {
+	if req.ID != uuid.Nil {
 		categoryBuilder.Where(categoryBuilder.Equal("c.parent_id", req.ID))
 		countBuilder.Where(countBuilder.Equal("c.parent_id", req.ID))
 	} else {

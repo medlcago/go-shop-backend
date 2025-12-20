@@ -6,6 +6,7 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -15,7 +16,7 @@ type ProductRepositoryMock struct {
 	mock.Mock
 }
 
-func (p *ProductRepositoryMock) GetByID(ctx context.Context, id string) (*models.Product, error) {
+func (p *ProductRepositoryMock) GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error) {
 	args := p.Called(ctx, id)
 	return args.Get(0).(*models.Product), args.Error(1)
 }

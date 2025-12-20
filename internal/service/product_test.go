@@ -38,10 +38,10 @@ func TestProductServiceTestSuite(t *testing.T) {
 
 func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 	ctx := context.Background()
-	productID := uuid.NewString()
+	productID := uuid.New()
 
 	mockProduct := &models.Product{
-		ID:         uuid.MustParse(productID),
+		ID:         productID,
 		Name:       "Test Product",
 		Price:      99.99,
 		Categories: pq.StringArray{"e2f832de-12e7-46af-9e36-2f2df847f43d", "fc7afa36-c488-4e78-a2a5-852ebfeb06a2"},
@@ -54,7 +54,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 
 	suite.NoError(err)
 	suite.NotNil(product)
-	suite.Equal(productID, product.ID)
+	suite.Equal(productID.String(), product.ID)
 	suite.Equal("Test Product", product.Name)
 	suite.Equal(99.99, product.Price)
 	suite.Len(product.Categories, 2)
@@ -64,7 +64,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 
 func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
 	ctx := context.Background()
-	productID := uuid.NewString()
+	productID := uuid.New()
 
 	suite.mockRepo.On("GetByID", ctx, productID).
 		Return(&models.Product{}, repository.ErrRecordNotFound).Once()
@@ -78,7 +78,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
 
 func (suite *ProductServiceTestSuite) TestGetProductByID_RepositoryError() {
 	ctx := context.Background()
-	productID := uuid.NewString()
+	productID := uuid.New()
 
 	repoErr := errors.New("database connection failed")
 	suite.mockRepo.On("GetByID", ctx, productID).

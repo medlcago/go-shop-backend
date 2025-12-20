@@ -8,6 +8,8 @@ import (
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/utils"
+
+	"github.com/google/uuid"
 )
 
 type productService struct {
@@ -20,7 +22,7 @@ func NewProductService(productRepo repository.ProductRepository) ProductService 
 	}
 }
 
-func (p *productService) GetProductByID(ctx context.Context, productID string) (*dto.ProductResponse, error) {
+func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error) {
 	const op = "productService.GetProductByID"
 
 	product, err := p.productRepo.GetByID(ctx, productID)

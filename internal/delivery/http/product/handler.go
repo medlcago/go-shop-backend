@@ -6,6 +6,7 @@ import (
 	"go-shop-backend/pkg/response"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -32,7 +33,10 @@ func NewHandler(productService service.ProductService) *Handler {
 //	@Failure		500	{object}	response.Response[any]
 //	@Router			/products/{id} [get]
 func (h *Handler) GetProductByID(ctx fiber.Ctx) error {
-	id := ctx.Params("id")
+	id, err := fiber.Convert(ctx.Params("id"), uuid.Parse, uuid.Nil)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
 
 	resp, err := h.productService.GetProductByID(ctx, id)
 	if err != nil {

@@ -28,7 +28,7 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 		{
 			name: "success",
 			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("GetProductByID", mock.Anything, "757c7dff-6d2f-44dc-9a22-ce16dabcaa2d").
+				serviceMock.On("GetProductByID", mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
 					Return(&dto.ProductResponse{}, nil).Once()
 			},
 			expectedCode: http.StatusOK,
@@ -37,7 +37,7 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 		{
 			name: "not found",
 			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("GetProductByID", mock.Anything, "757c7dff-6d2f-44dc-9a22-ce16dabcaa2d").
+				serviceMock.On("GetProductByID", mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
 					Return(&dto.ProductResponse{}, apperrors.ErrProductNotFound).Once()
 			},
 			expectedCode: http.StatusNotFound,
@@ -46,7 +46,7 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 		{
 			name: "internal server error",
 			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("GetProductByID", mock.Anything, "757c7dff-6d2f-44dc-9a22-ce16dabcaa2d").
+				serviceMock.On("GetProductByID", mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
 					Return(&dto.ProductResponse{}, errors.New("unexpected error"))
 			},
 			expectedCode: http.StatusInternalServerError,

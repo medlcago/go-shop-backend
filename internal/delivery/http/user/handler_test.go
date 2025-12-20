@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -20,20 +21,20 @@ func TestUserHandler_GetMe(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupMock    func(serviceMock *mocks.UserServiceMock)
-		userID       string
+		userID       uuid.UUID
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
 			setupMock: func(serviceMock *mocks.UserServiceMock) {
-				serviceMock.On("GetUserByID", mock.Anything, "c2f72e02-98b6-4cef-9a80-616f820fed31").
+				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{
 						ID:    "c2f72e02-98b6-4cef-9a80-616f820fed31",
 						Email: "test@test.com",
 					}, nil).Once()
 			},
-			userID:       "c2f72e02-98b6-4cef-9a80-616f820fed31",
+			userID:       uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
 			expectedCode: http.StatusOK,
 			expectedBody: response.NewResponse(
 				&dto.UserResponse{
@@ -43,27 +44,27 @@ func TestUserHandler_GetMe(t *testing.T) {
 		}, {
 			name:         "no user id in context",
 			setupMock:    nil,
-			userID:       "",
+			userID:       uuid.Nil,
 			expectedCode: http.StatusUnauthorized,
 			expectedBody: response.NewError(apperrors.ErrInvalidCredentials.Message),
 		},
 		{
 			name: "user not found",
 			setupMock: func(serviceMock *mocks.UserServiceMock) {
-				serviceMock.On("GetUserByID", mock.Anything, "c2f72e02-98b6-4cef-9a80-616f820fed31").
+				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, apperrors.ErrUserNotFound).Once()
 			},
-			userID:       "c2f72e02-98b6-4cef-9a80-616f820fed31",
+			userID:       uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
 			expectedCode: http.StatusNotFound,
 			expectedBody: response.NewError(apperrors.ErrUserNotFound.Message),
 		},
 		{
 			name: "internal server error",
 			setupMock: func(serviceMock *mocks.UserServiceMock) {
-				serviceMock.On("GetUserByID", mock.Anything, "c2f72e02-98b6-4cef-9a80-616f820fed31").
+				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, errors.New("unexpected error")).Once()
 			},
-			userID:       "c2f72e02-98b6-4cef-9a80-616f820fed31",
+			userID:       uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
 			expectedCode: http.StatusInternalServerError,
 			expectedBody: response.NewError(http.StatusText(http.StatusInternalServerError)),
 		},

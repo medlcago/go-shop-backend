@@ -6,6 +6,7 @@ import (
 	"go-shop-backend/pkg/response"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -32,8 +33,8 @@ func NewHandler(userService service.UserService) *Handler {
 //	@Failure		500	{object}	response.Response[any]
 //	@Router			/users/me [get]
 func (h *Handler) GetMe(ctx fiber.Ctx) error {
-	userID := fiber.Locals[string](ctx, "userID")
-	if userID == "" {
+	userID := fiber.Locals[uuid.UUID](ctx, "userID")
+	if userID == uuid.Nil {
 		return apperrors.ErrInvalidCredentials
 	}
 

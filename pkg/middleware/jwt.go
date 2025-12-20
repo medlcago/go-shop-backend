@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 )
 
 func JWTAuth(secretKey string) fiber.Handler {
@@ -36,8 +37,13 @@ func JWT(tokenType string, secretKey string) fiber.Handler {
 			return apperrors.ErrInvalidCredentials
 		}
 
-		userID := claims["user_id"].(string)
-		if userID == "" {
+		userIDStr := claims["user_id"].(string)
+		if userIDStr == "" {
+			return apperrors.ErrInvalidCredentials
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
 			return apperrors.ErrInvalidCredentials
 		}
 

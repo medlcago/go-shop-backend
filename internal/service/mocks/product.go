@@ -5,6 +5,7 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -14,7 +15,7 @@ type ProductServiceMock struct {
 	mock.Mock
 }
 
-func (p *ProductServiceMock) GetProductByID(ctx context.Context, productID string) (*dto.ProductResponse, error) {
+func (p *ProductServiceMock) GetProductByID(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error) {
 	args := p.Called(ctx, productID)
 	return args.Get(0).(*dto.ProductResponse), args.Error(1)
 }

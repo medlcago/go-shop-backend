@@ -6,6 +6,7 @@ import (
 	"go-shop-backend/pkg/response"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -40,7 +41,11 @@ func (h *Handler) ListCategories(ctx fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	id := ctx.Params("id")
+	id, err := fiber.Convert(ctx.Params("id"), uuid.Parse, uuid.Nil)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
 	req.ID = id
 
 	resp, total, err := h.categoryService.ListCategories(ctx, req)

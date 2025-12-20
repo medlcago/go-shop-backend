@@ -70,14 +70,14 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 
 func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories() {
 	ctx := context.Background()
-	parentID := uuid.NewString()
+	parentID := uuid.New()
 	req := dto.ListCategoryRequest{
 		ID:     parentID,
 		Limit:  5,
 		Offset: 0,
 	}
 
-	parentUUID := sql.Null[uuid.UUID]{V: uuid.MustParse(parentID), Valid: true}
+	parentUUID := sql.Null[uuid.UUID]{V: parentID, Valid: true}
 	mockCategories := []*models.ProductCategory{
 		{
 			Name:     "Laptops",
@@ -98,8 +98,8 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 	suite.Equal(int64(2), totalCount)
 	suite.Len(categories, 2)
 
-	suite.Equal(parentID, categories[0].ParentID)
-	suite.Equal(parentID, categories[1].ParentID)
+	suite.Equal(parentID.String(), categories[0].ParentID)
+	suite.Equal(parentID.String(), categories[1].ParentID)
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {

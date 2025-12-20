@@ -8,6 +8,8 @@ import (
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/utils"
+
+	"github.com/google/uuid"
 )
 
 type userService struct {
@@ -20,7 +22,7 @@ func NewUserService(userRepo repository.UserRepository) UserService {
 	}
 }
 
-func (u *userService) GetUserByID(ctx context.Context, userID string) (*dto.UserResponse, error) {
+func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error) {
 	const op = "userService.GetUserByID"
 
 	user, err := u.userRepo.GetByID(ctx, userID)

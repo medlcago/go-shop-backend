@@ -24,7 +24,7 @@ func NewProductRepository(getQueryer transaction.QueryerFunc) repository.Product
 	}
 }
 
-func (p productRepository) GetByID(ctx context.Context, id string) (*models.Product, error) {
+func (p productRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error) {
 	db := p.getQueryer(ctx)
 
 	query := `SELECT * FROM products WHERE id = $1`

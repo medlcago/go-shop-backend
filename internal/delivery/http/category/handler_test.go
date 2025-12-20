@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -39,7 +40,7 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 			categoryID: "e267ab94-8c00-4dce-b44e-93dc546f631a",
 			setupMock: func(serviceMock *mocks.CategoryServiceMock) {
 				serviceMock.On("ListCategories", mock.Anything, dto.ListCategoryRequest{
-					ID: "e267ab94-8c00-4dce-b44e-93dc546f631a",
+					ID: uuid.MustParse("e267ab94-8c00-4dce-b44e-93dc546f631a"),
 				}).Return([]*dto.ProductCategoryResponse{}, 3, nil).Once()
 			},
 			expectedCode: http.StatusOK,
