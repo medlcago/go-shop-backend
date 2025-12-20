@@ -6,6 +6,8 @@ import (
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -26,7 +28,7 @@ func HandleSQLError(err error) error {
 
 type UserRepository interface {
 	Save(ctx context.Context, user *models.User) error
-	GetByID(ctx context.Context, id string) (*models.User, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 }
 

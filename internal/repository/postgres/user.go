@@ -55,3 +55,17 @@ func (u userRepository) GetByEmail(ctx context.Context, email string) (*models.U
 
 	return user, nil
 }
+
+func (u userRepository) IsDeleted(ctx context.Context, id uuid.UUID) (bool, error) {
+	db := u.getQueryer(ctx)
+
+	query := `SELECT deleted_at IS NOT NULL as is_deleted FROM users WHERE id = $1`
+
+	var isDeleted bool
+	err := db.GetContext(ctx, &isDeleted, query, id)
+	if err != nil {
+		return false, repository.HandleSQLError(err)
+	}
+
+	return isDeleted, nil
+}
