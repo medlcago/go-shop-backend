@@ -23,6 +23,7 @@ func SetupApp(cfg *config.Config, log *slog.Logger, validate *validator.Validate
 	})
 
 	app.Use(recover.New())
+	app.Use(middleware.Logger(log))
 	app.Use(cors.New(cors.Config{
 		AllowMethods:        cfg.AllowMethods,
 		AllowOrigins:        cfg.AllowOrigins,
