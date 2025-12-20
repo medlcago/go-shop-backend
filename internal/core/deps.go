@@ -54,7 +54,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	productRepo := postgresRepo.NewProductRepository(getQueryer)
 	categoryRepo := postgresRepo.NewCategoryRepository(getQueryer)
 
-	authService := service.NewAuthService(userRepo, txManager, cfg.AuthSecret)
+	authService := service.NewAuthService(userRepo, cfg.AuthSecret)
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 	categoryService := service.NewCategoryService(categoryRepo)

@@ -10,20 +10,17 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/jtoken"
 	"go-shop-backend/pkg/password"
-	"go-shop-backend/pkg/transaction"
 	"go-shop-backend/pkg/utils"
 )
 
 type authService struct {
 	userRepo  repository.UserRepository
-	txManager transaction.Manager
 	secretKey string
 }
 
-func NewAuthService(userRepo repository.UserRepository, txManager transaction.Manager, secretKey string) AuthService {
+func NewAuthService(userRepo repository.UserRepository, secretKey string) AuthService {
 	return &authService{
 		userRepo:  userRepo,
-		txManager: txManager,
 		secretKey: secretKey,
 	}
 }

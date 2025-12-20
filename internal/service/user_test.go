@@ -1,0 +1,87 @@
+package service
+
+import (
+	"context"
+	"errors"
+	"go-shop-backend/internal/models"
+	"go-shop-backend/internal/repository"
+	"go-shop-backend/internal/repository/mocks"
+	"go-shop-backend/pkg/apperrors"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/suite"
+)
+
+type UserServiceTestSuite struct {
+	suite.Suite
+	mockRepo *mocks.UserRepositoryMock
+	service  UserService
+}
+
+func (suite *UserServiceTestSuite) SetupTest() {
+	suite.mockRepo = new(mocks.UserRepositoryMock)
+	suite.service = NewUserService(suite.mockRepo)
+}
+
+func (suite *UserServiceTestSuite) TearDownTest() {
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func TestUserServiceTestSuite(t *testing.T) {
+	suite.Run(t, new(UserServiceTestSuite))
+}
+
+// ==================== GetUserByID Tests ====================
+
+func (suite *UserServiceTestSuite) TestGetUserByID_Success() {
+	ctx := context.Background()
+	userID := uuid.NewString()
+
+	mockUser := &models.User{
+		ID:        uuid.MustParse(userID),
+		Email:     "test@example.com",
+		CreatedAt: time.Now(),
+	}
+
+	suite.mockRepo.On("GetByID", ctx, userID).
+		Return(mockUser, nil).Once()
+
+	user, err := suite.service.GetUserByID(ctx, userID)
+
+	suite.NoError(err)
+	suite.NotNil(user)
+	suite.Equal(userID, user.ID)
+	suite.Equal("test@example.com", user.Email)
+	suite.NotZero(user.CreatedAt)
+}
+
+func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
+	ctx := context.Background()
+	userID := uuid.NewString()
+
+	suite.mockRepo.On("GetByID", ctx, userID).
+		Return(&models.User{}, repository.ErrRecordNotFound).Once()
+
+	user, err := suite.service.GetUserByID(ctx, userID)
+
+	suite.Error(err)
+	suite.Nil(user)
+	suite.ErrorIs(err, apperrors.ErrUserNotFound)
+}
+
+func (suite *UserServiceTestSuite) TestGetUserByID_RepositoryError() {
+	ctx := context.Background()
+	userID := uuid.NewString()
+
+	repoErr := errors.New("database error")
+	suite.mockRepo.On("GetByID", ctx, userID).
+		Return(&models.User{}, repoErr).Once()
+
+	user, err := suite.service.GetUserByID(ctx, userID)
+
+	suite.Error(err)
+	suite.Nil(user)
+	suite.ErrorContains(err, repoErr.Error())
+}
