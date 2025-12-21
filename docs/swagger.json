@@ -237,6 +237,69 @@
                 }
             }
         },
+        "/products": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new product with the provided details including categories\n## Fields Description\n- **name** (required): Product name, 2-100 characters\n- **description** (optional): Product description, 5-500 characters if provided\n- **price** (required): Product price, must be greater than 0\n- **stock** (required): Initial stock quantity, must be greater than 0\n- **is_active** (optional): Whether product is active for sale. Defaults to true if not specified\n## Example Request\n```json\n{\n\"name\": \"Premium Laptop\",\n\"description\": \"High-performance laptop with 16GB RAM and 512GB SSD\",\n\"price\": 1299.99,\n\"stock\": 50,\n\"is_active\": true,\n}\n```",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Create a new product",
+                "parameters": [
+                    {
+                        "description": "Product creation data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.ProductCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data or validation failed",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized (e.g., invalid token)",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "403": {
+                        "description": "Access denied (e.g., no access rights)",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/products/": {
             "get": {
                 "description": "Get a paginated list of products with optional filtering by category and sorting",
@@ -431,6 +494,35 @@
                 },
                 "slug": {
                     "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.ProductCreateRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "price",
+                "stock"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 5
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "price": {
+                    "type": "number"
+                },
+                "stock": {
+                    "type": "integer"
                 }
             }
         },

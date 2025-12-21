@@ -8,6 +8,7 @@ require (
 	github.com/gofiber/fiber/v3 v3.0.0-rc.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
+	github.com/gosimple/slug v1.15.0
 	github.com/huandu/go-sqlbuilder v1.38.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/jmoiron/sqlx v1.4.0
@@ -41,6 +42,7 @@ require (
 	github.com/gofiber/schema v1.6.0 // indirect
 	github.com/gofiber/utils/v2 v2.0.0-rc.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/huandu/go-clone v1.7.3 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect

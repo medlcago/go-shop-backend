@@ -13,6 +13,27 @@ definitions:
       slug:
         type: string
     type: object
+  go-shop-backend_internal_dto.ProductCreateRequest:
+    properties:
+      description:
+        maxLength: 500
+        minLength: 5
+        type: string
+      is_active:
+        type: boolean
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      price:
+        type: number
+      stock:
+        type: integer
+    required:
+    - name
+    - price
+    - stock
+    type: object
   go-shop-backend_internal_dto.ProductResponse:
     properties:
       categories:
@@ -309,6 +330,63 @@ paths:
       summary: List categories or subcategories
       tags:
       - categories
+  /products:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Create a new product with the provided details including categories
+        ## Fields Description
+        - **name** (required): Product name, 2-100 characters
+        - **description** (optional): Product description, 5-500 characters if provided
+        - **price** (required): Product price, must be greater than 0
+        - **stock** (required): Initial stock quantity, must be greater than 0
+        - **is_active** (optional): Whether product is active for sale. Defaults to true if not specified
+        ## Example Request
+        ```json
+        {
+        "name": "Premium Laptop",
+        "description": "High-performance laptop with 16GB RAM and 512GB SSD",
+        "price": 1299.99,
+        "stock": 50,
+        "is_active": true,
+        }
+        ```
+      parameters:
+      - description: Product creation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ProductCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse'
+        "400":
+          description: Invalid request data or validation failed
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized (e.g., invalid token)
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Access denied (e.g., no access rights)
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Create a new product
+      tags:
+      - products
   /products/:
     get:
       consumes:

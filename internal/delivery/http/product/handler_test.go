@@ -10,6 +10,7 @@ import (
 	"go-shop-backend/pkg/testutils"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
@@ -201,6 +202,89 @@ func TestProductHandler_ListProducts(t *testing.T) {
 			app.Get("/", productHandler.ListProducts)
 
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/?%s", tt.query), nil)
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+
+			expectedJSON := testutils.StringJSON(tt.expectedBody)
+
+			testutils.AssertJSONResponse(t, tt.expectedCode, expectedJSON, resp)
+
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestProductHandler_CreateProduct(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupMock    func(serviceMock *mocks.ProductServiceMock)
+		requestBody  any
+		expectedCode int
+		expectedBody any
+	}{
+		{
+			name: "success",
+			setupMock: func(serviceMock *mocks.ProductServiceMock) {
+				serviceMock.On("CreateProduct", mock.Anything, dto.ProductCreateRequest{
+					Name:  "test product",
+					Price: 100,
+					Stock: 10,
+				}).
+					Return(&dto.ProductResponse{Name: "test product"}, nil).Once()
+			},
+			requestBody: dto.ProductCreateRequest{
+				Name:  "test product",
+				Price: 100,
+				Stock: 10,
+			},
+			expectedCode: http.StatusCreated,
+			expectedBody: response.NewResponse(&dto.ProductResponse{Name: "test product"}),
+		},
+		{
+			name:         "validation error",
+			setupMock:    nil,
+			requestBody:  dto.ProductCreateRequest{},
+			expectedCode: http.StatusBadRequest,
+			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+		},
+		{
+			name: "internal server error",
+			setupMock: func(serviceMock *mocks.ProductServiceMock) {
+				serviceMock.On("CreateProduct", mock.Anything, dto.ProductCreateRequest{
+					Name:  "test product",
+					Price: 100,
+					Stock: 10,
+				}).
+					Return(&dto.ProductResponse{}, errors.New("unexpected error")).Once()
+			},
+			requestBody: dto.ProductCreateRequest{
+				Name:  "test product",
+				Price: 100,
+				Stock: 10,
+			},
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: response.NewError(http.StatusText(http.StatusInternalServerError)),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockService := new(mocks.ProductServiceMock)
+			if tt.setupMock != nil {
+				tt.setupMock(mockService)
+			}
+
+			productHandler := NewHandler(mockService)
+
+			app := testutils.CreateTestApp()
+
+			app.Post("/", productHandler.CreateProduct)
+
+			body := testutils.StringJSON(tt.requestBody)
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 
 			resp, err := app.Test(req)
 			assert.NoError(t, err)

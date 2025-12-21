@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"go-shop-backend/internal/dto"
+	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/utils"
@@ -56,4 +57,32 @@ func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRe
 	}
 
 	return resp, total, nil
+}
+
+func (p *productService) CreateProduct(ctx context.Context, req dto.ProductCreateRequest) (*dto.ProductResponse, error) {
+	const op = "productService.CreateProduct"
+
+	var product models.Product
+	if err := utils.Copy(&product, req); err != nil {
+		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
+	}
+	product.IsActive = true
+
+	if req.IsActive != nil {
+		product.IsActive = *req.IsActive
+	}
+
+	product.Slug = utils.Slugify(product.Name)
+
+	err := p.productRepo.CreateProduct(ctx, &product)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var res dto.ProductResponse
+	if err := utils.Copy(&res, product); err != nil {
+		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
+	}
+
+	return &res, nil
 }

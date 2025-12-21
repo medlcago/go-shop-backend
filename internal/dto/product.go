@@ -9,7 +9,7 @@ import (
 type ProductResponse struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
-	Description string    `json:"description"`
+	Description *string   `json:"description"`
 	Price       float64   `json:"price"`
 	Stock       int       `json:"stock"`
 	Slug        string    `json:"slug"`
@@ -26,4 +26,12 @@ type ListProductRequest struct {
 	OrderBy    string    `query:"order_by"`
 	OrderDesc  bool      `query:"order_desc"`
 	CategoryID uuid.UUID `query:"category_id"`
+}
+
+type ProductCreateRequest struct {
+	Name        string  `json:"name" validate:"required,min=2,max=100"`
+	Description *string `json:"description" validate:"omitempty,min=5,max=500"`
+	Price       float64 `json:"price" validate:"required,gt=0"`
+	Stock       int     `json:"stock" validate:"required,gt=0"`
+	IsActive    *bool   `json:"is_active"`
 }

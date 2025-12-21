@@ -1,11 +1,21 @@
 package product
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"go-shop-backend/internal/models"
+	"go-shop-backend/pkg/middleware"
 
-func RegisterRoutes(r fiber.Router, productHandler *Handler) {
+	"github.com/gofiber/fiber/v3"
+)
+
+func RegisterRoutes(r fiber.Router, productHandler *Handler, authMiddleware fiber.Handler) {
 	productGroup := r.Group("/products")
 	{
 		productGroup.Get("/:id<guid>", productHandler.GetProductByID)
 		productGroup.Get("/", productHandler.ListProducts)
+		productGroup.Post("/",
+			authMiddleware,
+			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
+			productHandler.CreateProduct,
+		)
 	}
 }

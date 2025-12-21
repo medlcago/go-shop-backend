@@ -35,6 +35,7 @@ type UserRepository interface {
 type ProductRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error)
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
+	CreateProduct(ctx context.Context, product *models.Product) error
 }
 
 type CategoryRepository interface {

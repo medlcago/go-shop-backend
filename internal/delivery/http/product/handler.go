@@ -76,3 +76,52 @@ func (h *Handler) ListProducts(ctx fiber.Ctx) error {
 
 	return response.PaginatedJSON(ctx, fiber.StatusOK, resp, total)
 }
+
+// CreateProduct godoc
+//
+//	@Summary		Create a new product
+//	@Description	Create a new product with the provided details including categories
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.ProductCreateRequest	true	"Product creation data"
+//	@Success		201		{object}	response.Response[dto.ProductResponse]
+//	@Failure		400		{object}	response.Response[any]	"Invalid request data or validation failed"
+//	@Failure		401		{object}	response.Response[any]	"Unauthorized (e.g., invalid token)"
+//	@Failure		403		{object}	response.Response[any]	"Access denied (e.g., no access rights)"
+//	@Failure		500		{object}	response.Response[any]	"Internal server error"
+//	@Router			/products [post]
+//
+//	@Security		BearerAuth
+//
+//	@Description	## Fields Description
+//	@Description	- **name** (required): Product name, 2-100 characters
+//	@Description	- **description** (optional): Product description, 5-500 characters if provided
+//	@Description	- **price** (required): Product price, must be greater than 0
+//	@Description	- **stock** (required): Initial stock quantity, must be greater than 0
+//	@Description	- **is_active** (optional): Whether product is active for sale. Defaults to true if not specified
+//
+//	@Description	## Example Request
+//	@Description	```json
+//	@Description	{
+//	@Description	"name": "Premium Laptop",
+//	@Description	"description": "High-performance laptop with 16GB RAM and 512GB SSD",
+//	@Description	"price": 1299.99,
+//	@Description	"stock": 50,
+//	@Description	"is_active": true,
+//	@Description	}
+//	@Description	```
+func (h *Handler) CreateProduct(ctx fiber.Ctx) error {
+	var req dto.ProductCreateRequest
+
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	resp, err := h.productService.CreateProduct(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusCreated, resp)
+}

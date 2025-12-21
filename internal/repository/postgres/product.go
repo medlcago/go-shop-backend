@@ -112,3 +112,16 @@ func (p productRepository) ListProducts(ctx context.Context, req dto.ListProduct
 
 	return products, total, nil
 }
+
+func (p productRepository) CreateProduct(ctx context.Context, product *models.Product) error {
+	db := p.getQueryer(ctx)
+
+	query := `INSERT INTO products (name, description, price, stock, slug, is_active) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`
+	err := db.GetContext(ctx, product, query, product.Name, product.Description, product.Price, product.Stock, product.Slug, product.IsActive)
+
+	if err != nil {
+		return repository.HandleSQLError(err)
+	}
+
+	return nil
+}

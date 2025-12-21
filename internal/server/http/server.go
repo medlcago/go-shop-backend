@@ -111,7 +111,7 @@ func (s *Server) Init() {
 	userHttp.RegisterRoutes(v1, userHandler, authMiddleware)
 
 	productHandler := productHttp.NewHandler(s.deps.ProductService)
-	productHttp.RegisterRoutes(v1, productHandler)
+	productHttp.RegisterRoutes(v1, productHandler, authMiddleware)
 
 	categoryHandler := categoryHttp.NewHandler(s.deps.CategoryService)
 	categoryHttp.RegisterRoutes(v1, categoryHandler)

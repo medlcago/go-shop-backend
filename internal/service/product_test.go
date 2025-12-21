@@ -2,16 +2,19 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/utils"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -197,5 +200,97 @@ func (suite *ProductServiceTestSuite) TestListProducts_RepositoryError() {
 	suite.Error(err)
 	suite.Nil(products)
 	suite.Equal(int64(0), totalCount)
+	suite.ErrorContains(err, repoErr.Error())
+}
+
+// ==================== CreateProduct Tests ====================
+
+func (suite *ProductServiceTestSuite) TestCreateProduct_Success_DefaultIsActive() {
+	ctx := context.Background()
+	description := "product 1 description"
+	req := dto.ProductCreateRequest{
+		Name:        "Product 1",
+		Description: &description,
+		Price:       49.99,
+		Stock:       10,
+	}
+
+	slug := utils.Slugify(req.Name)
+	productModel := &models.Product{
+		Name:        "Product 1",
+		Description: sql.NullString{String: description, Valid: true},
+		Price:       49.99,
+		Stock:       10,
+		IsActive:    true,
+		Slug:        slug,
+	}
+	suite.mockRepo.On("CreateProduct", ctx, productModel).Return(nil).Once()
+
+	product, err := suite.service.CreateProduct(ctx, req)
+
+	suite.NoError(err)
+	suite.NotNil(product)
+
+	suite.Equal(product.ID, productModel.ID.String())
+	suite.Equal(product.Name, productModel.Name)
+	suite.Equal(*product.Description, productModel.Description.String)
+	suite.Equal(product.Price, productModel.Price)
+	suite.Equal(product.Stock, productModel.Stock)
+	suite.Equal(product.Slug, slug)
+	suite.True(product.IsActive)
+}
+func (suite *ProductServiceTestSuite) TestCreateProduct_Success_IsActiveTrue() {
+	ctx := context.Background()
+	isActive := true
+	req := dto.ProductCreateRequest{
+		Name:     "Product 1",
+		Price:    50,
+		Stock:    5,
+		IsActive: &isActive,
+	}
+
+	suite.mockRepo.On("CreateProduct", ctx, mock.Anything).Return(nil).Once()
+
+	product, err := suite.service.CreateProduct(ctx, req)
+
+	suite.NoError(err)
+	suite.NotNil(product)
+	suite.True(product.IsActive)
+}
+
+func (suite *ProductServiceTestSuite) TestCreateProduct_Success_IsActiveFalse() {
+	ctx := context.Background()
+	isActive := false
+	req := dto.ProductCreateRequest{
+		Name:     "Product 1",
+		Price:    50,
+		Stock:    5,
+		IsActive: &isActive,
+	}
+
+	suite.mockRepo.On("CreateProduct", ctx, mock.Anything).Return(nil).Once()
+
+	product, err := suite.service.CreateProduct(ctx, req)
+
+	suite.NoError(err)
+	suite.NotNil(product)
+	suite.False(product.IsActive)
+}
+
+func (suite *ProductServiceTestSuite) TestCreateProduct_RepositoryError() {
+	ctx := context.Background()
+	req := dto.ProductCreateRequest{
+		Name:  "Product 1",
+		Price: 50,
+		Stock: 5,
+	}
+
+	repoErr := errors.New("query execution failed")
+	suite.mockRepo.On("CreateProduct", ctx, mock.Anything).Return(repoErr).Once()
+
+	product, err := suite.service.CreateProduct(ctx, req)
+
+	suite.Error(err)
+	suite.Nil(product)
 	suite.ErrorContains(err, repoErr.Error())
 }
