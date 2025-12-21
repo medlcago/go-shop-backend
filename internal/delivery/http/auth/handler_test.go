@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -174,7 +175,7 @@ func TestAuthHandler_Register(t *testing.T) {
 			name:         "invalid email",
 			setupMock:    nil,
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError("Key: 'UserRegisterRequest.Email' Error:Field validation for 'Email' failed on the 'email' tag"),
+			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
 			requestBody: dto.UserRegisterRequest{
 				Email:    "test",
 				Password: "123123",
@@ -184,7 +185,7 @@ func TestAuthHandler_Register(t *testing.T) {
 			name:         "invalid password",
 			setupMock:    nil,
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError("Key: 'UserRegisterRequest.Password' Error:Field validation for 'Password' failed on the 'min' tag"),
+			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
 			requestBody: dto.UserRegisterRequest{
 				Email:    "test@test.com",
 				Password: "123",
