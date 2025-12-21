@@ -10,6 +10,7 @@ var (
 	ErrInvalidCredentials = New(http.StatusUnauthorized, "invalid credentials")
 	ErrUserNotFound       = New(http.StatusNotFound, "user not found")
 	ErrProductNotFound    = New(http.StatusNotFound, "product not found")
+	ErrForbidden          = New(http.StatusForbidden, "forbidden")
 )
 
 type AppError struct {

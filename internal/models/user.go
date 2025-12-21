@@ -7,6 +7,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type UserRole string
+
+const (
+	UserRoleAdmin    UserRole = "admin"
+	UserRoleSeller   UserRole = "seller"
+	UserRoleCustomer UserRole = "customer"
+)
+
 type User struct {
 	ID           uuid.UUID      `db:"id"`
 	Email        string         `db:"email"`
@@ -16,4 +24,5 @@ type User struct {
 	CreatedAt    time.Time      `db:"created_at"`
 	UpdatedAt    time.Time      `db:"updated_at"`
 	DeletedAt    sql.NullTime   `db:"deleted_at"`
+	Role         UserRole       `db:"role"`
 }

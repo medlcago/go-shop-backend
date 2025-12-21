@@ -41,7 +41,7 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, apperrors.ErrInvalidCredentials
 	}
 
-	token, err := a.createTokens(user.ID.String())
+	token, err := a.createTokens(user)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -71,7 +71,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, err
 	}
 
-	token, err := a.createTokens(user.ID.String())
+	token, err := a.createTokens(user)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -79,7 +79,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 	return buildUserTokenResponse(user, token)
 }
 
-func (a *authService) createTokens(userID string) (*dto.TokenResponse, error) {
+func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error) {
 	const (
 		op        = "authService.createTokens"
 		tokenType = "Bearer"
@@ -87,7 +87,8 @@ func (a *authService) createTokens(userID string) (*dto.TokenResponse, error) {
 
 	var errs []error
 	payload := map[string]interface{}{
-		"user_id": userID,
+		"user_id": user.ID,
+		"role":    user.Role,
 	}
 
 	accessToken, err := jtoken.GenerateAccessToken(payload, a.secretKey)

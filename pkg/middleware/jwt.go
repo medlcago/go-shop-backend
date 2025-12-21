@@ -32,13 +32,13 @@ func JWT(tokenType string, secretKey string) fiber.Handler {
 			return apperrors.ErrInvalidCredentials
 		}
 
-		t := claims["type"].(string)
-		if t != tokenType {
+		t, ok := claims["type"].(string)
+		if !ok || t != tokenType {
 			return apperrors.ErrInvalidCredentials
 		}
 
-		userIDStr := claims["user_id"].(string)
-		if userIDStr == "" {
+		userIDStr, ok := claims["user_id"].(string)
+		if !ok {
 			return apperrors.ErrInvalidCredentials
 		}
 
@@ -47,7 +47,13 @@ func JWT(tokenType string, secretKey string) fiber.Handler {
 			return apperrors.ErrInvalidCredentials
 		}
 
+		userRole, ok := claims["role"].(string)
+		if !ok {
+			return apperrors.ErrInvalidCredentials
+		}
+
 		ctx.Locals("userID", userID)
+		ctx.Locals("userRole", userRole)
 		return ctx.Next()
 	}
 }
