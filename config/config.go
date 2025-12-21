@@ -32,6 +32,11 @@ type Config struct {
 	ServerShutdownTimeout time.Duration `env:"SERVER_SHUTDOWN_TIMEOUT" mapstructure:"server_shutdown_timeout" validate:"required"`
 
 	CorsConfig `mapstructure:",squash"`
+
+	MaxOpenConns    int           `env:"DB_MAX_OPEN_CONNS" mapstructure:"db_max_open_conns" validate:"required"`
+	MaxIdleConns    int           `env:"DB_MAX_IDLE_CONNS" mapstructure:"db_max_idle_conns" validate:"required"`
+	ConnMaxLifetime time.Duration `env:"DB_CONN_MAX_LIFETIME" mapstructure:"db_conn_max_lifetime" validate:"required"`
+	ConnMaxIdleTime time.Duration `env:"DB_CONN_MAX_IDLE_TIME" mapstructure:"db_conn_max_idle_time" validate:"required"`
 }
 
 func (cfg *Config) Validate() error {

@@ -12,11 +12,22 @@ const (
 	postgresDialect = "postgres"
 )
 
-func New(addr string) (*sqlx.DB, error) {
+func New(addr string, opts ...Option) (*sqlx.DB, error) {
 	db, err := sqlx.Connect("postgres", addr)
 	if err != nil {
 		return nil, err
 	}
+
+	cfg := defaultOptions()
+
+	for _, opt := range opts {
+		opt.apply(cfg)
+	}
+
+	db.SetMaxOpenConns(cfg.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+	db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 
 	return db, nil
 }
