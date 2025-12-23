@@ -17,5 +17,10 @@ func RegisterRoutes(r fiber.Router, productHandler *Handler, authMiddleware fibe
 			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
 			productHandler.CreateProduct,
 		)
+		productGroup.Patch("/:id<guid>",
+			authMiddleware,
+			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
+			productHandler.UpdateProduct,
+		)
 	}
 }

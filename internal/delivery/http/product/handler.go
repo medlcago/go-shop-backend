@@ -33,10 +33,7 @@ func NewHandler(productService service.ProductService) *Handler {
 //	@Failure		500	{object}	response.Response[any]
 //	@Router			/products/{id} [get]
 func (h *Handler) GetProductByID(ctx fiber.Ctx) error {
-	id, err := fiber.Convert(ctx.Params("id"), uuid.Parse, uuid.Nil)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
+	id := uuid.MustParse(ctx.Params("id"))
 
 	resp, err := h.productService.GetProductByID(ctx, id)
 	if err != nil {
@@ -124,4 +121,38 @@ func (h *Handler) CreateProduct(ctx fiber.Ctx) error {
 	}
 
 	return response.JSON(ctx, fiber.StatusCreated, resp)
+}
+
+// UpdateProduct godoc
+//
+//	@Summary		Update an existing product
+//	@Description	Partially update a product's information. Only provided fields will be updated.
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string						true	"Product ID"	Format(uuid)
+//	@Param			request	body		dto.ProductUpdateRequest	true	"Product update data (partial update)"
+//	@Success		200		{object}	response.Response[dto.ProductResponse]
+//	@Failure		400		{object}	response.Response[any]	"Invalid request data or validation failed"
+//	@Failure		401		{object}	response.Response[any]	"Unauthorized (e.g., invalid token)"
+//	@Failure		403		{object}	response.Response[any]	"Access denied (e.g., no access rights)"
+//	@Failure		404		{object}	response.Response[any]	"Product not found"
+//	@Failure		500		{object}	response.Response[any]	"Internal server error"
+//	@Router			/products/{id} [patch]
+//	@Security		BearerAuth
+func (h *Handler) UpdateProduct(ctx fiber.Ctx) error {
+	productID := uuid.MustParse(ctx.Params("id"))
+
+	var req dto.ProductUpdateRequest
+
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	resp, err := h.productService.UpdateProduct(ctx, productID, req)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
 }

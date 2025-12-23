@@ -59,6 +59,24 @@ definitions:
       updated_at:
         type: string
     type: object
+  go-shop-backend_internal_dto.ProductUpdateRequest:
+    properties:
+      description:
+        maxLength: 500
+        minLength: 5
+        type: string
+      is_active:
+        type: boolean
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      price:
+        type: number
+      stock:
+        minimum: 0
+        type: integer
+    type: object
   go-shop-backend_internal_dto.UserLoginRequest:
     properties:
       email:
@@ -85,6 +103,8 @@ definitions:
       email:
         type: string
       id:
+        type: string
+      role:
         type: string
     type: object
   go-shop-backend_internal_dto.UserTokenResponse:
@@ -164,6 +184,8 @@ definitions:
       email:
         type: string
       id:
+        type: string
+      role:
         type: string
     type: object
 host: localhost:8080
@@ -474,6 +496,56 @@ paths:
           schema:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       summary: Get product by ID
+      tags:
+      - products
+    patch:
+      consumes:
+      - application/json
+      description: Partially update a product's information. Only provided fields
+        will be updated.
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product update data (partial update)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ProductUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse'
+        "400":
+          description: Invalid request data or validation failed
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized (e.g., invalid token)
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Access denied (e.g., no access rights)
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Update an existing product
       tags:
       - products
   /users/me:

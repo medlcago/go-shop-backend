@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,15 +8,15 @@ import (
 )
 
 type Product struct {
-	ID          uuid.UUID      `db:"id"`
-	Name        string         `db:"name"`
-	Description sql.NullString `db:"description"`
-	Price       float64        `db:"price"`
-	Slug        string         `db:"slug"`
-	Stock       int            `db:"stock"`
-	IsActive    bool           `db:"is_active"`
-	CreatedAt   time.Time      `db:"created_at"`
-	UpdatedAt   time.Time      `db:"updated_at"`
+	ID          uuid.UUID `db:"id"`
+	Name        string    `db:"name"`
+	Description *string   `db:"description"`
+	Price       float64   `db:"price"`
+	Slug        string    `db:"slug"`
+	Stock       int       `db:"stock"`
+	IsActive    bool      `db:"is_active"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
 
 	Categories pq.StringArray `db:"categories"`
 }

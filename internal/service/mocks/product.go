@@ -29,3 +29,8 @@ func (p *ProductServiceMock) CreateProduct(ctx context.Context, req dto.ProductC
 	args := p.Called(ctx, req)
 	return args.Get(0).(*dto.ProductResponse), args.Error(1)
 }
+
+func (p *ProductServiceMock) UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error) {
+	args := p.Called(ctx, productID, req)
+	return args.Get(0).(*dto.ProductResponse), args.Error(1)
+}

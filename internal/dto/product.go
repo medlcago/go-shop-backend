@@ -35,3 +35,11 @@ type ProductCreateRequest struct {
 	Stock       int     `json:"stock" validate:"required,gt=0"`
 	IsActive    *bool   `json:"is_active"`
 }
+
+type ProductUpdateRequest struct {
+	Name        *string  `json:"name" validate:"omitempty,min=2,max=100"`
+	Description *string  `json:"description" validate:"omitempty,min=5,max=500"`
+	Price       *float64 `json:"price" validate:"omitempty,gt=0"`
+	Stock       *int     `json:"stock" validate:"omitempty,gte=0"`
+	IsActive    *bool    `json:"is_active"`
+}

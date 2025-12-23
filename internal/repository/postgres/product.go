@@ -7,6 +7,7 @@ import (
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/paging"
 	"go-shop-backend/pkg/transaction"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/huandu/go-sqlbuilder"
@@ -120,6 +121,32 @@ func (p productRepository) CreateProduct(ctx context.Context, product *models.Pr
 	err := db.GetContext(ctx, product, query, product.Name, product.Description, product.Price, product.Stock, product.Slug, product.IsActive)
 
 	if err != nil {
+		return repository.HandleSQLError(err)
+	}
+
+	return nil
+}
+
+func (p productRepository) UpdateProduct(ctx context.Context, product *models.Product) error {
+	db := p.getQueryer(ctx)
+
+	ub := p.flavor.NewUpdateBuilder()
+
+	ub.Update("products")
+	ub.Set(
+		ub.Assign("name", product.Name),
+		ub.Assign("description", product.Description),
+		ub.Assign("price", product.Price),
+		ub.Assign("stock", product.Stock),
+		ub.Assign("is_active", product.IsActive),
+		ub.Assign("slug", product.Slug),
+		ub.Assign("updated_at", time.Now()),
+	)
+	ub.Where(ub.Equal("id", product.ID)).Returning("*")
+
+	query, args := ub.Build()
+
+	if err := db.GetContext(ctx, product, query, args...); err != nil {
 		return repository.HandleSQLError(err)
 	}
 

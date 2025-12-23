@@ -20,6 +20,7 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error)
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*dto.ProductResponse, int64, error)
 	CreateProduct(ctx context.Context, req dto.ProductCreateRequest) (*dto.ProductResponse, error)
+	UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error)
 }
 
 type CategoryService interface {

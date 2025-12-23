@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
+	"go-shop-backend/pkg/utils"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -285,6 +286,84 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 
 			body := testutils.StringJSON(tt.requestBody)
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+
+			expectedJSON := testutils.StringJSON(tt.expectedBody)
+
+			testutils.AssertJSONResponse(t, tt.expectedCode, expectedJSON, resp)
+
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestProductHandler_UpdateProduct(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupMock    func(serviceMock *mocks.ProductServiceMock)
+		requestBody  any
+		expectedCode int
+		expectedBody any
+	}{
+		{
+			name: "success",
+			setupMock: func(serviceMock *mocks.ProductServiceMock) {
+				serviceMock.On("UpdateProduct", mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
+					dto.ProductUpdateRequest{Name: utils.Ptr("test product")}).
+					Return(&dto.ProductResponse{Name: "test product"}, nil).Once()
+			},
+			requestBody:  dto.ProductUpdateRequest{Name: utils.Ptr("test product")},
+			expectedCode: http.StatusOK,
+			expectedBody: response.NewResponse(&dto.ProductResponse{Name: "test product"}),
+		},
+		{
+			name: "product not found",
+			setupMock: func(serviceMock *mocks.ProductServiceMock) {
+				serviceMock.On("UpdateProduct", mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
+					dto.ProductUpdateRequest{}).
+					Return(&dto.ProductResponse{}, apperrors.ErrProductNotFound).Once()
+			},
+			requestBody:  dto.ProductUpdateRequest{},
+			expectedCode: http.StatusNotFound,
+			expectedBody: response.NewError(apperrors.ErrProductNotFound.Message),
+		},
+		{
+			name:         "validation error",
+			requestBody:  dto.ProductUpdateRequest{Name: utils.Ptr("1")},
+			expectedCode: http.StatusBadRequest,
+			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+		},
+		{
+			name: "internal server error",
+			setupMock: func(serviceMock *mocks.ProductServiceMock) {
+				serviceMock.On("UpdateProduct", mock.Anything, mock.Anything, mock.Anything).
+					Return(&dto.ProductResponse{}, errors.New("unexpected error")).Once()
+			},
+			requestBody:  dto.ProductUpdateRequest{},
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: response.NewError(http.StatusText(http.StatusInternalServerError)),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockService := new(mocks.ProductServiceMock)
+			if tt.setupMock != nil {
+				tt.setupMock(mockService)
+			}
+
+			productHandler := NewHandler(mockService)
+
+			app := testutils.CreateTestApp()
+
+			app.Patch("/:id<guid>", productHandler.UpdateProduct)
+
+			body := testutils.StringJSON(tt.requestBody)
+			req := httptest.NewRequest(http.MethodPatch, "/3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d", strings.NewReader(body))
 
 			resp, err := app.Test(req)
 			assert.NoError(t, err)
