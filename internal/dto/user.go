@@ -16,6 +16,7 @@ type UserResponse struct {
 	ID        string    `json:"id"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
+	Role      string    `json:"role"`
 }
 
 type UserTokenResponse struct {
