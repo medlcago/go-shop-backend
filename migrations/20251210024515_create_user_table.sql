@@ -1,16 +1,20 @@
 -- +goose Up
 -- +goose StatementBegin
+CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TABLE users
 (
-    id            UUID PRIMARY KEY         DEFAULT gen_random_uuid(),
-    email         VARCHAR(255) UNIQUE                    NOT NULL,
-    password_hash VARCHAR(255)                           NOT NULL,
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email         CITEXT                         NOT NULL,
+    password_hash VARCHAR(255)                   NOT NULL,
     full_name     VARCHAR(255),
     phone         VARCHAR(50),
-    created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-    updated_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-    deleted_at    TIMESTAMP WITH TIME ZONE
+    created_at    TIMESTAMPTZ      DEFAULT NOW() NOT NULL,
+    updated_at    TIMESTAMPTZ      DEFAULT NOW() NOT NULL,
+    deleted_at    TIMESTAMPTZ
 );
+
+CREATE UNIQUE INDEX idx_users_email_unique ON users (email);
 -- +goose StatementEnd
 
 -- +goose Down
