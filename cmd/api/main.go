@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-func init() {
-	time.Local = time.UTC
-}
-
 //	@title		Go Shop Backend API
 //	@version	1.0
 
@@ -25,6 +21,8 @@ func init() {
 // @name						Authorization
 // @description				Type "Bearer" followed by a space and JWT token. "Bearer {token}"
 func main() {
+	time.Local = time.UTC
+
 	cfg := config.MustLoad()
 
 	deps := core.NewDependencies(cfg)

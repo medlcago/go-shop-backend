@@ -1,42 +1,19 @@
 package config
 
 import (
-	"errors"
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/spf13/viper"
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
-type CorsConfig struct {
-	AllowMethods        []string `env:"CORS_ALLOW_METHODS" mapstructure:"cors_allow_methods" validate:"required,min=1"`
-	AllowOrigins        []string `env:"CORS_ALLOW_ORIGINS" mapstructure:"cors_allow_origins" validate:"required,min=1"`
-	AllowHeaders        []string `env:"CORS_ALLOW_HEADERS" mapstructure:"cors_allow_headers" validate:"required,min=1"`
-	ExposeHeaders       []string `env:"CORS_EXPOSE_HEADERS" mapstructure:"cors_expose_headers" validate:"required,min=1"`
-	AllowCredentials    bool     `env:"CORS_ALLOW_CREDENTIALS" mapstructure:"cors_allow_credentials"`
-	MaxAge              int      `env:"CORS_ALLOW_MAX_AGE" mapstructure:"cors_max_age"`
-	AllowPrivateNetwork bool     `env:"CORS_ALLOW_PRIVATE_NETWORK" mapstructure:"cors_allow_private_network"`
-}
-
 type Config struct {
-	Environment string `env:"ENVIRONMENT" mapstructure:"environment" validate:"required,oneof=production development"`
-	HttpPort    int    `env:"HTTP_PORT" mapstructure:"http_port" validate:"required"`
-	AuthSecret  string `env:"AUTH_SECRET" mapstructure:"auth_secret" validate:"required"`
-	DatabaseURI string `env:"DATABASE_URI" mapstructure:"database_uri" validate:"required"`
+	Environment string `env:"ENVIRONMENT" env-required:"true" validate:"required,oneof=production development"`
+	AuthSecret  string `env:"AUTH_SECRET" env-required:"true"`
 
-	ServerReadTimeout     time.Duration `env:"SERVER_READ_TIMEOUT" mapstructure:"server_read_timeout" validate:"required"`
-	ServerWriteTimeout    time.Duration `env:"SERVER_WRITE_TIMEOUT" mapstructure:"server_write_timeout" validate:"required"`
-	ServerIdleTimeout     time.Duration `env:"SERVER_IDLE_TIMEOUT" mapstructure:"server_idle_timeout" validate:"required"`
-	ServerShutdownTimeout time.Duration `env:"SERVER_SHUTDOWN_TIMEOUT" mapstructure:"server_shutdown_timeout" validate:"required"`
-
-	CorsConfig `mapstructure:",squash"`
-
-	MaxOpenConns    int           `env:"DB_MAX_OPEN_CONNS" mapstructure:"db_max_open_conns" validate:"required"`
-	MaxIdleConns    int           `env:"DB_MAX_IDLE_CONNS" mapstructure:"db_max_idle_conns" validate:"required"`
-	ConnMaxLifetime time.Duration `env:"DB_CONN_MAX_LIFETIME" mapstructure:"db_conn_max_lifetime" validate:"required"`
-	ConnMaxIdleTime time.Duration `env:"DB_CONN_MAX_IDLE_TIME" mapstructure:"db_conn_max_idle_time" validate:"required"`
+	HttpServer HttpServer `env-prefix:"HTTP_"`
+	Cors       Cors       `env-prefix:"CORS_"`
+	Database   Database   `env-prefix:"DB_"`
 }
 
 func (cfg *Config) Validate() error {
@@ -45,26 +22,9 @@ func (cfg *Config) Validate() error {
 }
 
 func Load() (*Config, error) {
-	v := viper.New()
-
-	v.AddConfigPath(".")
-	v.SetConfigName(".env")
-	v.SetConfigType("env")
-
-	if err := v.ReadInConfig(); err != nil {
-		var configFileNotFoundError viper.ConfigFileNotFoundError
-		if !errors.As(err, &configFileNotFoundError) {
-			return nil, fmt.Errorf("error reading .env file: %w", err)
-		}
-	}
-
-	v.SetEnvPrefix("APP")
-	v.AutomaticEnv()
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-
 	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	if err := cleanenv.ReadConfig(".env", &cfg); err != nil {
+		return nil, err
 	}
 
 	if err := cfg.Validate(); err != nil {

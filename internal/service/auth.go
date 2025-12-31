@@ -36,6 +36,10 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	if user.DeletedAt.Valid {
+		return nil, apperrors.ErrUserProfileDeleted
+	}
+
 	match := password.VerifyPassword(req.Password, user.PasswordHash)
 	if !match {
 		return nil, apperrors.ErrInvalidCredentials
@@ -67,7 +71,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		PasswordHash: passwordHash,
 	}
 
-	if err := a.userRepo.Save(ctx, user); err != nil {
+	if err := a.userRepo.CreateUser(ctx, user); err != nil {
 		return nil, err
 	}
 

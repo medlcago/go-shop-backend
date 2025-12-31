@@ -33,6 +33,10 @@ func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.U
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	if user.DeletedAt.Valid {
+		return nil, apperrors.ErrUserProfileDeleted
+	}
+
 	var resp dto.UserResponse
 	if err := utils.Copy(&resp, user); err != nil {
 		return nil, fmt.Errorf("%s: failed to copy user: %w", op, err)

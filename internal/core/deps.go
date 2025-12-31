@@ -40,11 +40,11 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	validate := validator.New()
 
 	pgDB, err := postgres.New(
-		cfg.DatabaseURI,
-		postgres.WithMaxOpenConns(cfg.MaxOpenConns),
-		postgres.WithMaxIdleConns(cfg.MaxIdleConns),
-		postgres.WithConnMaxLifetime(cfg.ConnMaxLifetime),
-		postgres.WithConnMaxIdleTime(cfg.ConnMaxIdleTime),
+		cfg.Database.URI,
+		postgres.WithMaxOpenConns(cfg.Database.MaxOpenConns),
+		postgres.WithMaxIdleConns(cfg.Database.MaxIdleConns),
+		postgres.WithConnMaxLifetime(cfg.Database.ConnMaxLifetime),
+		postgres.WithConnMaxIdleTime(cfg.Database.ConnMaxIdleTime),
 	)
 	if err != nil {
 		logger.Fatal(l, "failed to connect to database", err)

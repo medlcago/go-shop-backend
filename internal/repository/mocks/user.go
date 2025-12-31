@@ -15,7 +15,7 @@ type UserRepositoryMock struct {
 	mock.Mock
 }
 
-func (u *UserRepositoryMock) Save(ctx context.Context, user *models.User) error {
+func (u *UserRepositoryMock) CreateUser(ctx context.Context, user *models.User) error {
 	args := u.Called(ctx, user)
 	return args.Error(0)
 }

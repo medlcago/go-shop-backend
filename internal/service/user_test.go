@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -69,6 +70,20 @@ func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
 	suite.Error(err)
 	suite.Nil(user)
 	suite.ErrorIs(err, apperrors.ErrUserNotFound)
+}
+
+func (suite *UserServiceTestSuite) TestGetUserByID_ProfileDeleted() {
+	ctx := context.Background()
+	userID := uuid.New()
+
+	suite.mockRepo.On("GetByID", ctx, userID).
+		Return(&models.User{ID: userID, DeletedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil).Once()
+
+	user, err := suite.service.GetUserByID(ctx, userID)
+
+	suite.Error(err)
+	suite.Nil(user)
+	suite.ErrorIs(err, apperrors.ErrUserProfileDeleted)
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID_RepositoryError() {

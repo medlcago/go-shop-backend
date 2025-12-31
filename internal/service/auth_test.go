@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
@@ -10,6 +11,7 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/password"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -83,6 +85,23 @@ func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
 	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
 }
 
+func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
+	ctx := context.Background()
+	req := dto.UserLoginRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+	}
+
+	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+		Return(&models.User{DeletedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil).Once()
+
+	tokenResp, err := suite.service.Login(ctx, req)
+
+	suite.Error(err)
+	suite.Nil(tokenResp)
+	suite.ErrorIs(err, apperrors.ErrUserProfileDeleted)
+}
+
 func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 	ctx := context.Background()
 	req := dto.UserLoginRequest{
@@ -135,7 +154,7 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
 
-	suite.mockRepo.On("Save", mock.Anything, mock.MatchedBy(func(user *models.User) bool {
+	suite.mockRepo.On("CreateUser", mock.Anything, mock.MatchedBy(func(user *models.User) bool {
 		return user.Email == req.Email && user.PasswordHash != ""
 	})).Return(nil).Once()
 
@@ -172,7 +191,24 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 	suite.ErrorIs(err, apperrors.ErrEmailTaken)
 }
 
-func (suite *AuthServiceTestSuite) TestRegister_RepositorySaveError() {
+func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
+	ctx := context.Background()
+	req := dto.UserRegisterRequest{
+		Email:    "testuser@example.com",
+		Password: "password123",
+	}
+
+	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+		Return(&models.User{DeletedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil).Once()
+
+	token, err := suite.service.Register(ctx, req)
+
+	suite.Error(err)
+	suite.Nil(token)
+	suite.ErrorIs(err, apperrors.ErrEmailTaken)
+}
+
+func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
 	ctx := context.Background()
 	req := dto.UserRegisterRequest{
 		Email:    "newuser@example.com",
@@ -182,8 +218,8 @@ func (suite *AuthServiceTestSuite) TestRegister_RepositorySaveError() {
 	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
 
-	repoErr := errors.New("database save error")
-	suite.mockRepo.On("Save", mock.Anything, mock.AnythingOfType("*models.User")).
+	repoErr := errors.New("database error")
+	suite.mockRepo.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
 		Return(repoErr).Once()
 
 	token, err := suite.service.Register(ctx, req)

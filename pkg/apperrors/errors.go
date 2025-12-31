@@ -11,6 +11,7 @@ var (
 	ErrUserNotFound       = New(http.StatusNotFound, "user not found")
 	ErrProductNotFound    = New(http.StatusNotFound, "product not found")
 	ErrForbidden          = New(http.StatusForbidden, "forbidden")
+	ErrUserProfileDeleted = New(http.StatusForbidden, "profile deleted")
 )
 
 type AppError struct {

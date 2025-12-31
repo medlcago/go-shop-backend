@@ -47,20 +47,21 @@ func (s *Server) Run() {
 	select {
 	case <-ctx.Done():
 		s.deps.Logger.Info("Shutdown signal received")
-		s.Shutdown(s.deps.Cfg.ServerShutdownTimeout)
+		s.Shutdown(s.deps.Cfg.HttpServer.ShutdownTimeout)
 	case err := <-serverErr:
 		if err != nil {
 			s.deps.Logger.Error("Http Server error", logger.Err(err))
 		}
-		s.Shutdown(s.deps.Cfg.ServerShutdownTimeout)
+		s.Shutdown(s.deps.Cfg.HttpServer.ShutdownTimeout)
 	}
 }
 
 func (s *Server) runServer(errChan chan<- error) {
-	addr := fmt.Sprintf(":%d", s.deps.Cfg.HttpPort)
+	addr := fmt.Sprintf(":%d", s.deps.Cfg.HttpServer.Port)
 	s.deps.Logger.Info("HTTP server starting",
-		slog.Int("port", s.deps.Cfg.HttpPort),
-		slog.String("env", s.deps.Cfg.Environment))
+		slog.String("addr", addr),
+		slog.String("env", s.deps.Cfg.Environment),
+	)
 
 	err := s.app.Listen(addr, fiber.ListenConfig{
 		DisableStartupMessage: s.deps.Cfg.Environment == string(logger.EnvProduction),
@@ -73,7 +74,8 @@ func (s *Server) runServer(errChan chan<- error) {
 
 func (s *Server) Shutdown(timeout time.Duration) {
 	s.deps.Logger.Info("Starting graceful shutdown",
-		slog.String("timeout", timeout.String()))
+		slog.String("timeout", timeout.String()),
+	)
 
 	if err := s.app.ShutdownWithTimeout(timeout); err != nil {
 		s.deps.Logger.Error("HTTP server shutdown failed", logger.Err(err))
