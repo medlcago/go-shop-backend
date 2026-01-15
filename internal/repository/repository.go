@@ -11,7 +11,9 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *models.User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
+	GetByIDUnscoped(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
+	GetByEmailUnscoped(ctx context.Context, email string) (*models.User, error)
 }
 
 type ProductRepository interface {
@@ -22,5 +24,5 @@ type ProductRepository interface {
 }
 
 type CategoryRepository interface {
-	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.ProductCategory, int64, error)
+	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error)
 }

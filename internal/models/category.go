@@ -6,10 +6,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type ProductCategory struct {
-	ID          uuid.UUID           `db:"id"`
-	Name        string              `db:"name"`
-	Slug        string              `db:"slug"`
-	ParentID    sql.Null[uuid.UUID] `db:"parent_id"`
-	HasChildren bool                `db:"has_children"`
+type Category struct {
+	ID       uuid.UUID           `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Name     string              `gorm:"type:varchar(255);not null"`
+	Slug     string              `gorm:"type:varchar(255);not null"`
+	ParentID sql.Null[uuid.UUID] `gorm:"type:uuid;index:idx_categories_parent_id"`
+	Parent   *Category           `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`
+
+	Products []Product `gorm:"many2many:product_categories;constraint:OnDelete:CASCADE"`
 }

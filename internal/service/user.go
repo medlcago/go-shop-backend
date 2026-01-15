@@ -25,7 +25,7 @@ func NewUserService(userRepo repository.UserRepository) UserService {
 func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error) {
 	const op = "userService.GetUserByID"
 
-	user, err := u.userRepo.GetByID(ctx, userID)
+	user, err := u.userRepo.GetByIDUnscoped(ctx, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, apperrors.ErrUserNotFound

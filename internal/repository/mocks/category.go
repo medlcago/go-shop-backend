@@ -15,7 +15,7 @@ type CategoryRepositoryMock struct {
 	mock.Mock
 }
 
-func (c *CategoryRepositoryMock) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.ProductCategory, int64, error) {
+func (c *CategoryRepositoryMock) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error) {
 	args := c.Called(ctx, req)
-	return args.Get(0).([]*models.ProductCategory), int64(args.Int(1)), args.Error(2)
+	return args.Get(0).([]*models.Category), int64(args.Int(1)), args.Error(2)
 }

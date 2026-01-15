@@ -15,6 +15,7 @@ CREATE TABLE users
 );
 
 CREATE UNIQUE INDEX idx_users_email_unique ON users (email);
+CREATE INDEX idx_users_deleted_at ON users (deleted_at);
 -- +goose StatementEnd
 
 -- +goose Down

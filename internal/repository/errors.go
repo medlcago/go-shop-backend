@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"database/sql"
 	"errors"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -14,7 +15,7 @@ func HandleSQLError(err error) error {
 		return nil
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrRecordNotFound
 	}
 

@@ -34,12 +34,12 @@ func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var res dto.ProductResponse
-	if err := utils.Copy(&res, product); err != nil {
+	var resp dto.ProductResponse
+	if err := utils.Copy(&resp, product); err != nil {
 		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
 	}
 
-	return &res, nil
+	return &resp, nil
 }
 
 func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*dto.ProductResponse, int64, error) {
@@ -50,8 +50,7 @@ func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRe
 		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var resp []*dto.ProductResponse
-
+	resp := make([]*dto.ProductResponse, len(products))
 	if err := utils.Copy(&resp, products); err != nil {
 		return nil, 0, fmt.Errorf("%s: failed to copy products: %w", op, err)
 	}
@@ -79,12 +78,12 @@ func (p *productService) CreateProduct(ctx context.Context, req dto.ProductCreat
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var res dto.ProductResponse
-	if err := utils.Copy(&res, product); err != nil {
+	var resp dto.ProductResponse
+	if err := utils.Copy(&resp, product); err != nil {
 		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
 	}
 
-	return &res, nil
+	return &resp, nil
 }
 
 func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error) {
@@ -121,7 +120,6 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 	}
 
 	var resp dto.ProductResponse
-
 	if err := utils.Copy(&resp, product); err != nil {
 		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
 	}

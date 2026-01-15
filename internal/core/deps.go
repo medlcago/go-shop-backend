@@ -4,15 +4,13 @@ import (
 	"context"
 	"go-shop-backend/config"
 	"go-shop-backend/internal/repository"
-	postgresRepo "go-shop-backend/internal/repository/postgres"
+	gormRepo "go-shop-backend/internal/repository/gorm"
 	"go-shop-backend/internal/service"
-	"go-shop-backend/pkg/database/postgres"
+	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/logger"
-	"go-shop-backend/pkg/transaction"
 	"log/slog"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/jmoiron/sqlx"
 )
 
 type Dependencies struct {
@@ -20,8 +18,8 @@ type Dependencies struct {
 	Logger    *slog.Logger
 	Validator *validator.Validate
 
-	DB        *sqlx.DB
-	TxManager transaction.Manager
+	DB        database.DB
+	TxManager database.TxManager
 
 	UserRepository     repository.UserRepository
 	ProductRepository  repository.ProductRepository
@@ -38,27 +36,24 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	slog.SetDefault(l)
 
 	validate := validator.New()
+	ctx := context.Background()
 
-	pgDB, err := postgres.New(
+	db, err := database.NewDatabase(
 		cfg.Database.URI,
-		postgres.WithMaxOpenConns(cfg.Database.MaxOpenConns),
-		postgres.WithMaxIdleConns(cfg.Database.MaxIdleConns),
-		postgres.WithConnMaxLifetime(cfg.Database.ConnMaxLifetime),
-		postgres.WithConnMaxIdleTime(cfg.Database.ConnMaxIdleTime),
+		database.WithMaxOpenConns(cfg.Database.MaxOpenConns),
+		database.WithMaxIdleConns(cfg.Database.MaxIdleConns),
+		database.WithConnMaxLifetime(cfg.Database.ConnMaxLifetime),
+		database.WithConnMaxIdleTime(cfg.Database.ConnMaxIdleTime),
 	)
 	if err != nil {
 		logger.Fatal(l, "failed to connect to database", err)
 	}
 
-	getQueryer := func(ctx context.Context) transaction.Queryer {
-		return transaction.GetQueryer(ctx, pgDB)
-	}
+	txManager := database.NewManager(db.GetDB(ctx))
 
-	txManager := transaction.NewManager(pgDB)
-
-	userRepo := postgresRepo.NewUserRepository(getQueryer)
-	productRepo := postgresRepo.NewProductRepository(getQueryer)
-	categoryRepo := postgresRepo.NewCategoryRepository(getQueryer)
+	userRepo := gormRepo.NewUserRepository(db)
+	productRepo := gormRepo.NewProductRepository(db)
+	categoryRepo := gormRepo.NewCategoryRepository(db)
 
 	authService := service.NewAuthService(userRepo, cfg.AuthSecret)
 	userService := service.NewUserService(userRepo)
@@ -69,7 +64,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		Cfg:                cfg,
 		Logger:             l,
 		Validator:          validate,
-		DB:                 pgDB,
+		DB:                 db,
 		TxManager:          txManager,
 		UserRepository:     userRepo,
 		ProductRepository:  productRepo,

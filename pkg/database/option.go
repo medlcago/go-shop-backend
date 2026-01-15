@@ -1,14 +1,10 @@
-package postgres
+package database
 
 import "time"
 
 type Option interface {
 	apply(*option)
 }
-
-type optionFunc func(*option)
-
-func (f optionFunc) apply(o *option) { f(o) }
 
 type option struct {
 	MaxOpenConns    int
@@ -17,35 +13,45 @@ type option struct {
 	ConnMaxIdleTime time.Duration
 }
 
-func defaultOptions() *option {
-	return &option{
-		MaxOpenConns:    100,
-		MaxIdleConns:    50,
-		ConnMaxLifetime: time.Hour,
-		ConnMaxIdleTime: 10 * time.Minute,
-	}
-}
+type optionFn func(*option)
+
+func (f optionFn) apply(o *option) { f(o) }
 
 func WithMaxOpenConns(maxOpenConns int) Option {
-	return optionFunc(func(o *option) {
+	return optionFn(func(o *option) {
 		o.MaxOpenConns = maxOpenConns
 	})
 }
 
 func WithMaxIdleConns(maxIdleConns int) Option {
-	return optionFunc(func(o *option) {
+	return optionFn(func(o *option) {
 		o.MaxIdleConns = maxIdleConns
 	})
 }
 
 func WithConnMaxLifetime(connMaxLifetime time.Duration) Option {
-	return optionFunc(func(o *option) {
+	return optionFn(func(o *option) {
 		o.ConnMaxLifetime = connMaxLifetime
 	})
 }
 
 func WithConnMaxIdleTime(connMaxIdleTime time.Duration) Option {
-	return optionFunc(func(o *option) {
+	return optionFn(func(o *option) {
 		o.ConnMaxIdleTime = connMaxIdleTime
 	})
+}
+
+func getOption(opts ...Option) option {
+	opt := option{
+		MaxOpenConns:    100,
+		MaxIdleConns:    50,
+		ConnMaxLifetime: time.Hour,
+		ConnMaxIdleTime: 10 * time.Minute,
+	}
+
+	for _, o := range opts {
+		o.apply(&opt)
+	}
+
+	return opt
 }

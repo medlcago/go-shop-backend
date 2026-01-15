@@ -5,7 +5,6 @@ import (
 	_ "go-shop-backend/docs"
 	"go-shop-backend/internal/core"
 	httpServer "go-shop-backend/internal/server/http"
-	"go-shop-backend/pkg/database/postgres"
 	"go-shop-backend/pkg/logger"
 	"time"
 )
@@ -28,7 +27,7 @@ func main() {
 	deps := core.NewDependencies(cfg)
 
 	deps.Logger.Info("starting database migration...")
-	if err := postgres.Migrate(deps.DB.DB); err != nil {
+	if err := deps.DB.Migrate("postgres"); err != nil {
 		logger.Fatal(deps.Logger, "failed to migrate database", err)
 	}
 

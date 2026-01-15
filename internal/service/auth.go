@@ -28,7 +28,7 @@ func NewAuthService(userRepo repository.UserRepository, secretKey string) AuthSe
 func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto.UserTokenResponse, error) {
 	const op = "authService.Login"
 
-	user, err := a.userRepo.GetByEmail(ctx, req.Email)
+	user, err := a.userRepo.GetByEmailUnscoped(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, apperrors.ErrInvalidCredentials
@@ -56,7 +56,7 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error) {
 	const op = "authService.Register"
 
-	_, err := a.userRepo.GetByEmail(ctx, req.Email)
+	_, err := a.userRepo.GetByEmailUnscoped(ctx, req.Email)
 	if err == nil {
 		return nil, apperrors.ErrEmailTaken
 	}

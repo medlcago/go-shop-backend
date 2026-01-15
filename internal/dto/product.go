@@ -17,7 +17,7 @@ type ProductResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 
-	Categories []string `json:"categories"`
+	Categories []ProductCategoryResponse `json:"categories"`
 }
 
 type ListProductRequest struct {
@@ -30,7 +30,7 @@ type ListProductRequest struct {
 
 type ProductCreateRequest struct {
 	Name        string  `json:"name" validate:"required,min=2,max=100"`
-	Description *string `json:"description" validate:"omitempty,min=5,max=500"`
+	Description *string `json:"description" validate:"omitempty,min=5,max=4096"`
 	Price       float64 `json:"price" validate:"required,gt=0"`
 	Stock       int     `json:"stock" validate:"required,gt=0"`
 	IsActive    *bool   `json:"is_active"`
@@ -38,7 +38,7 @@ type ProductCreateRequest struct {
 
 type ProductUpdateRequest struct {
 	Name        *string  `json:"name" validate:"omitempty,min=2,max=100"`
-	Description *string  `json:"description" validate:"omitempty,min=5,max=500"`
+	Description *string  `json:"description" validate:"omitempty,min=5,max=4096"`
 	Price       *float64 `json:"price" validate:"omitempty,gt=0"`
 	Stock       *int     `json:"stock" validate:"omitempty,gte=0"`
 	IsActive    *bool    `json:"is_active"`
