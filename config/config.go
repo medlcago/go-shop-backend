@@ -14,6 +14,7 @@ type Config struct {
 	HttpServer HttpServer `env-prefix:"HTTP_"`
 	Cors       Cors       `env-prefix:"CORS_"`
 	Database   Database   `env-prefix:"DB_"`
+	Minio      Minio      `env-prefix:"MINIO_"`
 }
 
 func (cfg *Config) Validate() error {
