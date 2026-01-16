@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -43,10 +42,19 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 	productID := uuid.New()
 
 	mockProduct := &models.Product{
-		ID:         productID,
-		Name:       "Test Product",
-		Price:      99.99,
-		Categories: pq.StringArray{"e2f832de-12e7-46af-9e36-2f2df847f43d", "fc7afa36-c488-4e78-a2a5-852ebfeb06a2"},
+		ID:    productID,
+		Name:  "Test Product",
+		Price: 99.99,
+		Categories: []models.Category{
+			{
+				ID:   uuid.MustParse("e2f832de-12e7-46af-9e36-2f2df847f43d"),
+				Name: "Test Category 1",
+			},
+			{
+				ID:   uuid.MustParse("fc7afa36-c488-4e78-a2a5-852ebfeb06a2"),
+				Name: "Test Category 2",
+			},
+		},
 	}
 
 	suite.mockRepo.On("GetByID", ctx, productID).
@@ -60,8 +68,8 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 	suite.Equal("Test Product", product.Name)
 	suite.Equal(99.99, product.Price)
 	suite.Len(product.Categories, 2)
-	suite.Equal("e2f832de-12e7-46af-9e36-2f2df847f43d", product.Categories[0])
-	suite.Equal("fc7afa36-c488-4e78-a2a5-852ebfeb06a2", product.Categories[1])
+	suite.Equal("e2f832de-12e7-46af-9e36-2f2df847f43d", product.Categories[0].ID)
+	suite.Equal("fc7afa36-c488-4e78-a2a5-852ebfeb06a2", product.Categories[1].ID)
 }
 
 func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
@@ -106,14 +114,28 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 
 	mockProducts := []*models.Product{
 		{
-			Name:       "Product 1",
-			Price:      49.99,
-			Categories: []string{"784ab8fc-f2b5-41ad-b957-41288b547277"},
+			Name:  "Product 1",
+			Price: 49.99,
+			Categories: []models.Category{
+				{
+					ID:   uuid.MustParse("e2f832de-12e7-46af-9e36-2f2df847f43d"),
+					Name: "Test Category 1",
+				},
+			},
 		},
 		{
-			Name:       "Product 2",
-			Price:      99.99,
-			Categories: []string{"784ab8fc-f2b5-41ad-b957-41288b547277", "fc7afa36-c488-4e78-a2a5-852ebfeb06a2"},
+			Name:  "Product 2",
+			Price: 99.99,
+			Categories: []models.Category{
+				{
+					ID:   uuid.MustParse("e2f832de-12e7-46af-9e36-2f2df847f43d"),
+					Name: "Test Category 1",
+				},
+				{
+					ID:   uuid.MustParse("fc7afa36-c488-4e78-a2a5-852ebfeb06a2"),
+					Name: "Test Category 2",
+				},
+			},
 		},
 	}
 
@@ -148,8 +170,12 @@ func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 
 	mockProducts := []*models.Product{
 		{
-			Name:       "Category Product",
-			Categories: []string{categoryID},
+			Name: "Category Product",
+			Categories: []models.Category{
+				{
+					ID: uuid.MustParse(categoryID),
+				},
+			},
 		},
 	}
 

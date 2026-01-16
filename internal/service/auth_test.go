@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/gorm"
 )
 
 type AuthServiceTestSuite struct {
@@ -53,7 +54,7 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 		PasswordHash: passwordHash,
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(expectedUser, nil).Once()
 
 	token, err := suite.service.Login(ctx, req)
@@ -75,7 +76,7 @@ func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
 		Password: "password123",
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
 
 	tokenResp, err := suite.service.Login(ctx, req)
@@ -92,8 +93,8 @@ func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
 		Password: "password123",
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
-		Return(&models.User{DeletedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil).Once()
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
+		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
 	tokenResp, err := suite.service.Login(ctx, req)
 
@@ -115,7 +116,7 @@ func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 		PasswordHash: passwordHash,
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(user, nil).Once()
 
 	tokenResp, err := suite.service.Login(ctx, req)
@@ -132,7 +133,7 @@ func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
 	}
 
 	repoErr := errors.New("database error")
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{}, repoErr).Once()
 
 	token, err := suite.service.Login(context.Background(), req)
@@ -151,7 +152,7 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 		Password: "password123",
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
 
 	suite.mockRepo.On("CreateUser", mock.Anything, mock.MatchedBy(func(user *models.User) bool {
@@ -181,7 +182,7 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 		Email: req.Email,
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(user, nil).Once()
 
 	token, err := suite.service.Register(ctx, req)
@@ -198,8 +199,8 @@ func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
 		Password: "password123",
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
-		Return(&models.User{DeletedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil).Once()
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
+		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
 	token, err := suite.service.Register(ctx, req)
 
@@ -215,7 +216,7 @@ func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
 		Password: "password123",
 	}
 
-	suite.mockRepo.On("GetByEmail", mock.Anything, req.Email).
+	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
 
 	repoErr := errors.New("database error")

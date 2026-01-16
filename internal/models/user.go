@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UserRole string
@@ -16,13 +17,13 @@ const (
 )
 
 type User struct {
-	ID           uuid.UUID      `db:"id"`
-	Email        string         `db:"email"`
-	PasswordHash string         `db:"password_hash"`
-	FullName     sql.NullString `db:"full_name"`
-	Phone        sql.NullString `db:"phone"`
-	CreatedAt    time.Time      `db:"created_at"`
-	UpdatedAt    time.Time      `db:"updated_at"`
-	DeletedAt    sql.NullTime   `db:"deleted_at"`
-	Role         UserRole       `db:"role"`
+	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Email        string         `gorm:"type:citext;not null;uniqueIndex:idx_users_email_unique"`
+	PasswordHash string         `gorm:"type:varchar(255);not null"`
+	FullName     sql.NullString `gorm:"type:varchar(255)"`
+	Phone        sql.NullString `gorm:"type:varchar(50)"`
+	CreatedAt    time.Time      `gorm:"type:timestamptz;default:now();not null"`
+	UpdatedAt    time.Time      `gorm:"type:timestamptz;default:now();not null"`
+	DeletedAt    gorm.DeletedAt `gorm:"type:timestamptz;index:idx_users_deleted_at"`
+	Role         UserRole       `gorm:"type:varchar(50);default:'customer';not null"`
 }

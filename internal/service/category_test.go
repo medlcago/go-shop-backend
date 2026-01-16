@@ -41,14 +41,12 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 		Offset: 0,
 	}
 
-	mockCategories := []*models.ProductCategory{
+	mockCategories := []*models.Category{
 		{
-			Name:        "Electronics",
-			HasChildren: true,
+			Name: "Electronics",
 		},
 		{
-			Name:        "Clothing",
-			HasChildren: false,
+			Name: "Clothing",
 		},
 	}
 
@@ -62,10 +60,8 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 	suite.Len(categories, 2)
 
 	suite.Equal("Electronics", categories[0].Name)
-	suite.True(categories[0].HasChildren)
 
 	suite.Equal("Clothing", categories[1].Name)
-	suite.False(categories[1].HasChildren)
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories() {
@@ -78,7 +74,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 	}
 
 	parentUUID := sql.Null[uuid.UUID]{V: parentID, Valid: true}
-	mockCategories := []*models.ProductCategory{
+	mockCategories := []*models.Category{
 		{
 			Name:     "Laptops",
 			ParentID: parentUUID,
@@ -111,7 +107,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
 
 	repoErr := errors.New("database connection failed")
 	suite.mockRepo.On("ListCategories", ctx, req).
-		Return([]*models.ProductCategory{}, 0, repoErr).Once()
+		Return([]*models.Category{}, 0, repoErr).Once()
 
 	categories, totalCount, err := suite.service.ListCategories(ctx, req)
 
@@ -128,7 +124,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_EmptyResult() {
 	}
 
 	suite.mockRepo.On("ListCategories", ctx, req).
-		Return([]*models.ProductCategory{}, 0, nil).Once()
+		Return([]*models.Category{}, 0, nil).Once()
 
 	categories, totalCount, err := suite.service.ListCategories(ctx, req)
 

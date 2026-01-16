@@ -12,7 +12,7 @@ const (
 	migrationsDir = "migrations"
 )
 
-func ApplyMigrations(db *sql.DB, dialect string) error {
+func Migrate(db *sql.DB, dialect string) error {
 	goose.SetLogger(goose.NopLogger())
 
 	goose.SetTableName(tableName)
@@ -22,7 +22,7 @@ func ApplyMigrations(db *sql.DB, dialect string) error {
 	}
 
 	if err := goose.Up(db, migrationsDir); err != nil {
-		return fmt.Errorf("migrate: failed to apply migrations: %w", err)
+		return fmt.Errorf("migrate: failed to migrate: %w", err)
 	}
 
 	return nil

@@ -25,7 +25,17 @@ func (u *UserRepositoryMock) GetByID(ctx context.Context, id uuid.UUID) (*models
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
+func (u *UserRepositoryMock) GetByIDUnscoped(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	args := u.Called(ctx, id)
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
 func (u *UserRepositoryMock) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+	args := u.Called(ctx, email)
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
+func (u *UserRepositoryMock) GetByEmailUnscoped(ctx context.Context, email string) (*models.User, error) {
 	args := u.Called(ctx, email)
 	return args.Get(0).(*models.User), args.Error(1)
 }
