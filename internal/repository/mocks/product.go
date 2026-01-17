@@ -40,3 +40,8 @@ func (p *ProductRepositoryMock) UpdateProduct(ctx context.Context, product *mode
 	args := p.Called(ctx, product)
 	return args.Error(0)
 }
+
+func (p *ProductRepositoryMock) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
+	args := p.Called(ctx, id)
+	return args.Bool(0), args.Error(1)
+}

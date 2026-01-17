@@ -103,3 +103,13 @@ func (p *productRepository) UpdateProduct(ctx context.Context, product *models.P
 	err := db.Updates(product).Error
 	return repository.HandleSQLError(err)
 }
+func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
+	db := p.db.GetDB(ctx)
+
+	var exists bool
+	if err := db.Raw("SELECT EXISTS(SELECT 1 FROM products WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+		return false, repository.HandleSQLError(err)
+	}
+
+	return exists, nil
+}

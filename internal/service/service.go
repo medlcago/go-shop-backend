@@ -26,3 +26,11 @@ type ProductService interface {
 type CategoryService interface {
 	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error)
 }
+
+type UploadService interface {
+	SignURL(ctx context.Context, req dto.SignURLRequest) (*dto.SignURLResponse, error)
+}
+
+type EntityService interface {
+	Exists(ctx context.Context, entityType dto.EntityType, id uuid.UUID) (bool, error)
+}

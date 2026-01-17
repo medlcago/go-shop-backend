@@ -8,6 +8,8 @@ import (
 	"go-shop-backend/internal/service"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/logger"
+	"go-shop-backend/pkg/storage"
+	"go-shop-backend/pkg/storage/minio"
 	"log/slog"
 
 	"github.com/go-playground/validator/v10"
@@ -21,6 +23,8 @@ type Dependencies struct {
 	DB        database.DB
 	TxManager database.TxManager
 
+	Storage storage.Storage
+
 	UserRepository     repository.UserRepository
 	ProductRepository  repository.ProductRepository
 	CategoryRepository repository.CategoryRepository
@@ -29,6 +33,8 @@ type Dependencies struct {
 	UserService     service.UserService
 	ProductService  service.ProductService
 	CategoryService service.CategoryService
+	EntityService   service.EntityService
+	UploadService   service.UploadService
 }
 
 func NewDependencies(cfg *config.Config) *Dependencies {
@@ -51,6 +57,11 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 
 	txManager := database.NewManager(db.GetDB(ctx))
 
+	minioStorage, err := minio.New(cfg.Minio)
+	if err != nil {
+		logger.Fatal(l, "failed to create minio storage", err)
+	}
+
 	userRepo := gormRepo.NewUserRepository(db)
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
@@ -59,6 +70,8 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
+	entityService := service.NewEntityService(productRepo)
+	uploadService := service.NewUploadService(minioStorage, entityService)
 
 	return &Dependencies{
 		Cfg:                cfg,
@@ -66,6 +79,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		Validator:          validate,
 		DB:                 db,
 		TxManager:          txManager,
+		Storage:            minioStorage,
 		UserRepository:     userRepo,
 		ProductRepository:  productRepo,
 		CategoryRepository: categoryRepo,
@@ -73,5 +87,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		UserService:        userService,
 		ProductService:     productService,
 		CategoryService:    categoryService,
+		EntityService:      entityService,
+		UploadService:      uploadService,
 	}
 }

@@ -1,9 +1,23 @@
 basePath: /api/v1
 definitions:
+  go-shop-backend_internal_dto.Entity:
+    properties:
+      id:
+        type: string
+      type:
+        $ref: '#/definitions/go-shop-backend_internal_dto.EntityType'
+    required:
+    - id
+    - type
+    type: object
+  go-shop-backend_internal_dto.EntityType:
+    enum:
+    - products
+    type: string
+    x-enum-varnames:
+    - EntityProduct
   go-shop-backend_internal_dto.ProductCategoryResponse:
     properties:
-      has_children:
-        type: boolean
       id:
         type: string
       name:
@@ -16,7 +30,7 @@ definitions:
   go-shop-backend_internal_dto.ProductCreateRequest:
     properties:
       description:
-        maxLength: 500
+        maxLength: 4096
         minLength: 5
         type: string
       is_active:
@@ -38,7 +52,7 @@ definitions:
     properties:
       categories:
         items:
-          type: string
+          $ref: '#/definitions/go-shop-backend_internal_dto.ProductCategoryResponse'
         type: array
       created_at:
         type: string
@@ -62,7 +76,7 @@ definitions:
   go-shop-backend_internal_dto.ProductUpdateRequest:
     properties:
       description:
-        maxLength: 500
+        maxLength: 4096
         minLength: 5
         type: string
       is_active:
@@ -76,6 +90,39 @@ definitions:
       stock:
         minimum: 0
         type: integer
+    type: object
+  go-shop-backend_internal_dto.SignURLRequest:
+    properties:
+      content_type:
+        type: string
+      entity:
+        $ref: '#/definitions/go-shop-backend_internal_dto.Entity'
+      ext:
+        enum:
+        - jpg
+        - png
+        type: string
+    required:
+    - content_type
+    - entity
+    - ext
+    type: object
+  go-shop-backend_internal_dto.SignURLResponse:
+    properties:
+      content_type:
+        type: string
+      expire_date:
+        type: string
+      filename:
+        type: string
+      form_data:
+        additionalProperties:
+          type: string
+        type: object
+      id:
+        type: string
+      url:
+        type: string
     type: object
   go-shop-backend_internal_dto.UserLoginRequest:
     properties:
@@ -148,6 +195,13 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.ProductResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse:
+    properties:
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.SignURLResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
@@ -548,6 +602,44 @@ paths:
       summary: Update an existing product
       tags:
       - products
+  /uploads/signurl:
+    post:
+      consumes:
+      - application/json
+      description: Create a pre-signed URL for uploading files to storage
+      parameters:
+      - description: Sign URL request parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.SignURLRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Generate signed URL for upload
+      tags:
+      - uploads
   /users/me:
     get:
       consumes:

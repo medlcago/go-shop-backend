@@ -7,6 +7,7 @@ import (
 	authHttp "go-shop-backend/internal/delivery/http/auth"
 	categoryHttp "go-shop-backend/internal/delivery/http/category"
 	productHttp "go-shop-backend/internal/delivery/http/product"
+	uploadHttp "go-shop-backend/internal/delivery/http/upload"
 	userHttp "go-shop-backend/internal/delivery/http/user"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/middleware"
@@ -117,4 +118,7 @@ func (s *Server) Init() {
 
 	categoryHandler := categoryHttp.NewHandler(s.deps.CategoryService)
 	categoryHttp.RegisterRoutes(v1, categoryHandler)
+
+	uploadHandler := uploadHttp.NewHandler(s.deps.UploadService)
+	uploadHttp.RegisterRoutes(v1, uploadHandler, authMiddleware)
 }

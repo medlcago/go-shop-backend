@@ -21,6 +21,7 @@ type ProductRepository interface {
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
 	CreateProduct(ctx context.Context, product *models.Product) error
 	UpdateProduct(ctx context.Context, product *models.Product) error
+	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
 type CategoryRepository interface {
