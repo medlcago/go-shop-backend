@@ -91,6 +91,7 @@ func (s *Storage) GetPresignedURL(ctx context.Context, objectKey string, expiry 
 
 func (s *Storage) CreatePresignedPost(ctx context.Context, opts storage.PresignedPostOptions) (*storage.PresignedPost, error) {
 	policy := minio.NewPostPolicy()
+
 	err := policy.SetBucket(s.bucket)
 	if err != nil {
 		return nil, fmt.Errorf("set bucket: %w", err)
@@ -112,16 +113,18 @@ func (s *Storage) CreatePresignedPost(ctx context.Context, opts storage.Presigne
 		}
 	}
 
-	if opts.MaxSize > 0 {
-		if err := policy.SetContentLengthRange(1, opts.MaxSize); err != nil {
-			return nil, fmt.Errorf("set content length range: %w", err)
-		}
+	if opts.MaxSize <= 0 {
+		opts.MaxSize = 5 << 20 // 5MB
+	}
+	if err := policy.SetContentLengthRange(1, opts.MaxSize); err != nil {
+		return nil, fmt.Errorf("set content length range: %w", err)
 	}
 
-	if opts.ExpiresIn > 0 {
-		if err := policy.SetExpires(time.Now().Add(opts.ExpiresIn)); err != nil {
-			return nil, fmt.Errorf("set expiry: %w", err)
-		}
+	if opts.ExpiresIn == 0 {
+		opts.ExpiresIn = 24 * time.Hour
+	}
+	if err := policy.SetExpires(time.Now().UTC().Add(opts.ExpiresIn)); err != nil {
+		return nil, fmt.Errorf("set expiry: %w", err)
 	}
 
 	for k, v := range opts.Metadata {
@@ -159,6 +162,14 @@ func (s *Storage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser
 	object, err := s.cli.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("get object: %w", err)
+	}
+
+	_, err = object.Stat()
+	if err != nil {
+		if err := object.Close(); err != nil {
+			return nil, fmt.Errorf("close object: %w", err)
+		}
+		return nil, fmt.Errorf("stat object: %w", err)
 	}
 
 	return object, nil
