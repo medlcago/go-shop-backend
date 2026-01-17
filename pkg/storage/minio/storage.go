@@ -31,7 +31,8 @@ func New(cfg config.Minio) (*Storage, error) {
 		return nil, fmt.Errorf("new minio client: %w", err)
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	ok, err := client.BucketExists(ctx, cfg.Bucket)
 	if err != nil {
@@ -152,4 +153,29 @@ func (s *Storage) Exists(ctx context.Context, objectKey string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (s *Storage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
+	object, err := s.cli.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("get object: %w", err)
+	}
+
+	return object, nil
+}
+
+func (s *Storage) GetObjectInfo(ctx context.Context, objectKey string) (*storage.ObjectInfo, error) {
+	info, err := s.cli.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("stat object: %w", err)
+	}
+
+	return &storage.ObjectInfo{
+		Key:          info.Key,
+		Size:         info.Size,
+		LastModified: info.LastModified,
+		ContentType:  info.ContentType,
+		ETag:         info.ETag,
+		Metadata:     info.UserMetadata,
+	}, nil
 }

@@ -25,6 +25,15 @@ type PresignedPost struct {
 	Fields map[string]string
 }
 
+type ObjectInfo struct {
+	Key          string
+	Size         int64
+	LastModified time.Time
+	ContentType  string
+	ETag         string
+	Metadata     map[string]string
+}
+
 type Storage interface {
 	Upload(ctx context.Context, objectKey string, r io.Reader, size int64, opts UploadOptions) (string, error)
 	Delete(ctx context.Context, objectKey string) error
@@ -32,4 +41,6 @@ type Storage interface {
 	CreatePresignedPost(ctx context.Context, opts PresignedPostOptions) (*PresignedPost, error)
 	GetURL(ctx context.Context, objectKey string) (string, error)
 	Exists(ctx context.Context, objectKey string) (bool, error)
+	Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error)
+	GetObjectInfo(ctx context.Context, objectKey string) (*ObjectInfo, error)
 }
