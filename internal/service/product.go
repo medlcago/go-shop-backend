@@ -15,11 +15,13 @@ import (
 
 type productService struct {
 	productRepo repository.ProductRepository
+	urlBuilder  PublicURLBuilder
 }
 
-func NewProductService(productRepo repository.ProductRepository) ProductService {
+func NewProductService(productRepo repository.ProductRepository, urlBuilder PublicURLBuilder) ProductService {
 	return &productService{
 		productRepo: productRepo,
+		urlBuilder:  urlBuilder,
 	}
 }
 
@@ -39,6 +41,10 @@ func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID
 		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
 	}
 
+	for i := range resp.Images {
+		resp.Images[i].URL = p.urlBuilder.PublicURL(ctx, product.Images[i].ObjectKey)
+	}
+
 	return &resp, nil
 }
 
@@ -53,6 +59,12 @@ func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRe
 	resp := make([]*dto.ProductResponse, len(products))
 	if err := utils.Copy(&resp, products); err != nil {
 		return nil, 0, fmt.Errorf("%s: failed to copy products: %w", op, err)
+	}
+
+	for i, product := range resp {
+		for j := range product.Images {
+			product.Images[j].URL = p.urlBuilder.PublicURL(ctx, products[i].Images[j].ObjectKey)
+		}
 	}
 
 	return resp, total, nil
@@ -122,6 +134,10 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 	var resp dto.ProductResponse
 	if err := utils.Copy(&resp, product); err != nil {
 		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
+	}
+
+	for i := range resp.Images {
+		resp.Images[i].URL = p.urlBuilder.PublicURL(ctx, product.Images[i].ObjectKey)
 	}
 
 	return &resp, nil

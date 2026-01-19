@@ -16,5 +16,11 @@ func RegisterRoutes(r fiber.Router, uploadHandler *Handler, authMiddleware fiber
 			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
 			uploadHandler.SignURL,
 		)
+		uploadGroup.Post(
+			"/save",
+			authMiddleware,
+			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
+			uploadHandler.Save,
+		)
 	}
 }

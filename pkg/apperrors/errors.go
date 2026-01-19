@@ -16,6 +16,9 @@ var (
 	ErrEntityNotFound      = New(http.StatusBadRequest, "entity not found")
 	ErrInvalidImageFormat  = New(http.StatusBadRequest, "invalid image format: only PNG, JPG are allowed")
 	ErrContentTypeMismatch = New(http.StatusBadRequest, "ext is not allowed for that content type")
+	ErrInvalidUploadID     = New(http.StatusBadRequest, "invalid upload id")
+	ErrInvalidEntityID     = New(http.StatusBadRequest, "invalid entity id")
+	ErrFileAlreadyUploaded = New(http.StatusConflict, "file already uploaded")
 )
 
 type AppError struct {

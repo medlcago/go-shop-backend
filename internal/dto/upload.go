@@ -24,11 +24,25 @@ type SignURLRequest struct {
 }
 
 type SignURLResponse struct {
-	ID          uuid.UUID `json:"id"`
-	URL         string    `json:"url"`
+	UploadID    uuid.UUID `json:"upload_id"`
+	UploadURL   string    `json:"upload_url"`
 	Filename    string    `json:"filename"`
 	ContentType string    `json:"content_type"`
 	ExpireDate  time.Time `json:"expire_date"`
 
 	FormData map[string]string `json:"form_data,omitempty"`
+}
+
+type UploadRequest struct {
+	UploadID  uuid.UUID `json:"upload_id" validate:"required"`
+	ObjectKey string    `json:"object_key" validate:"required"`
+	Entity    Entity    `json:"entity" validate:"required"`
+}
+
+type UploadResponse struct {
+	URL         string    `json:"url"`
+	ContentType *string   `json:"content_type"`
+	IsMain      bool      `json:"is_main"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

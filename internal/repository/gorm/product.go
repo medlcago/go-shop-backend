@@ -33,6 +33,7 @@ func (p *productRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.
 	var product models.Product
 	if err := db.Where("id = ?", id).
 		Preload("Categories").
+		Preload("Images").
 		First(&product).Error; err != nil {
 		return nil, repository.HandleSQLError(err)
 	}
@@ -83,6 +84,7 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 		Offset(pagination.Offset).
 		Order(order).
 		Preload("Categories").
+		Preload("Images").
 		Find(&products).Error; err != nil {
 		return nil, 0, repository.HandleSQLError(err)
 	}

@@ -18,4 +18,5 @@ type Product struct {
 	UpdatedAt   time.Time `gorm:"type:timestamptz;default:now();not null"`
 
 	Categories []Category `gorm:"many2many:product_categories;constraint:OnDelete:CASCADE"`
+	Images     []Upload   `gorm:"polymorphic:Entity"`
 }

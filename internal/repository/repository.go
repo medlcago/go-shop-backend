@@ -27,3 +27,8 @@ type ProductRepository interface {
 type CategoryRepository interface {
 	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error)
 }
+
+type UploadRepository interface {
+	Save(ctx context.Context, req *models.Upload) error
+	Exists(ctx context.Context, objectKey string) (bool, error)
+}

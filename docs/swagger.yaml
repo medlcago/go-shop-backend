@@ -60,6 +60,10 @@ definitions:
         type: string
       id:
         type: string
+      images:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UploadResponse'
+        type: array
       is_active:
         type: boolean
       name:
@@ -119,7 +123,33 @@ definitions:
         additionalProperties:
           type: string
         type: object
-      id:
+      upload_id:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  go-shop-backend_internal_dto.UploadRequest:
+    properties:
+      entity:
+        $ref: '#/definitions/go-shop-backend_internal_dto.Entity'
+      object_key:
+        type: string
+      upload_id:
+        type: string
+    required:
+    - entity
+    - object_key
+    - upload_id
+    type: object
+  go-shop-backend_internal_dto.UploadResponse:
+    properties:
+      content_type:
+        type: string
+      created_at:
+        type: string
+      is_main:
+        type: boolean
+      updated_at:
         type: string
       url:
         type: string
@@ -202,6 +232,13 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.SignURLResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse:
+    properties:
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.UploadResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
@@ -602,6 +639,51 @@ paths:
       summary: Update an existing product
       tags:
       - products
+  /uploads/save:
+    post:
+      consumes:
+      - application/json
+      description: Bind a previously uploaded file (via signed URL) to a specific
+        entity after successful upload
+      parameters:
+      - description: Upload save request parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Attach uploaded file to entity
+      tags:
+      - uploads
   /uploads/signurl:
     post:
       consumes:
@@ -637,6 +719,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
       summary: Generate signed URL for upload
       tags:
       - uploads

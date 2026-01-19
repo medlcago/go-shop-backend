@@ -144,9 +144,8 @@ func (s *Storage) CreatePresignedPost(ctx context.Context, opts storage.Presigne
 	}, nil
 }
 
-func (s *Storage) GetURL(_ context.Context, objectKey string) (string, error) {
-	url := fmt.Sprintf("%s/%s/%s", s.baseURL, s.bucket, objectKey)
-	return url, nil
+func (s *Storage) PublicURL(_ context.Context, objectKey string) string {
+	return fmt.Sprintf("%s/%s/%s", s.baseURL, s.bucket, objectKey)
 }
 
 func (s *Storage) Exists(ctx context.Context, objectKey string) (bool, error) {

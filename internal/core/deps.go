@@ -28,6 +28,7 @@ type Dependencies struct {
 	UserRepository     repository.UserRepository
 	ProductRepository  repository.ProductRepository
 	CategoryRepository repository.CategoryRepository
+	UploadRepository   repository.UploadRepository
 
 	AuthService     service.AuthService
 	UserService     service.UserService
@@ -65,13 +66,14 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	userRepo := gormRepo.NewUserRepository(db)
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
+	uploadRepo := gormRepo.NewUploadRepository(db)
 
 	authService := service.NewAuthService(userRepo, cfg.AuthSecret)
 	userService := service.NewUserService(userRepo)
-	productService := service.NewProductService(productRepo)
-	categoryService := service.NewCategoryService(categoryRepo)
 	entityService := service.NewEntityService(productRepo)
-	uploadService := service.NewUploadService(minioStorage, entityService)
+	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload)
+	productService := service.NewProductService(productRepo, uploadService)
+	categoryService := service.NewCategoryService(categoryRepo)
 
 	return &Dependencies{
 		Cfg:                cfg,
@@ -83,6 +85,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		UserRepository:     userRepo,
 		ProductRepository:  productRepo,
 		CategoryRepository: categoryRepo,
+		UploadRepository:   uploadRepo,
 		AuthService:        authService,
 		UserService:        userService,
 		ProductService:     productService,

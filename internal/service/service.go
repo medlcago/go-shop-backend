@@ -29,6 +29,12 @@ type CategoryService interface {
 
 type UploadService interface {
 	SignURL(ctx context.Context, req dto.SignURLRequest) (*dto.SignURLResponse, error)
+	Save(ctx context.Context, req dto.UploadRequest) (*dto.UploadResponse, error)
+	PublicURL(ctx context.Context, objectKey string) string
+}
+
+type PublicURLBuilder interface {
+	PublicURL(ctx context.Context, objectKey string) string
 }
 
 type EntityService interface {

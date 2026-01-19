@@ -16,15 +16,26 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type URLBuilder struct {
+	mock.Mock
+}
+
+func (u *URLBuilder) PublicURL(ctx context.Context, objectKey string) string {
+	args := u.Called(ctx, objectKey)
+	return args.String(0)
+}
+
 type ProductServiceTestSuite struct {
 	suite.Suite
-	mockRepo *mocks.ProductRepositoryMock
-	service  ProductService
+	mockRepo   *mocks.ProductRepositoryMock
+	urlBuilder *URLBuilder
+	service    ProductService
 }
 
 func (suite *ProductServiceTestSuite) SetupTest() {
 	suite.mockRepo = new(mocks.ProductRepositoryMock)
-	suite.service = NewProductService(suite.mockRepo)
+	suite.urlBuilder = new(URLBuilder)
+	suite.service = NewProductService(suite.mockRepo, suite.urlBuilder)
 }
 
 func (suite *ProductServiceTestSuite) TearDownTest() {
