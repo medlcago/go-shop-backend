@@ -2,14 +2,17 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Environment string `env:"ENVIRONMENT" env-required:"true" validate:"required,oneof=production development"`
-	AuthSecret  string `env:"AUTH_SECRET" env-required:"true"`
+	Environment             string        `env:"ENVIRONMENT" env-required:"true" validate:"required,oneof=production development"`
+	AuthSecret              string        `env:"AUTH_SECRET" env-required:"true"`
+	AccessTokenExpiredTime  time.Duration `env:"AUTH_ACCESS_TOKEN_EXPIRED_TIME" env-required:"true"`
+	RefreshTokenExpiredTime time.Duration `env:"AUTH_REFRESH_TOKEN_EXPIRED_TIME" env-required:"true"`
 
 	HttpServer HttpServer `env-prefix:"HTTP_"`
 	Cors       Cors       `env-prefix:"CORS_"`

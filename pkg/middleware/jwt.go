@@ -2,18 +2,28 @@ package middleware
 
 import (
 	"go-shop-backend/pkg/apperrors"
-	"go-shop-backend/pkg/jtoken"
+	"go-shop-backend/pkg/token"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 )
 
-func JWTAuth(secretKey string) fiber.Handler {
-	return JWT(jtoken.AccessTokenType, secretKey)
+type Auth interface {
+	Handle() fiber.Handler
 }
 
-func JWT(tokenType string, secretKey string) fiber.Handler {
+type jwtMiddleware struct {
+	manager token.Manager
+}
+
+func NewJWT(manager token.Manager) Auth {
+	return &jwtMiddleware{
+		manager: manager,
+	}
+}
+
+func (j jwtMiddleware) Handle() fiber.Handler {
 	return func(ctx fiber.Ctx) error {
 		authHeader := ctx.Get("Authorization")
 
@@ -27,13 +37,13 @@ func JWT(tokenType string, secretKey string) fiber.Handler {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		claims, err := jtoken.ValidateToken(tokenString, secretKey)
+		claims, err := j.manager.ValidateToken(tokenString)
 		if err != nil {
 			return apperrors.ErrInvalidCredentials
 		}
 
 		t, ok := claims["type"].(string)
-		if !ok || t != tokenType {
+		if !ok || t != token.AccessTokenType {
 			return apperrors.ErrInvalidCredentials
 		}
 

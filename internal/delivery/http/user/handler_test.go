@@ -30,7 +30,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			setupMock: func(serviceMock *mocks.UserServiceMock) {
 				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{
-						ID:    "c2f72e02-98b6-4cef-9a80-616f820fed31",
+						ID:    uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
 						Email: "test@test.com",
 					}, nil).Once()
 			},
@@ -38,7 +38,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			expectedCode: http.StatusOK,
 			expectedBody: response.NewResponse(
 				&dto.UserResponse{
-					ID:    "c2f72e02-98b6-4cef-9a80-616f820fed31",
+					ID:    uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
 					Email: "test@test.com",
 				}),
 		}, {

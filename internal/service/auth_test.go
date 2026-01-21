@@ -10,9 +10,11 @@ import (
 	"go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/password"
+	"go-shop-backend/pkg/token"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
@@ -20,15 +22,15 @@ import (
 
 type AuthServiceTestSuite struct {
 	suite.Suite
-	mockRepo  *mocks.UserRepositoryMock
-	service   AuthService
-	secretKey string
+	mockRepo     *mocks.UserRepositoryMock
+	tokenManager *token.ManagerMock
+	service      AuthService
 }
 
 func (suite *AuthServiceTestSuite) SetupTest() {
 	suite.mockRepo = new(mocks.UserRepositoryMock)
-	suite.secretKey = "test-secret-key"
-	suite.service = NewAuthService(suite.mockRepo, suite.secretKey)
+	suite.tokenManager = new(token.ManagerMock)
+	suite.service = NewAuthService(suite.mockRepo, suite.tokenManager)
 }
 
 func (suite *AuthServiceTestSuite) TearDownTest() {
@@ -50,23 +52,34 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 
 	passwordHash, _ := password.HashPassword(req.Password)
 	expectedUser := &models.User{
+		ID:           uuid.New(),
 		Email:        req.Email,
 		PasswordHash: passwordHash,
+		Role:         models.UserRoleCustomer,
 	}
 
 	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(expectedUser, nil).Once()
 
-	token, err := suite.service.Login(ctx, req)
+	payload := map[string]interface{}{
+		"user_id": expectedUser.ID,
+		"role":    expectedUser.Role,
+	}
+
+	suite.tokenManager.On("GenerateAccessToken", payload).Return("test_access_token", nil).Once()
+	suite.tokenManager.On("GenerateRefreshToken", payload).Return("test_refresh_token", nil).Once()
+
+	result, err := suite.service.Login(ctx, req)
 
 	suite.NoError(err)
-	suite.NotNil(token)
-	suite.NotNil(token.TokenResponse)
-	suite.NotNil(token.User)
-	suite.Equal(req.Email, token.User.Email)
-	suite.NotEmpty(token.TokenResponse.AccessToken)
-	suite.NotEmpty(token.TokenResponse.RefreshToken)
-	suite.Equal("Bearer", token.TokenResponse.TokenType)
+	suite.NotNil(result)
+	suite.NotNil(result.User)
+	suite.Equal(result.User.ID, expectedUser.ID)
+	suite.Equal(result.User.Email, expectedUser.Email)
+	suite.NotNil(result.TokenResponse)
+	suite.Equal(result.AccessToken, "test_access_token")
+	suite.Equal(result.RefreshToken, "test_refresh_token")
+	suite.Equal("Bearer", result.TokenResponse.TokenType)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
@@ -127,6 +140,7 @@ func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
+	ctx := context.Background()
 	req := dto.UserLoginRequest{
 		Email:    "test@test.test",
 		Password: "test123",
@@ -136,10 +150,10 @@ func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
 	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{}, repoErr).Once()
 
-	token, err := suite.service.Login(context.Background(), req)
+	result, err := suite.service.Login(ctx, req)
 
 	suite.Error(err)
-	suite.Nil(token)
+	suite.Nil(result)
 	suite.ErrorContains(err, repoErr.Error())
 }
 
@@ -152,23 +166,37 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 		Password: "password123",
 	}
 
+	userID := uuid.New()
+	userRole := models.UserRoleSeller
+
 	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
 
 	suite.mockRepo.On("CreateUser", mock.Anything, mock.MatchedBy(func(user *models.User) bool {
+		user.ID = userID
+		user.Role = userRole
 		return user.Email == req.Email && user.PasswordHash != ""
 	})).Return(nil).Once()
 
-	token, err := suite.service.Register(ctx, req)
+	payload := map[string]interface{}{
+		"user_id": userID,
+		"role":    userRole,
+	}
+
+	suite.tokenManager.On("GenerateAccessToken", payload).Return("test_access_token", nil).Once()
+	suite.tokenManager.On("GenerateRefreshToken", payload).Return("test_refresh_token", nil).Once()
+
+	result, err := suite.service.Register(ctx, req)
 
 	suite.NoError(err)
-	suite.NotNil(token)
-	suite.NotNil(token.TokenResponse)
-	suite.NotNil(token.User)
-	suite.Equal(req.Email, token.User.Email)
-	suite.NotEmpty(token.TokenResponse.AccessToken)
-	suite.NotEmpty(token.TokenResponse.RefreshToken)
-	suite.Equal("Bearer", token.TokenResponse.TokenType)
+	suite.NotNil(result)
+	suite.NotNil(result.User)
+	suite.Equal(result.User.ID, userID)
+	suite.Equal(result.User.Email, req.Email)
+	suite.NotNil(result.TokenResponse)
+	suite.Equal(result.AccessToken, "test_access_token")
+	suite.Equal(result.RefreshToken, "test_refresh_token")
+	suite.Equal("Bearer", result.TokenResponse.TokenType)
 }
 
 func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
@@ -185,10 +213,10 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(user, nil).Once()
 
-	token, err := suite.service.Register(ctx, req)
+	result, err := suite.service.Register(ctx, req)
 
 	suite.Error(err)
-	suite.Nil(token)
+	suite.Nil(result)
 	suite.ErrorIs(err, apperrors.ErrEmailTaken)
 }
 
@@ -202,10 +230,10 @@ func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
 	suite.mockRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
-	token, err := suite.service.Register(ctx, req)
+	result, err := suite.service.Register(ctx, req)
 
 	suite.Error(err)
-	suite.Nil(token)
+	suite.Nil(result)
 	suite.ErrorIs(err, apperrors.ErrEmailTaken)
 }
 
@@ -223,9 +251,9 @@ func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
 	suite.mockRepo.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
 		Return(repoErr).Once()
 
-	token, err := suite.service.Register(ctx, req)
+	result, err := suite.service.Register(ctx, req)
 
 	suite.Error(err)
-	suite.Nil(token)
+	suite.Nil(result)
 	suite.ErrorContains(err, repoErr.Error())
 }

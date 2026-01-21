@@ -105,7 +105,7 @@ func (s *Server) Init() {
 
 	v1 := s.app.Group("/api/v1")
 
-	authMiddleware := middleware.JWTAuth(s.deps.Cfg.AuthSecret)
+	authMiddleware := middleware.NewJWT(s.deps.TokenManager)
 
 	authHandler := authHttp.NewHandler(s.deps.AuthService)
 	authHttp.RegisterRoutes(v1, authHandler)

@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type UserLoginRequest struct {
 	Email    string `json:"email"`
@@ -13,7 +17,7 @@ type UserRegisterRequest struct {
 }
 
 type UserResponse struct {
-	ID        string    `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	Role      string    `json:"role"`

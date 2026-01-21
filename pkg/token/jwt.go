@@ -1,4 +1,4 @@
-package jtoken
+package token
 
 import (
 	"fmt"
@@ -8,22 +8,29 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const (
-	AccessTokenExpiredTime  = 30 * time.Minute
-	RefreshTokenExpiredTime = 24 * 30 * time.Hour
-	AccessTokenType         = "x-access"
-	RefreshTokenType        = "x-refresh"
-)
+type JWT struct {
+	secretKey               string
+	accessTokenExpiredTime  time.Duration
+	refreshTokenExpiredTime time.Duration
+}
 
-func GenerateAccessToken(payload map[string]any, secretKey string) (string, error) {
+func NewJWT(secretKey string, accessTokenExpiredTime, refreshTokenExpiredTime time.Duration) *JWT {
+	return &JWT{
+		secretKey:               secretKey,
+		accessTokenExpiredTime:  accessTokenExpiredTime,
+		refreshTokenExpiredTime: refreshTokenExpiredTime,
+	}
+}
+
+func (j JWT) GenerateAccessToken(payload map[string]any) (string, error) {
 	payload["type"] = AccessTokenType
 	claims := jwt.MapClaims{
 		"payload": payload,
-		"exp":     time.Now().Add(AccessTokenExpiredTime).Unix(),
+		"exp":     time.Now().UTC().Add(j.accessTokenExpiredTime).Unix(),
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := jwtToken.SignedString([]byte(secretKey))
+	token, err := jwtToken.SignedString([]byte(j.secretKey))
 	if err != nil {
 		return "", err
 	}
@@ -31,15 +38,15 @@ func GenerateAccessToken(payload map[string]any, secretKey string) (string, erro
 	return token, nil
 }
 
-func GenerateRefreshToken(payload map[string]any, secretKey string) (string, error) {
+func (j JWT) GenerateRefreshToken(payload map[string]any) (string, error) {
 	payload["type"] = RefreshTokenType
 	claims := jwt.MapClaims{
 		"payload": payload,
-		"exp":     time.Now().Add(RefreshTokenExpiredTime).Unix(),
+		"exp":     time.Now().UTC().Add(j.refreshTokenExpiredTime).Unix(),
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := jwtToken.SignedString([]byte(secretKey))
+	token, err := jwtToken.SignedString([]byte(j.secretKey))
 	if err != nil {
 		return "", err
 	}
@@ -47,10 +54,10 @@ func GenerateRefreshToken(payload map[string]any, secretKey string) (string, err
 	return token, nil
 }
 
-func ValidateToken(tokenString string, secretKey string) (map[string]interface{}, error) {
+func (j JWT) ValidateToken(tokenString string) (map[string]interface{}, error) {
 	tokenData := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, &tokenData, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secretKey), nil
+		return []byte(j.secretKey), nil
 	})
 
 	if err != nil {

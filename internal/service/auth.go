@@ -8,20 +8,20 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
-	"go-shop-backend/pkg/jtoken"
 	"go-shop-backend/pkg/password"
+	"go-shop-backend/pkg/token"
 	"go-shop-backend/pkg/utils"
 )
 
 type authService struct {
-	userRepo  repository.UserRepository
-	secretKey string
+	userRepo     repository.UserRepository
+	tokenManager token.Manager
 }
 
-func NewAuthService(userRepo repository.UserRepository, secretKey string) AuthService {
+func NewAuthService(userRepo repository.UserRepository, tokenManager token.Manager) AuthService {
 	return &authService{
-		userRepo:  userRepo,
-		secretKey: secretKey,
+		userRepo:     userRepo,
+		tokenManager: tokenManager,
 	}
 }
 
@@ -45,12 +45,12 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, apperrors.ErrInvalidCredentials
 	}
 
-	token, err := a.createTokens(user)
+	tokenResponse, err := a.createTokens(user)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return buildUserTokenResponse(user, token)
+	return buildUserTokenResponse(user, tokenResponse)
 }
 
 func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error) {
@@ -75,12 +75,12 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, err
 	}
 
-	token, err := a.createTokens(user)
+	tokenResponse, err := a.createTokens(user)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return buildUserTokenResponse(user, token)
+	return buildUserTokenResponse(user, tokenResponse)
 }
 
 func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error) {
@@ -95,12 +95,12 @@ func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error
 		"role":    user.Role,
 	}
 
-	accessToken, err := jtoken.GenerateAccessToken(payload, a.secretKey)
+	accessToken, err := a.tokenManager.GenerateAccessToken(payload)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("%s: failed to generate access token: %w", op, err))
 	}
 
-	refreshToken, err := jtoken.GenerateRefreshToken(payload, a.secretKey)
+	refreshToken, err := a.tokenManager.GenerateRefreshToken(payload)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("%s: failed to generate refresh token: %w", op, err))
 	}

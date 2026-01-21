@@ -54,7 +54,7 @@ func (suite *UserServiceTestSuite) TestGetUserByID_Success() {
 
 	suite.NoError(err)
 	suite.NotNil(user)
-	suite.Equal(userID.String(), user.ID)
+	suite.Equal(userID, user.ID)
 	suite.Equal("test@example.com", user.Email)
 	suite.NotZero(user.CreatedAt)
 }

@@ -10,6 +10,7 @@ import (
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/storage"
 	"go-shop-backend/pkg/storage/minio"
+	"go-shop-backend/pkg/token"
 	"log/slog"
 
 	"github.com/go-playground/validator/v10"
@@ -23,7 +24,8 @@ type Dependencies struct {
 	DB        database.DB
 	TxManager database.TxManager
 
-	Storage storage.Storage
+	Storage      storage.Storage
+	TokenManager token.Manager
 
 	UserRepository     repository.UserRepository
 	ProductRepository  repository.ProductRepository
@@ -63,12 +65,14 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		logger.Fatal(l, "failed to create minio storage", err)
 	}
 
+	jwtManager := token.NewJWT(cfg.AuthSecret, cfg.AccessTokenExpiredTime, cfg.RefreshTokenExpiredTime)
+
 	userRepo := gormRepo.NewUserRepository(db)
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
 	uploadRepo := gormRepo.NewUploadRepository(db)
 
-	authService := service.NewAuthService(userRepo, cfg.AuthSecret)
+	authService := service.NewAuthService(userRepo, jwtManager)
 	userService := service.NewUserService(userRepo)
 	entityService := service.NewEntityService(productRepo)
 	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload)
@@ -82,6 +86,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		DB:                 db,
 		TxManager:          txManager,
 		Storage:            minioStorage,
+		TokenManager:       jwtManager,
 		UserRepository:     userRepo,
 		ProductRepository:  productRepo,
 		CategoryRepository: categoryRepo,
