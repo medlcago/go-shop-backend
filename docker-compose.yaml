@@ -8,12 +8,10 @@ services:
       - minio
     volumes:
       - ./.env:/app/.env:ro
-    ports:
-      - "8080:8080"
     restart: on-failure
 
   postgres:
-    image: postgres:latest
+    image: postgres:17-alpine
     container_name: postgres
     env_file:
       - .env
@@ -47,6 +45,21 @@ services:
       retries: 3
     restart: always
 
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      - app
+      - minio
+    restart: always
+
 volumes:
   postgres_data:
   minio_data:
+  nginx_cache:
