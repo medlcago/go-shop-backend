@@ -2,8 +2,13 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"io"
 	"time"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 type UploadOptions struct {
@@ -12,12 +17,11 @@ type UploadOptions struct {
 }
 
 type PresignedPostOptions struct {
-	ObjectKey     string
-	ContentType   string
-	MaxSize       int64
-	ExpiresIn     time.Duration
-	Metadata      map[string]string
-	KeyPrefixOnly bool
+	ObjectKey   string
+	ContentType string
+	MaxSize     int64
+	ExpiresIn   time.Duration
+	Metadata    map[string]string
 }
 
 type PresignedPost struct {
@@ -40,7 +44,7 @@ type Storage interface {
 	GetPresignedURL(ctx context.Context, objectKey string, expiry time.Duration) (string, error)
 	CreatePresignedPost(ctx context.Context, opts PresignedPostOptions) (*PresignedPost, error)
 	PublicURL(ctx context.Context, objectKey string) string
-	Exists(ctx context.Context, objectKey string) (bool, error)
+	Exists(ctx context.Context, objectKey string) error
 	Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error)
 	GetObjectInfo(ctx context.Context, objectKey string) (*ObjectInfo, error)
 }

@@ -8,20 +8,22 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
-	"go-shop-backend/pkg/password"
+	"go-shop-backend/pkg/hasher"
 	"go-shop-backend/pkg/token"
 	"go-shop-backend/pkg/utils"
 )
 
 type authService struct {
-	userRepo     repository.UserRepository
-	tokenManager token.Manager
+	userRepo       repository.UserRepository
+	tokenManager   token.Manager
+	passwordHasher hasher.Hasher
 }
 
-func NewAuthService(userRepo repository.UserRepository, tokenManager token.Manager) AuthService {
+func NewAuthService(userRepo repository.UserRepository, tokenManager token.Manager, passwordHasher hasher.Hasher) AuthService {
 	return &authService{
-		userRepo:     userRepo,
-		tokenManager: tokenManager,
+		userRepo:       userRepo,
+		tokenManager:   tokenManager,
+		passwordHasher: passwordHasher,
 	}
 }
 
@@ -36,11 +38,15 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if user.DeletedAt.Valid {
+	if user.DeletedAt.Valid { // FIXME: Reveals that such a user exists
 		return nil, apperrors.ErrUserProfileDeleted
 	}
 
-	match := password.VerifyPassword(req.Password, user.PasswordHash)
+	match, err := a.passwordHasher.Verify(req.Password, user.PasswordHash)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
 	if !match {
 		return nil, apperrors.ErrInvalidCredentials
 	}
@@ -61,9 +67,9 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, apperrors.ErrEmailTaken
 	}
 
-	passwordHash, err := password.HashPassword(req.Password)
+	passwordHash, err := a.passwordHasher.Hash(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to hash password: %w", op, err)
+		return nil, fmt.Errorf("%s: failed to hash hasher: %w", op, err)
 	}
 
 	user := &models.User{
@@ -122,7 +128,7 @@ func buildUserTokenResponse(user *models.User, token *dto.TokenResponse) (*dto.U
 		User:          &dto.UserResponse{},
 	}
 
-	if err := utils.Copy(&resp.User, user); err != nil {
+	if err := utils.Copy(resp.User, user); err != nil {
 		return nil, fmt.Errorf("failed to copy user: %w", err)
 	}
 

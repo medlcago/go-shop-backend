@@ -15,17 +15,17 @@ import (
 
 type CategoryServiceTestSuite struct {
 	suite.Suite
-	mockRepo *mocks.CategoryRepositoryMock
-	service  CategoryService
+	categoryRepo    *mocks.CategoryRepositoryMock
+	categoryService CategoryService
 }
 
 func (suite *CategoryServiceTestSuite) SetupTest() {
-	suite.mockRepo = new(mocks.CategoryRepositoryMock)
-	suite.service = NewCategoryService(suite.mockRepo)
+	suite.categoryRepo = new(mocks.CategoryRepositoryMock)
+	suite.categoryService = NewCategoryService(suite.categoryRepo)
 }
 
 func (suite *CategoryServiceTestSuite) TearDownTest() {
-	suite.mockRepo.AssertExpectations(suite.T())
+	suite.categoryRepo.AssertExpectations(suite.T())
 }
 
 func TestCategoryServiceTestSuite(t *testing.T) {
@@ -50,10 +50,10 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 		},
 	}
 
-	suite.mockRepo.On("ListCategories", ctx, req).
+	suite.categoryRepo.On("ListCategories", ctx, req).
 		Return(mockCategories, 5, nil).Once()
 
-	categories, totalCount, err := suite.service.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
 
 	suite.NoError(err)
 	suite.Equal(int64(5), totalCount)
@@ -85,10 +85,10 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 		},
 	}
 
-	suite.mockRepo.On("ListCategories", ctx, req).
+	suite.categoryRepo.On("ListCategories", ctx, req).
 		Return(mockCategories, 2, nil).Once()
 
-	categories, totalCount, err := suite.service.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
 
 	suite.NoError(err)
 	suite.Equal(int64(2), totalCount)
@@ -106,10 +106,10 @@ func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
 	}
 
 	repoErr := errors.New("database connection failed")
-	suite.mockRepo.On("ListCategories", ctx, req).
+	suite.categoryRepo.On("ListCategories", ctx, req).
 		Return([]*models.Category{}, 0, repoErr).Once()
 
-	categories, totalCount, err := suite.service.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
 
 	suite.Nil(categories)
 	suite.Equal(int64(0), totalCount)
@@ -123,10 +123,10 @@ func (suite *CategoryServiceTestSuite) TestListCategories_EmptyResult() {
 		Offset: 100,
 	}
 
-	suite.mockRepo.On("ListCategories", ctx, req).
+	suite.categoryRepo.On("ListCategories", ctx, req).
 		Return([]*models.Category{}, 0, nil).Once()
 
-	categories, totalCount, err := suite.service.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
 
 	suite.NoError(err)
 	suite.Equal(int64(0), totalCount)

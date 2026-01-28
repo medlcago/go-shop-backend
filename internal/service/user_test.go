@@ -18,17 +18,17 @@ import (
 
 type UserServiceTestSuite struct {
 	suite.Suite
-	mockRepo *mocks.UserRepositoryMock
-	service  UserService
+	userRepo    *mocks.UserRepositoryMock
+	userService UserService
 }
 
 func (suite *UserServiceTestSuite) SetupTest() {
-	suite.mockRepo = new(mocks.UserRepositoryMock)
-	suite.service = NewUserService(suite.mockRepo)
+	suite.userRepo = new(mocks.UserRepositoryMock)
+	suite.userService = NewUserService(suite.userRepo)
 }
 
 func (suite *UserServiceTestSuite) TearDownTest() {
-	suite.mockRepo.AssertExpectations(suite.T())
+	suite.userRepo.AssertExpectations(suite.T())
 }
 
 func TestUserServiceTestSuite(t *testing.T) {
@@ -47,10 +47,10 @@ func (suite *UserServiceTestSuite) TestGetUserByID_Success() {
 		CreatedAt: time.Now(),
 	}
 
-	suite.mockRepo.On("GetByIDUnscoped", ctx, userID).
+	suite.userRepo.On("GetByIDUnscoped", ctx, userID).
 		Return(mockUser, nil).Once()
 
-	user, err := suite.service.GetUserByID(ctx, userID)
+	user, err := suite.userService.GetUserByID(ctx, userID)
 
 	suite.NoError(err)
 	suite.NotNil(user)
@@ -63,10 +63,10 @@ func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
 	ctx := context.Background()
 	userID := uuid.New()
 
-	suite.mockRepo.On("GetByIDUnscoped", ctx, userID).
+	suite.userRepo.On("GetByIDUnscoped", ctx, userID).
 		Return(&models.User{}, repository.ErrRecordNotFound).Once()
 
-	user, err := suite.service.GetUserByID(ctx, userID)
+	user, err := suite.userService.GetUserByID(ctx, userID)
 
 	suite.Error(err)
 	suite.Nil(user)
@@ -77,10 +77,10 @@ func (suite *UserServiceTestSuite) TestGetUserByID_ProfileDeleted() {
 	ctx := context.Background()
 	userID := uuid.New()
 
-	suite.mockRepo.On("GetByIDUnscoped", ctx, userID).
+	suite.userRepo.On("GetByIDUnscoped", ctx, userID).
 		Return(&models.User{ID: userID, DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
-	user, err := suite.service.GetUserByID(ctx, userID)
+	user, err := suite.userService.GetUserByID(ctx, userID)
 
 	suite.Error(err)
 	suite.Nil(user)
@@ -92,10 +92,10 @@ func (suite *UserServiceTestSuite) TestGetUserByID_RepositoryError() {
 	userID := uuid.New()
 
 	repoErr := errors.New("database error")
-	suite.mockRepo.On("GetByIDUnscoped", ctx, userID).
+	suite.userRepo.On("GetByIDUnscoped", ctx, userID).
 		Return(&models.User{}, repoErr).Once()
 
-	user, err := suite.service.GetUserByID(ctx, userID)
+	user, err := suite.userService.GetUserByID(ctx, userID)
 
 	suite.Error(err)
 	suite.Nil(user)

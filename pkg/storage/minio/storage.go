@@ -6,7 +6,6 @@ import (
 	"go-shop-backend/config"
 	"go-shop-backend/pkg/storage"
 	"io"
-	"path"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -28,7 +27,7 @@ func New(cfg config.Minio) (*Storage, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("new minio client: %w", err)
+		return nil, fmt.Errorf("failed to create minio client: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -36,12 +35,12 @@ func New(cfg config.Minio) (*Storage, error) {
 
 	ok, err := client.BucketExists(ctx, cfg.Bucket)
 	if err != nil {
-		return nil, fmt.Errorf("bucket exists: %w", err)
+		return nil, fmt.Errorf("failed to check bucket exists: %w", err)
 	}
 
 	if !ok {
 		if err := client.MakeBucket(ctx, cfg.Bucket, minio.MakeBucketOptions{Region: cfg.Region}); err != nil {
-			return nil, fmt.Errorf("create bucket: %w", err)
+			return nil, fmt.Errorf("failed to create bucket: %w", err)
 		}
 	}
 
@@ -53,93 +52,89 @@ func New(cfg config.Minio) (*Storage, error) {
 }
 
 func (s *Storage) Upload(ctx context.Context, objectKey string, r io.Reader, size int64, opts storage.UploadOptions) (string, error) {
+	const op = "minio.Storage.Upload"
+
 	_, err := s.cli.PutObject(ctx, s.bucket, objectKey, r, size, minio.PutObjectOptions{
 		ContentType:  opts.ContentType,
 		UserMetadata: opts.Metadata,
 	})
-
 	if err != nil {
-		return "", fmt.Errorf("upload object: %w", err)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", s.baseURL, s.bucket, objectKey)
-	return path.Clean(url), nil
+	return s.PublicURL(ctx, objectKey), nil
 }
 
 func (s *Storage) Delete(ctx context.Context, objectKey string) error {
-	err := s.cli.RemoveObject(
-		ctx,
-		s.bucket,
-		objectKey,
-		minio.RemoveObjectOptions{},
-	)
+	const op = "minio.Storage.Delete"
+
+	err := s.cli.RemoveObject(ctx, s.bucket, objectKey, minio.RemoveObjectOptions{})
 	if err != nil {
-		return fmt.Errorf("delete object: %w", err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	return nil
 }
 
 func (s *Storage) GetPresignedURL(ctx context.Context, objectKey string, expiry time.Duration) (string, error) {
-	url, err := s.cli.PresignedGetObject(ctx, s.bucket, objectKey, expiry, nil)
+	const op = "minio.Storage.GetPresignedURL"
+
+	u, err := s.cli.PresignedGetObject(ctx, s.bucket, objectKey, expiry, nil)
 	if err != nil {
-		return "", fmt.Errorf("get presigned url: %w", err)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	return url.String(), nil
+	return u.String(), nil
 }
 
 func (s *Storage) CreatePresignedPost(ctx context.Context, opts storage.PresignedPostOptions) (*storage.PresignedPost, error) {
+	const op = "minio.Storage.CreatePresignedPost"
+
 	policy := minio.NewPostPolicy()
 
-	err := policy.SetBucket(s.bucket)
-	if err != nil {
-		return nil, fmt.Errorf("set bucket: %w", err)
+	if err := policy.SetBucket(s.bucket); err != nil {
+		return nil, fmt.Errorf("%s: set bucket: %w", op, err)
 	}
 
-	if opts.KeyPrefixOnly {
-		if err := policy.SetKeyStartsWith(opts.ObjectKey); err != nil {
-			return nil, fmt.Errorf("set object key prefix: %w", err)
-		}
-	} else {
-		if err := policy.SetKey(opts.ObjectKey); err != nil {
-			return nil, fmt.Errorf("set object key: %w", err)
-		}
+	if err := policy.SetKey(opts.ObjectKey); err != nil {
+		return nil, fmt.Errorf("%s: set key: %w", op, err)
 	}
 
 	if opts.ContentType != "" {
 		if err := policy.SetContentType(opts.ContentType); err != nil {
-			return nil, fmt.Errorf("set content type: %w", err)
+			return nil, fmt.Errorf("%s: set content type: %w", op, err)
 		}
 	}
 
-	if opts.MaxSize <= 0 {
-		opts.MaxSize = 5 << 20 // 5MB
+	maxSize := opts.MaxSize
+	if maxSize <= 0 {
+		maxSize = 5 << 20 // 5MB
 	}
-	if err := policy.SetContentLengthRange(1, opts.MaxSize); err != nil {
-		return nil, fmt.Errorf("set content length range: %w", err)
+	if err := policy.SetContentLengthRange(1, maxSize); err != nil {
+		return nil, fmt.Errorf("%s: set length range: %w", op, err)
 	}
 
-	if opts.ExpiresIn == 0 {
-		opts.ExpiresIn = 24 * time.Hour
+	expireTime := time.Now().UTC().Add(10 * time.Minute)
+	if opts.ExpiresIn > 0 {
+		expireTime = time.Now().UTC().Add(opts.ExpiresIn)
 	}
-	if err := policy.SetExpires(time.Now().UTC().Add(opts.ExpiresIn)); err != nil {
-		return nil, fmt.Errorf("set expiry: %w", err)
+	if err := policy.SetExpires(expireTime); err != nil {
+		return nil, fmt.Errorf("%s: set expiry: %w", op, err)
 	}
 
 	for k, v := range opts.Metadata {
 		if err := policy.SetUserMetadata(k, v); err != nil {
-			return nil, fmt.Errorf("set user metadata: %w", err)
+			return nil, fmt.Errorf("%s: set metadata %s: %w", op, k, err)
 		}
 	}
 
-	url, formData, err := s.cli.PresignedPostPolicy(ctx, policy)
+	u, formData, err := s.cli.PresignedPostPolicy(ctx, policy)
 	if err != nil {
-		return nil, fmt.Errorf("presigned post policy: %w", err)
+		return nil, fmt.Errorf("%s: generate policy: %w", op, err)
 	}
 
 	return &storage.PresignedPost{
-		URL:    url.String(),
+		URL:    u.String(),
 		Fields: formData,
 	}, nil
 }
@@ -147,37 +142,50 @@ func (s *Storage) CreatePresignedPost(ctx context.Context, opts storage.Presigne
 func (s *Storage) PublicURL(_ context.Context, objectKey string) string {
 	return fmt.Sprintf("%s/%s/%s", s.baseURL, s.bucket, objectKey)
 }
+func (s *Storage) Exists(ctx context.Context, objectKey string) error {
+	const op = "minio.Storage.Exists"
 
-func (s *Storage) Exists(ctx context.Context, objectKey string) (bool, error) {
 	_, err := s.cli.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
 	if err != nil {
-		return false, fmt.Errorf("stat object: %w", err)
+		errResp := minio.ToErrorResponse(err)
+		if errResp.Code == minio.NoSuchKey {
+			return storage.ErrNotFound
+		}
+
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (s *Storage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
-	object, err := s.cli.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
+	const op = "minio.Storage.Open"
+
+	obj, err := s.cli.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("get object: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = object.Stat()
-	if err != nil {
-		if err := object.Close(); err != nil {
-			return nil, fmt.Errorf("close object: %w", err)
+	if _, err := obj.Stat(); err != nil {
+		_ = obj.Close()
+
+		errResp := minio.ToErrorResponse(err)
+		if errResp.Code == minio.NoSuchKey {
+			return nil, storage.ErrNotFound
 		}
-		return nil, fmt.Errorf("stat object: %w", err)
+
+		return nil, fmt.Errorf("%s: stat failed: %w", op, err)
 	}
 
-	return object, nil
+	return obj, nil
 }
 
 func (s *Storage) GetObjectInfo(ctx context.Context, objectKey string) (*storage.ObjectInfo, error) {
+	const op = "minio.Storage.GetObjectInfo"
+
 	info, err := s.cli.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("stat object: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &storage.ObjectInfo{

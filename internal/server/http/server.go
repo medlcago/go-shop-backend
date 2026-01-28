@@ -36,6 +36,10 @@ func (s *Server) App() *fiber.App {
 	return s.app
 }
 
+func (s *Server) IsDevMode() bool {
+	return s.deps.Cfg.Environment == string(logger.EnvDevelopment)
+}
+
 func (s *Server) Run() {
 	s.Init()
 
@@ -101,7 +105,9 @@ func (s *Server) closeResources() error {
 }
 
 func (s *Server) Init() {
-	s.app.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
+	if s.IsDevMode() {
+		s.app.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
+	}
 
 	v1 := s.app.Group("/api/v1")
 

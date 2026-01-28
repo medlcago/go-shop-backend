@@ -25,6 +25,16 @@ func NewProductService(productRepo repository.ProductRepository, urlBuilder Publ
 	}
 }
 
+func (p *productService) attachImageURLs(
+	ctx context.Context,
+	respImages []dto.UploadResponse,
+	modelImages []models.Upload,
+) {
+	for i := range respImages {
+		respImages[i].URL = p.urlBuilder.PublicURL(ctx, modelImages[i].ObjectKey)
+	}
+}
+
 func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error) {
 	const op = "productService.GetProductByID"
 
@@ -41,9 +51,7 @@ func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID
 		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
 	}
 
-	for i := range resp.Images {
-		resp.Images[i].URL = p.urlBuilder.PublicURL(ctx, product.Images[i].ObjectKey)
-	}
+	p.attachImageURLs(ctx, resp.Images, product.Images)
 
 	return &resp, nil
 }
@@ -61,10 +69,8 @@ func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRe
 		return nil, 0, fmt.Errorf("%s: failed to copy products: %w", op, err)
 	}
 
-	for i, product := range resp {
-		for j := range product.Images {
-			product.Images[j].URL = p.urlBuilder.PublicURL(ctx, products[i].Images[j].ObjectKey)
-		}
+	for i := range resp {
+		p.attachImageURLs(ctx, resp[i].Images, products[i].Images)
 	}
 
 	return resp, total, nil
@@ -136,9 +142,7 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
 	}
 
-	for i := range resp.Images {
-		resp.Images[i].URL = p.urlBuilder.PublicURL(ctx, product.Images[i].ObjectKey)
-	}
+	p.attachImageURLs(ctx, resp.Images, product.Images)
 
 	return &resp, nil
 }

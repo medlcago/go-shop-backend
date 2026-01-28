@@ -3,10 +3,12 @@ package core
 import (
 	"context"
 	"go-shop-backend/config"
+	"go-shop-backend/internal/contenttype"
 	"go-shop-backend/internal/repository"
 	gormRepo "go-shop-backend/internal/repository/gorm"
 	"go-shop-backend/internal/service"
 	"go-shop-backend/pkg/database"
+	"go-shop-backend/pkg/hasher"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/storage"
 	"go-shop-backend/pkg/storage/minio"
@@ -67,15 +69,19 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 
 	jwtManager := token.NewJWT(cfg.AuthSecret, cfg.AccessTokenExpiredTime, cfg.RefreshTokenExpiredTime)
 
+	passwordHasher := hasher.NewArgon2ID()
+
+	contentTypeDetector := contenttype.NewMagicDetector()
+
 	userRepo := gormRepo.NewUserRepository(db)
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
 	uploadRepo := gormRepo.NewUploadRepository(db)
 
-	authService := service.NewAuthService(userRepo, jwtManager)
+	authService := service.NewAuthService(userRepo, jwtManager, passwordHasher)
 	userService := service.NewUserService(userRepo)
 	entityService := service.NewEntityService(productRepo)
-	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload)
+	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload, contentTypeDetector)
 	productService := service.NewProductService(productRepo, uploadService)
 	categoryService := service.NewCategoryService(categoryRepo)
 

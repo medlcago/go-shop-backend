@@ -9,17 +9,20 @@ import (
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/storage"
-	"go-shop-backend/pkg/utils"
+	"io"
 	"mime"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-var supportedImageContentTypes = map[string]struct{}{
-	"image/jpeg": {},
-	"image/png":  {},
+type ContentTypeDetector interface {
+	Detect(r io.ReadSeeker) (string, error)
+}
+
+var allowedTypes = map[string]string{
+	"image/jpeg": "jpg",
+	"image/png":  "png",
 }
 
 type uploadService struct {
@@ -27,6 +30,7 @@ type uploadService struct {
 	entityService EntityService
 	uploadRepo    repository.UploadRepository
 	uploadConfig  config.Upload
+	ctDetector    ContentTypeDetector
 }
 
 func NewUploadService(
@@ -34,12 +38,14 @@ func NewUploadService(
 	entityService EntityService,
 	uploadRepo repository.UploadRepository,
 	uploadConfig config.Upload,
+	ctDetector ContentTypeDetector,
 ) UploadService {
 	return &uploadService{
 		storage:       storage,
 		entityService: entityService,
 		uploadRepo:    uploadRepo,
 		uploadConfig:  uploadConfig,
+		ctDetector:    ctDetector,
 	}
 }
 
@@ -47,14 +53,10 @@ func (u *uploadService) SignURL(ctx context.Context, req dto.SignURLRequest) (*d
 	const op = "uploadService.SignURL"
 
 	if err := validateExtAndContentType(req.Ext, req.ContentType); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	exists, err := u.entityService.Exists(
-		ctx,
-		req.Entity.Type,
-		req.Entity.ID,
-	)
+	exists, err := u.entityService.Exists(ctx, req.Entity.Type, req.Entity.ID)
 
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -112,16 +114,8 @@ func (u *uploadService) Save(ctx context.Context, req dto.UploadRequest) (*dto.U
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if obj.Metadata["Upload-Id"] != req.UploadID.String() {
-		return nil, apperrors.ErrInvalidUploadID
-	}
-
-	if obj.Metadata["Entity-Id"] != req.Entity.ID.String() {
-		return nil, apperrors.ErrInvalidEntityID
-	}
-
-	if obj.Metadata["Entity-Type"] != string(req.Entity.Type) {
-		return nil, apperrors.ErrInvalidEntityID
+	if err := validateMetadata(req, obj.Metadata); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	uploadExists, err := u.uploadRepo.Exists(ctx, req.ObjectKey)
@@ -137,15 +131,17 @@ func (u *uploadService) Save(ctx context.Context, req dto.UploadRequest) (*dto.U
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
-	detectedCT, err := utils.DetectContentType(file)
+	detectedCT, err := u.ctDetector.Detect(file)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := validateDetectedContentType(detectedCT); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	upload := &models.Upload{
@@ -153,7 +149,7 @@ func (u *uploadService) Save(ctx context.Context, req dto.UploadRequest) (*dto.U
 		EntityID:    req.Entity.ID,
 		EntityType:  string(req.Entity.Type),
 		FileSize:    obj.Size,
-		ContentType: utils.Ptr(detectedCT),
+		ContentType: &detectedCT,
 		IsMain:      false,
 	}
 
@@ -178,23 +174,42 @@ func (u *uploadService) PublicURL(ctx context.Context, objectKey string) string 
 	return u.storage.PublicURL(ctx, objectKey)
 }
 
+func (u *uploadService) generateObjectKey(req dto.SignURLRequest, uploadID uuid.UUID) string {
+	return fmt.Sprintf("%s/%s/%s.%s",
+		req.Entity.Type,
+		req.Entity.ID,
+		uploadID,
+		req.Ext,
+	)
+}
+
+func validateMetadata(req dto.UploadRequest, metadata map[string]string) error {
+	if metadata["Upload-Id"] != req.UploadID.String() {
+		return apperrors.ErrInvalidUploadID
+	}
+
+	if metadata["Entity-Id"] != req.Entity.ID.String() {
+		return apperrors.ErrInvalidEntityID
+	}
+
+	if metadata["Entity-Type"] != string(req.Entity.Type) {
+		return apperrors.ErrInvalidEntityID
+	}
+
+	return nil
+}
+
 func validateExtAndContentType(ext, contentType string) error {
-	if _, ok := supportedImageContentTypes[contentType]; !ok {
+	extension, ok := allowedTypes[contentType]
+	if !ok {
 		return apperrors.ErrInvalidImageFormat
 	}
 
-	exts, err := utils.ContentTypeToExt(contentType)
-	if err != nil {
-		return err
+	if extension != ext {
+		return apperrors.ErrContentTypeMismatch
 	}
 
-	for _, e := range exts {
-		if strings.TrimPrefix(e, ".") == ext {
-			return nil
-		}
-	}
-
-	return apperrors.ErrContentTypeMismatch
+	return nil
 }
 
 func validateDetectedContentType(contentType string) error {
@@ -203,18 +218,9 @@ func validateDetectedContentType(contentType string) error {
 		return err
 	}
 
-	if _, ok := supportedImageContentTypes[baseType]; !ok {
+	if _, ok := allowedTypes[baseType]; !ok {
 		return apperrors.ErrInvalidImageFormat
 	}
 
 	return nil
-}
-
-func (u *uploadService) generateObjectKey(req dto.SignURLRequest, uploadID uuid.UUID) string {
-	return fmt.Sprintf("%s/%s/%s.%s",
-		req.Entity.Type,
-		req.Entity.ID,
-		uploadID,
-		req.Ext,
-	)
 }

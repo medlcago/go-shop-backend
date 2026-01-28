@@ -1,8 +1,6 @@
 package token
 
 import (
-	"fmt"
-	"go-shop-backend/pkg/utils"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,9 +22,10 @@ func NewJWT(secretKey string, accessTokenExpiredTime, refreshTokenExpiredTime ti
 
 func (j JWT) GenerateAccessToken(payload map[string]any) (string, error) {
 	payload["type"] = AccessTokenType
+	exp := time.Now().UTC().Add(j.accessTokenExpiredTime).Unix()
 	claims := jwt.MapClaims{
 		"payload": payload,
-		"exp":     time.Now().UTC().Add(j.accessTokenExpiredTime).Unix(),
+		"exp":     exp,
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -40,9 +39,10 @@ func (j JWT) GenerateAccessToken(payload map[string]any) (string, error) {
 
 func (j JWT) GenerateRefreshToken(payload map[string]any) (string, error) {
 	payload["type"] = RefreshTokenType
+	exp := time.Now().UTC().Add(j.refreshTokenExpiredTime).Unix()
 	claims := jwt.MapClaims{
 		"payload": payload,
-		"exp":     time.Now().UTC().Add(j.refreshTokenExpiredTime).Unix(),
+		"exp":     exp,
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -68,10 +68,5 @@ func (j JWT) ValidateToken(tokenString string) (map[string]interface{}, error) {
 		return nil, jwt.ErrInvalidKey
 	}
 
-	var data map[string]interface{}
-	if err := utils.Copy(&data, tokenData["payload"]); err != nil {
-		return nil, fmt.Errorf("validate token: failed to copy payload: %w", err)
-	}
-
-	return data, nil
+	return tokenData["payload"].(map[string]interface{}), nil
 }
