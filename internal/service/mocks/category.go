@@ -3,12 +3,9 @@ package mocks
 import (
 	"context"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/service"
 
 	"github.com/stretchr/testify/mock"
 )
-
-var _ service.CategoryService = (*CategoryServiceMock)(nil)
 
 type CategoryServiceMock struct {
 	mock.Mock

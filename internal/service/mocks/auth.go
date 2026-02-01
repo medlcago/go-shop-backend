@@ -3,12 +3,9 @@ package mocks
 import (
 	"context"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/service"
 
 	"github.com/stretchr/testify/mock"
 )
-
-var _ service.AuthService = (*AuthServiceMock)(nil)
 
 type AuthServiceMock struct {
 	mock.Mock
