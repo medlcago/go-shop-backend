@@ -385,6 +385,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/products/search": {
+            "get": {
+                "description": "Search products with full-text search capability on name and description",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Search products",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query for full-text search on name and description fields",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Maximum number of items to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Number of items to skip",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/products/{id}": {
             "get": {
                 "description": "Get detailed information about a specific product by its UUID",
@@ -1011,6 +1071,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-any": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },
@@ -1020,6 +1086,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },
@@ -1031,6 +1103,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },
@@ -1042,6 +1120,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },
@@ -1053,6 +1137,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },
@@ -1064,6 +1154,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },
@@ -1075,6 +1171,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },
@@ -1086,6 +1188,12 @@ const docTemplate = `{
         "go-shop-backend_pkg_response.Response-internal_dto_UserResponse": {
             "type": "object",
             "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "error": {
                     "type": "string"
                 },

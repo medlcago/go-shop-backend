@@ -45,3 +45,8 @@ func (p *ProductRepositoryMock) Exists(ctx context.Context, id uuid.UUID) (bool,
 	args := p.Called(ctx, id)
 	return args.Bool(0), args.Error(1)
 }
+
+func (p *ProductRepositoryMock) Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error) {
+	args := p.Called(ctx, req)
+	return args.Get(0).([]*models.Product), int64(args.Int(1)), args.Error(2)
+}

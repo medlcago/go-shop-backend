@@ -156,3 +156,32 @@ func (h *Handler) UpdateProduct(ctx fiber.Ctx) error {
 
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
+
+// Search godoc
+//
+//	@Summary		Search products
+//	@Description	Search products with full-text search capability on name and description
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			q		query		string	true	"Search query for full-text search on name and description fields"
+//	@Param			limit	query		int		false	"Maximum number of items to return"	minimum(1)	default(50)
+//	@Param			offset	query		int		false	"Number of items to skip"			minimum(0)	default(0)
+//	@Success		200		{object}	response.Response[response.PaginatedResponse[[]dto.ProductResponse]]
+//	@Failure		400		{object}	response.Response[any]	"Invalid request parameters"
+//	@Failure		500		{object}	response.Response[any]	"Internal server error"
+//	@Router			/products/search [get]
+func (h *Handler) Search(ctx fiber.Ctx) error {
+	var req dto.SearchProductRequest
+
+	if err := ctx.Bind().Query(&req); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	resp, total, err := h.productService.Search(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return response.PaginatedJSON(ctx, fiber.StatusOK, resp, total)
+}

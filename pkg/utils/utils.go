@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"strings"
+	"unicode"
+
 	"github.com/gosimple/slug"
 	"github.com/jinzhu/copier"
 )
@@ -15,4 +18,25 @@ func Copy(dest interface{}, src interface{}) error {
 
 func Ptr[T any](v T) *T {
 	return &v
+}
+
+func BuildSearchQuery(input string) string {
+	words := strings.Fields(input)
+
+	var parts []string
+
+	for _, word := range words {
+		cleaned := strings.Map(func(r rune) rune {
+			if unicode.IsLetter(r) || unicode.IsNumber(r) {
+				return r
+			}
+			return -1
+		}, word)
+
+		if cleaned != "" {
+			parts = append(parts, cleaned+":*")
+		}
+	}
+
+	return strings.Join(parts, " & ")
 }

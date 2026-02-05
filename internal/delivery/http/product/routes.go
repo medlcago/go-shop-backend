@@ -22,5 +22,6 @@ func RegisterRoutes(r fiber.Router, productHandler *Handler, auth middleware.Aut
 			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
 			productHandler.UpdateProduct,
 		)
+		productGroup.Get("/search", productHandler.Search)
 	}
 }

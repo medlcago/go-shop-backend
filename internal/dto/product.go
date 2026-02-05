@@ -44,3 +44,9 @@ type ProductUpdateRequest struct {
 	Stock       *int     `json:"stock" validate:"omitempty,gte=0"`
 	IsActive    *bool    `json:"is_active"`
 }
+
+type SearchProductRequest struct {
+	Query  string `query:"q" validate:"required"`
+	Limit  int    `query:"limit"`
+	Offset int    `query:"offset"`
+}

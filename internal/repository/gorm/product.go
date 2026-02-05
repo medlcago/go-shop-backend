@@ -2,11 +2,13 @@ package gorm
 
 import (
 	"context"
+	"database/sql"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/paging"
+	"go-shop-backend/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -114,4 +116,48 @@ func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, err
 	}
 
 	return exists, nil
+}
+
+func (p *productRepository) Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error) {
+	db := p.db.GetDB(ctx)
+
+	if req.Query == "" {
+		return nil, 0, nil
+	}
+
+	tsQuery := utils.BuildSearchQuery(req.Query)
+
+	fullTsQuery := "to_tsquery('english', @query)"
+
+	namedQuery := sql.Named("query", tsQuery)
+
+	db = db.Model(&models.Product{}).
+		Where("is_active = ?", true).
+		Where("stock > ?", 0).
+		Where("search_vector @@ "+fullTsQuery, namedQuery)
+
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, repository.HandleSQLError(err)
+	}
+
+	if total == 0 {
+		return nil, 0, nil
+	}
+
+	pagination := paging.New(req.Limit, req.Offset)
+
+	var products []*models.Product
+
+	err := db.Select("products.*, ts_rank(search_vector, "+fullTsQuery+") AS rank", namedQuery).
+		Order("rank DESC").
+		Limit(pagination.Limit).
+		Offset(pagination.Offset).
+		Find(&products).Error
+
+	if err != nil {
+		return nil, 0, repository.HandleSQLError(err)
+	}
+
+	return products, total, nil
 }

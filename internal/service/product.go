@@ -146,3 +146,23 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 
 	return &resp, nil
 }
+
+func (p *productService) Search(ctx context.Context, req dto.SearchProductRequest) ([]*dto.ProductResponse, int64, error) {
+	const op = "productService.Search"
+
+	products, total, err := p.productRepo.Search(ctx, req)
+	if err != nil {
+		return nil, 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	resp := make([]*dto.ProductResponse, len(products))
+	if err := utils.Copy(&resp, products); err != nil {
+		return nil, 0, fmt.Errorf("%s: failed to copy products: %w", op, err)
+	}
+
+	for i := range resp {
+		p.attachImageURLs(ctx, resp[i].Images, products[i].Images)
+	}
+
+	return resp, total, nil
+}
