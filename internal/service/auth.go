@@ -38,10 +38,6 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if user.DeletedAt.Valid { // FIXME: Reveals that such a user exists
-		return nil, apperrors.ErrUserProfileDeleted
-	}
-
 	match, err := a.passwordHasher.Verify(req.Password, user.PasswordHash)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -49,6 +45,10 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 
 	if !match {
 		return nil, apperrors.ErrInvalidCredentials
+	}
+
+	if user.DeletedAt.Valid {
+		return nil, apperrors.ErrUserProfileDeleted
 	}
 
 	tokenResponse, err := a.createTokens(user)

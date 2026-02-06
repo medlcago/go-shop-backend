@@ -115,6 +115,9 @@ func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
 	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
+	suite.passwordHasher.On("Verify", req.Password, mock.Anything).
+		Return(true, nil).Once()
+
 	tokenResp, err := suite.authService.Login(ctx, req)
 
 	suite.Error(err)
