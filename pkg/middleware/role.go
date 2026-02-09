@@ -9,13 +9,13 @@ import (
 
 func RequireRole[T ~string](roles ...T) fiber.Handler {
 	return func(ctx fiber.Ctx) error {
-		userRole := fiber.Locals[string](ctx, "userRole")
+		userCtx := GetUserContext(ctx)
 
-		if userRole == "" {
+		if userCtx.Role == "" {
 			return apperrors.ErrForbidden
 		}
 
-		allowed := slices.Contains(roles, T(userRole))
+		allowed := slices.Contains(roles, T(userCtx.Role))
 
 		if !allowed {
 			return apperrors.ErrForbidden

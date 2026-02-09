@@ -3,10 +3,10 @@ package user
 import (
 	"go-shop-backend/internal/service"
 	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -33,12 +33,12 @@ func NewHandler(userService service.UserService) *Handler {
 //	@Failure		500	{object}	response.Response[any]
 //	@Router			/users/me [get]
 func (h *Handler) GetMe(ctx fiber.Ctx) error {
-	userID := fiber.Locals[uuid.UUID](ctx, "userID")
-	if userID == uuid.Nil {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
 		return apperrors.ErrInvalidCredentials
 	}
 
-	resp, err := h.userService.GetUserByID(ctx, userID)
+	resp, err := h.userService.GetUserByID(ctx, *userCtx.UserID)
 	if err != nil {
 		return err
 	}
