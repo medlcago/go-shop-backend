@@ -7,6 +7,7 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
+	"go-shop-backend/pkg/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,7 +22,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupMock    func(serviceMock *mocks.UserServiceMock)
-		userID       uuid.UUID
+		userID       *uuid.UUID
 		expectedCode int
 		expectedBody any
 	}{
@@ -34,7 +35,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 						Email: "test@test.com",
 					}, nil).Once()
 			},
-			userID:       uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
+			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
 			expectedCode: http.StatusOK,
 			expectedBody: response.NewResponse(
 				&dto.UserResponse{
@@ -44,7 +45,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 		}, {
 			name:         "no user id in context",
 			setupMock:    nil,
-			userID:       uuid.Nil,
+			userID:       nil,
 			expectedCode: http.StatusUnauthorized,
 			expectedBody: response.NewError(apperrors.ErrInvalidCredentials.Message),
 		},
@@ -54,7 +55,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, apperrors.ErrUserNotFound).Once()
 			},
-			userID:       uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
+			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
 			expectedCode: http.StatusNotFound,
 			expectedBody: response.NewError(apperrors.ErrUserNotFound.Message),
 		},
@@ -64,7 +65,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, errors.New("unexpected error")).Once()
 			},
-			userID:       uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
+			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
 			expectedCode: http.StatusInternalServerError,
 			expectedBody: response.NewError(http.StatusText(http.StatusInternalServerError)),
 		},
@@ -84,7 +85,10 @@ func TestUserHandler_GetMe(t *testing.T) {
 			app := testutils.CreateTestApp()
 
 			app.Get("/", func(c fiber.Ctx) error {
-				c.Locals("userID", tt.userID)
+				if tt.userID != nil {
+					c.Locals("userID", *tt.userID)
+				}
+
 				return userHandler.GetMe(c)
 			})
 
