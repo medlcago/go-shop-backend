@@ -17,7 +17,7 @@ type UserRepository interface {
 }
 
 type ProductRepository interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error)
+	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Product, error)
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
 	CreateProduct(ctx context.Context, product *models.Product) error
 	UpdateProduct(ctx context.Context, product *models.Product) error
@@ -32,4 +32,12 @@ type CategoryRepository interface {
 type UploadRepository interface {
 	Save(ctx context.Context, req *models.Upload) error
 	Exists(ctx context.Context, objectKey string) (bool, error)
+}
+
+type CartRepository interface {
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*models.Cart, error)
+	GetBySessionID(ctx context.Context, sessionID uuid.UUID) (*models.Cart, error)
+	Create(ctx context.Context, cart *models.Cart) error
+	Save(ctx context.Context, cart *models.Cart) error
+	DeleteItem(ctx context.Context, cartID uuid.UUID, productID uuid.UUID) error
 }

@@ -33,6 +33,7 @@ type Dependencies struct {
 	ProductRepository  repository.ProductRepository
 	CategoryRepository repository.CategoryRepository
 	UploadRepository   repository.UploadRepository
+	CartRepository     repository.CartRepository
 
 	AuthService     service.AuthService
 	UserService     service.UserService
@@ -40,6 +41,7 @@ type Dependencies struct {
 	CategoryService service.CategoryService
 	EntityService   service.EntityService
 	UploadService   service.UploadService
+	CartService     service.CartService
 }
 
 func NewDependencies(cfg *config.Config) *Dependencies {
@@ -77,6 +79,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
 	uploadRepo := gormRepo.NewUploadRepository(db)
+	cartRepo := gormRepo.NewCartRepository(db)
 
 	authService := service.NewAuthService(userRepo, jwtManager, passwordHasher)
 	userService := service.NewUserService(userRepo)
@@ -84,24 +87,31 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload, contentTypeDetector)
 	productService := service.NewProductService(productRepo, uploadService)
 	categoryService := service.NewCategoryService(categoryRepo)
+	cartService := service.NewCartService(cartRepo, productRepo, txManager)
 
 	return &Dependencies{
-		Cfg:                cfg,
-		Logger:             l,
-		Validator:          validate,
-		DB:                 db,
-		TxManager:          txManager,
-		Storage:            minioStorage,
-		TokenManager:       jwtManager,
+		Cfg:       cfg,
+		Logger:    l,
+		Validator: validate,
+
+		DB:        db,
+		TxManager: txManager,
+
+		Storage:      minioStorage,
+		TokenManager: jwtManager,
+
 		UserRepository:     userRepo,
 		ProductRepository:  productRepo,
 		CategoryRepository: categoryRepo,
 		UploadRepository:   uploadRepo,
-		AuthService:        authService,
-		UserService:        userService,
-		ProductService:     productService,
-		CategoryService:    categoryService,
-		EntityService:      entityService,
-		UploadService:      uploadService,
+		CartRepository:     cartRepo,
+
+		AuthService:     authService,
+		UserService:     userService,
+		ProductService:  productService,
+		CategoryService: categoryService,
+		EntityService:   entityService,
+		UploadService:   uploadService,
+		CartService:     cartService,
 	}
 }

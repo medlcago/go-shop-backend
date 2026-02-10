@@ -1,5 +1,26 @@
 basePath: /api/v1
 definitions:
+  go-shop-backend_internal_dto.AddItemRequest:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  go-shop-backend_internal_dto.CartResponse:
+    properties:
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ItemResponse'
+        type: array
+      total_cost:
+        type: number
+    type: object
   go-shop-backend_internal_dto.Entity:
     properties:
       id:
@@ -16,6 +37,15 @@ definitions:
     type: string
     x-enum-varnames:
     - EntityProduct
+  go-shop-backend_internal_dto.ItemResponse:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        type: integer
+      unit_price:
+        type: number
+    type: object
   go-shop-backend_internal_dto.ProductCategoryResponse:
     properties:
       id:
@@ -223,6 +253,17 @@ definitions:
         type: string
       result: {}
     type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse:
+    properties:
+      details:
+        additionalProperties:
+          type: string
+        type: object
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.CartResponse'
+    type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse:
     properties:
       details:
@@ -385,6 +426,89 @@ paths:
       summary: Register
       tags:
       - auth
+  /cart:
+    get:
+      consumes:
+      - application/json
+      description: Get user's cart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Get cart
+      tags:
+      - cart
+  /cart/items:
+    post:
+      consumes:
+      - application/json
+      description: Add item to cart
+      parameters:
+      - description: Item data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.AddItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Add item
+      tags:
+      - cart
+  /cart/items/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete item from cart by ID
+      parameters:
+      - description: Item ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Delete item
+      tags:
+      - cart
   /categories/:
     get:
       consumes:

@@ -16,8 +16,8 @@ type ProductRepositoryMock struct {
 	mock.Mock
 }
 
-func (p *ProductRepositoryMock) GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error) {
-	args := p.Called(ctx, id)
+func (p *ProductRepositoryMock) GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Product, error) {
+	args := p.Called(ctx, id, preload)
 	return args.Get(0).(*models.Product), args.Error(1)
 }
 

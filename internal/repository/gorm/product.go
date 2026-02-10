@@ -29,19 +29,21 @@ func NewProductRepository(db database.Provider) repository.ProductRepository {
 	}
 }
 
-func (p *productRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error) {
+func (p *productRepository) GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Product, error) {
 	db := p.db.GetDB(ctx)
 
+	db = db.Where("id = ?", id)
+
+	if preload {
+		db = db.Preload("Categories").Preload("Images")
+	}
+
 	var product models.Product
-	if err := db.Where("id = ?", id).
-		Preload("Categories").
-		Preload("Images").
-		First(&product).Error; err != nil {
+	if err := db.First(&product).Error; err != nil {
 		return nil, repository.HandleSQLError(err)
 	}
 
 	return &product, nil
-
 }
 
 func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error) {

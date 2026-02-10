@@ -68,7 +68,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 		},
 	}
 
-	suite.productRepo.On("GetByID", ctx, productID).
+	suite.productRepo.On("GetByID", ctx, productID, true).
 		Return(mockProduct, nil).Once()
 
 	product, err := suite.productService.GetProductByID(ctx, productID)
@@ -87,7 +87,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
 	ctx := context.Background()
 	productID := uuid.New()
 
-	suite.productRepo.On("GetByID", ctx, productID).
+	suite.productRepo.On("GetByID", ctx, productID, true).
 		Return(&models.Product{}, repository.ErrRecordNotFound).Once()
 
 	product, err := suite.productService.GetProductByID(ctx, productID)
@@ -102,7 +102,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_RepositoryError() {
 	productID := uuid.New()
 
 	repoErr := errors.New("database connection failed")
-	suite.productRepo.On("GetByID", ctx, productID).
+	suite.productRepo.On("GetByID", ctx, productID, true).
 		Return(&models.Product{}, repoErr).Once()
 
 	product, err := suite.productService.GetProductByID(ctx, productID)
@@ -346,7 +346,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 	}
 
 	suite.productRepo.
-		On("GetByID", ctx, productID).
+		On("GetByID", ctx, productID, false).
 		Return(existingProduct, nil).
 		Once()
 
@@ -390,7 +390,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() 
 	}
 
 	suite.productRepo.
-		On("GetByID", ctx, productID).
+		On("GetByID", ctx, productID, false).
 		Return(existingProduct, nil).
 		Once()
 
@@ -420,7 +420,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_ProductNotFound() {
 	req := dto.ProductUpdateRequest{}
 
 	suite.productRepo.
-		On("GetByID", ctx, productID).
+		On("GetByID", ctx, productID, false).
 		Return(&models.Product{}, repository.ErrRecordNotFound).
 		Once()
 
@@ -450,7 +450,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() 
 	repoErr := errors.New("update failed")
 
 	suite.productRepo.
-		On("GetByID", ctx, productID).
+		On("GetByID", ctx, productID, false).
 		Return(existingProduct, nil).
 		Once()
 

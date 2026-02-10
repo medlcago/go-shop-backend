@@ -38,7 +38,7 @@ func (p *productService) attachImageURLs(
 func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error) {
 	const op = "productService.GetProductByID"
 
-	product, err := p.productRepo.GetByID(ctx, productID)
+	product, err := p.productRepo.GetByID(ctx, productID, true)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, apperrors.ErrProductNotFound
@@ -107,7 +107,7 @@ func (p *productService) CreateProduct(ctx context.Context, req dto.ProductCreat
 func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error) {
 	const op = "productService.UpdateProduct"
 
-	product, err := p.productRepo.GetByID(ctx, productID)
+	product, err := p.productRepo.GetByID(ctx, productID, false)
 	if err != nil {
 		return nil, apperrors.ErrProductNotFound
 	}

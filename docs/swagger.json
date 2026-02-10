@@ -112,6 +112,132 @@
                 }
             }
         },
+        "/cart": {
+            "get": {
+                "description": "Get user's cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cart"
+                ],
+                "summary": "Get cart",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/cart/items": {
+            "post": {
+                "description": "Add item to cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cart"
+                ],
+                "summary": "Add item",
+                "parameters": [
+                    {
+                        "description": "Item data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.AddItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/cart/items/{id}": {
+            "delete": {
+                "description": "Delete item from cart by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cart"
+                ],
+                "summary": "Delete item",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Item ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/categories/": {
             "get": {
                 "description": "Get a paginated list of all categories or subcategories of a specific category. If ID is provided in the path, returns subcategories of that category. Otherwise returns all root categories.",
@@ -744,6 +870,38 @@
         }
     },
     "definitions": {
+        "go-shop-backend_internal_dto.AddItemRequest": {
+            "type": "object",
+            "required": [
+                "product_id",
+                "quantity"
+            ],
+            "properties": {
+                "product_id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.CartResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/go-shop-backend_internal_dto.ItemResponse"
+                    }
+                },
+                "total_cost": {
+                    "type": "number"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.Entity": {
             "type": "object",
             "required": [
@@ -767,6 +925,20 @@
             "x-enum-varnames": [
                 "EntityProduct"
             ]
+        },
+        "go-shop-backend_internal_dto.ItemResponse": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "unit_price": {
+                    "type": "number"
+                }
+            }
         },
         "go-shop-backend_internal_dto.ProductCategoryResponse": {
             "type": "object",
@@ -1074,6 +1246,23 @@
                     "type": "string"
                 },
                 "result": {}
+            }
+        },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.CartResponse"
+                }
             }
         },
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse": {
