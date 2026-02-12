@@ -37,7 +37,7 @@ func (h *Handler) SignURL(ctx fiber.Ctx) error {
 	var req dto.SignURLRequest
 
 	if err := ctx.Bind().JSON(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, err := h.uploadService.SignURL(ctx, req)
@@ -68,7 +68,7 @@ func (h *Handler) Save(ctx fiber.Ctx) error {
 	var req dto.UploadRequest
 
 	if err := ctx.Bind().JSON(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, err := h.uploadService.Save(ctx, req)

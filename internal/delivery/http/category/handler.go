@@ -38,7 +38,7 @@ func NewHandler(categoryService service.CategoryService) *Handler {
 func (h *Handler) ListCategories(ctx fiber.Ctx) error {
 	var req dto.ListCategoryRequest
 	if err := ctx.Bind().Query(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	id, err := fiber.Convert(ctx.Params("id"), uuid.Parse, uuid.Nil)

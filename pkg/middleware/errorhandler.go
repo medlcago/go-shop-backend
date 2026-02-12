@@ -6,8 +6,10 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/response"
+	"go-shop-backend/pkg/utils"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
@@ -17,6 +19,7 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 	return func(ctx fiber.Ctx, err error) error {
 		status := fiber.StatusInternalServerError
 		message := http.StatusText(status)
+		var details any
 
 		var fiberErr *fiber.Error
 		if errors.As(err, &fiberErr) {
@@ -33,7 +36,8 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 		var validationErrs validator.ValidationErrors
 		if errors.As(err, &validationErrs) {
 			status = http.StatusBadRequest
-			message = err.Error()
+			message = "Validation failed"
+			details = utils.HumanizeValidationError(err)
 		}
 
 		var jsonUnmarshalTypeErr *json.UnmarshalTypeError
@@ -48,8 +52,18 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 			message = http.StatusText(status)
 		}
 
-		log.Error("error handler", slog.Int("status_code", status), logger.Err(err))
+		// Handling binding errors
+		if strings.Contains(err.Error(), "bind:") {
+			status = http.StatusBadRequest
+			message = http.StatusText(status)
+		}
 
-		return response.Error(ctx, status, message)
+		log.Error(
+			"request error",
+			slog.Int("status", status),
+			logger.Err(err),
+		)
+
+		return response.Error(ctx, status, message, details)
 	}
 }

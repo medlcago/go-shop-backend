@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -155,14 +154,14 @@ func TestProductHandler_ListProducts(t *testing.T) {
 			setupMock:    nil,
 			query:        "category_id=not-a-uuid",
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: response.NewError(http.StatusText(http.StatusBadRequest)),
 		},
 		{
 			name:         "invalid query",
 			setupMock:    nil,
 			query:        "limit=test",
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: response.NewError(http.StatusText(http.StatusBadRequest)),
 		},
 		{
 			name:  "negative limit and offset",
@@ -247,7 +246,7 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 			setupMock:    nil,
 			requestBody:  dto.ProductCreateRequest{},
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: testutils.ValidationError(dto.ProductCreateRequest{}),
 		},
 		{
 			name: "internal server error",
@@ -333,7 +332,7 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 			name:         "validation error",
 			requestBody:  dto.ProductUpdateRequest{Name: utils.Ptr("1")},
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: testutils.ValidationError(dto.ProductUpdateRequest{Name: utils.Ptr("1")}),
 		},
 		{
 			name: "internal server error",

@@ -34,7 +34,7 @@ func NewHandler(authService service.AuthService) *Handler {
 func (h *Handler) Login(ctx fiber.Ctx) error {
 	var req dto.UserLoginRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, err := h.authService.Login(ctx, req)
@@ -61,7 +61,7 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 func (h *Handler) Register(ctx fiber.Ctx) error {
 	var req dto.UserRegisterRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, err := h.authService.Register(ctx, req)

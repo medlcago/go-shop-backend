@@ -10,7 +10,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -52,7 +51,7 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 			setupMock:    nil,
 			query:        "limit=test",
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: response.NewError(http.StatusText(http.StatusBadRequest)),
 		},
 		{
 			name: "internal server error",
@@ -78,7 +77,7 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 
 			app := testutils.CreateTestApp()
 
-			app.Get(":id<guid>?", categoryHandler.ListCategories)
+			app.Get("/:id<guid>?", categoryHandler.ListCategories)
 
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s?%s", tt.categoryID, tt.query), nil)
 

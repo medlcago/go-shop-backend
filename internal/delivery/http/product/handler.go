@@ -63,7 +63,7 @@ func (h *Handler) ListProducts(ctx fiber.Ctx) error {
 	var req dto.ListProductRequest
 
 	if err := ctx.Bind().Query(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, total, err := h.productService.ListProducts(ctx, req)
@@ -112,7 +112,7 @@ func (h *Handler) CreateProduct(ctx fiber.Ctx) error {
 	var req dto.ProductCreateRequest
 
 	if err := ctx.Bind().JSON(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, err := h.productService.CreateProduct(ctx, req)
@@ -146,7 +146,7 @@ func (h *Handler) UpdateProduct(ctx fiber.Ctx) error {
 	var req dto.ProductUpdateRequest
 
 	if err := ctx.Bind().JSON(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, err := h.productService.UpdateProduct(ctx, productID, req)
@@ -175,7 +175,7 @@ func (h *Handler) Search(ctx fiber.Ctx) error {
 	var req dto.SearchProductRequest
 
 	if err := ctx.Bind().Query(&req); err != nil {
-		return fiber.ErrBadRequest
+		return err
 	}
 
 	resp, total, err := h.productService.Search(ctx, req)

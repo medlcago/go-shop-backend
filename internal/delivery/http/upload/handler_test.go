@@ -59,7 +59,16 @@ func TestUploadHandler_SignURL(t *testing.T) {
 				Ext: "mp4",
 			},
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: testutils.ValidationError(
+				dto.SignURLRequest{
+					ContentType: "image/jpeg",
+					Entity: dto.Entity{
+						ID:   uuid.MustParse("e0261a9b-7cb0-4e62-8d6f-72f1fe12fad6"),
+						Type: dto.EntityProduct,
+					},
+					Ext: "mp4",
+				},
+			),
 		},
 		{
 			name: "internal server error",
@@ -145,7 +154,7 @@ func TestUploadHandler_Save(t *testing.T) {
 			name:         "validation error",
 			requestBody:  dto.UploadRequest{ObjectKey: "key"},
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: testutils.ValidationError(dto.UploadRequest{ObjectKey: "key"}),
 		},
 		{
 			name: "internal server error",

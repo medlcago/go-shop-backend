@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -175,7 +174,12 @@ func TestAuthHandler_Register(t *testing.T) {
 			name:         "invalid email",
 			setupMock:    nil,
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: testutils.ValidationError(
+				dto.UserRegisterRequest{
+					Email:    "test",
+					Password: "123123",
+				},
+			),
 			requestBody: dto.UserRegisterRequest{
 				Email:    "test",
 				Password: "123123",
@@ -185,7 +189,12 @@ func TestAuthHandler_Register(t *testing.T) {
 			name:         "invalid password",
 			setupMock:    nil,
 			expectedCode: http.StatusBadRequest,
-			expectedBody: response.NewError(fiber.ErrBadRequest.Message),
+			expectedBody: testutils.ValidationError(
+				dto.UserRegisterRequest{
+					Email:    "test@test.com",
+					Password: "123",
+				},
+			),
 			requestBody: dto.UserRegisterRequest{
 				Email:    "test@test.com",
 				Password: "123",

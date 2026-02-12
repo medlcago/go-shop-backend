@@ -24,6 +24,7 @@ func TestErrorHandler(t *testing.T) {
 		err            error
 		expectedStatus int
 		expectedBody   *response.Response[struct{}]
+		isBindingError bool
 	}{
 		{
 			name:           "Fiber Error - Not Found",
@@ -61,7 +62,12 @@ func TestErrorHandler(t *testing.T) {
 				return err
 			}(),
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   response.NewError("Key: 'TestStruct.Name' Error:Field validation for 'Name' failed on the 'required' tag"),
+			expectedBody: response.NewError(
+				"Validation failed",
+				map[string]string{
+					"name": "This field is required",
+				},
+			),
 		},
 		{
 			name:           "JSON UnmarshalTypeError",
@@ -81,6 +87,12 @@ func TestErrorHandler(t *testing.T) {
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   response.NewError(http.StatusText(http.StatusInternalServerError)),
 		},
+		{
+			name:           "Binding Error",
+			isBindingError: true,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   response.NewError(http.StatusText(http.StatusBadRequest)),
+		},
 	}
 
 	for _, tt := range tests {
@@ -90,10 +102,16 @@ func TestErrorHandler(t *testing.T) {
 			app := newTestApp(t)
 
 			app.Post("/", func(c fiber.Ctx) error {
+				if tt.isBindingError {
+					tt.err = c.Bind().Query(&struct {
+						Test int `query:"test"`
+					}{})
+				}
+
 				return c.App().ErrorHandler(c, tt.err)
 			})
 
-			req := httptest.NewRequest(http.MethodPost, "/", nil)
+			req := httptest.NewRequest(http.MethodPost, "/?test=test123", nil)
 
 			resp, err := app.Test(req)
 			assert.NoError(t, err)
