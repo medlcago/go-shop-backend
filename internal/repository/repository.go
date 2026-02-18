@@ -34,10 +34,16 @@ type UploadRepository interface {
 	Exists(ctx context.Context, objectKey string) (bool, error)
 }
 
-type CartRepository interface {
-	GetByUserID(ctx context.Context, userID uuid.UUID) (*models.Cart, error)
-	GetBySessionID(ctx context.Context, sessionID uuid.UUID) (*models.Cart, error)
-	Create(ctx context.Context, cart *models.Cart) error
-	Save(ctx context.Context, cart *models.Cart) error
-	DeleteItem(ctx context.Context, cartID uuid.UUID, productID uuid.UUID) error
+type OrderRepository interface {
+	Create(ctx context.Context, order *models.Order) error
+	Update(ctx context.Context, order *models.Order) error
+	GetByOwner(ctx context.Context, orderID uuid.UUID, userID *uuid.UUID, sessionID uuid.UUID, preload bool) (*models.Order, error)
+	GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error)
+}
+
+type OrderItemRepository interface {
+	GetItem(ctx context.Context, productID uuid.UUID, orderID uuid.UUID) (*models.OrderItem, error)
+	AddItem(ctx context.Context, orderItem *models.OrderItem) error
+	UpdateQuantity(ctx context.Context, itemID uuid.UUID, qty int) error
+	DeleteItem(ctx context.Context, orderID uuid.UUID, productID uuid.UUID) error
 }

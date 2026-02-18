@@ -55,7 +55,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 	mockProduct := &models.Product{
 		ID:    productID,
 		Name:  "Test Product",
-		Price: 99.99,
+		Price: 10_000,
 		Categories: []models.Category{
 			{
 				ID:   uuid.MustParse("e2f832de-12e7-46af-9e36-2f2df847f43d"),
@@ -77,7 +77,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 	suite.NotNil(product)
 	suite.Equal(productID.String(), product.ID)
 	suite.Equal("Test Product", product.Name)
-	suite.Equal(99.99, product.Price)
+	suite.Equal(int64(10_000), product.Price)
 	suite.Len(product.Categories, 2)
 	suite.Equal("e2f832de-12e7-46af-9e36-2f2df847f43d", product.Categories[0].ID)
 	suite.Equal("fc7afa36-c488-4e78-a2a5-852ebfeb06a2", product.Categories[1].ID)
@@ -126,7 +126,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 	mockProducts := []*models.Product{
 		{
 			Name:  "Product 1",
-			Price: 49.99,
+			Price: 499_900,
 			Categories: []models.Category{
 				{
 					ID:   uuid.MustParse("e2f832de-12e7-46af-9e36-2f2df847f43d"),
@@ -136,7 +136,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 		},
 		{
 			Name:  "Product 2",
-			Price: 99.99,
+			Price: 999_900,
 			Categories: []models.Category{
 				{
 					ID:   uuid.MustParse("e2f832de-12e7-46af-9e36-2f2df847f43d"),
@@ -160,11 +160,11 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 	suite.Len(products, 2)
 
 	suite.Equal("Product 1", products[0].Name)
-	suite.Equal(49.99, products[0].Price)
+	suite.Equal(int64(499_900), products[0].Price)
 	suite.Len(products[0].Categories, 1)
 
 	suite.Equal("Product 2", products[1].Name)
-	suite.Equal(99.99, products[1].Price)
+	suite.Equal(int64(999_900), products[1].Price)
 	suite.Len(products[1].Categories, 2)
 }
 
@@ -247,7 +247,7 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_Success_DefaultIsActive(
 	req := dto.ProductCreateRequest{
 		Name:        "Product 1",
 		Description: &description,
-		Price:       49.99,
+		Price:       499_900,
 		Stock:       10,
 	}
 
@@ -255,7 +255,7 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_Success_DefaultIsActive(
 	productModel := &models.Product{
 		Name:        "Product 1",
 		Description: &description,
-		Price:       49.99,
+		Price:       499_900,
 		Stock:       10,
 		IsActive:    true,
 		Slug:        slug,
@@ -323,7 +323,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 
 	name := "Updated Product"
 	description := "updated description"
-	price := 99.99
+	price := int64(999_900)
 	stock := 20
 	isActive := true
 
@@ -380,7 +380,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() 
 		Name:        "Old Name",
 		Slug:        "old-name",
 		Description: utils.Ptr("description"),
-		Price:       10,
+		Price:       10_000,
 		Stock:       3,
 		IsActive:    true,
 	}
@@ -435,12 +435,12 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() 
 	ctx := context.Background()
 	productID := uuid.New()
 
-	price := 100.0
+	price := int64(100000)
 
 	existingProduct := &models.Product{
 		ID:    productID,
 		Name:  "Product",
-		Price: 50,
+		Price: 50_000,
 	}
 
 	req := dto.ProductUpdateRequest{

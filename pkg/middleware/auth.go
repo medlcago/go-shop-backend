@@ -4,7 +4,6 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/token"
 	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
@@ -33,13 +32,14 @@ func NewJWT(manager token.Manager) Auth {
 
 func (j jwtMiddleware) Handle() fiber.Handler {
 	return func(ctx fiber.Ctx) error {
+		sessionID := getSessionID(ctx)
+		if sessionID == nil {
+			return apperrors.ErrInvalidCredentials
+		}
+		ctx.Locals(ctxSessionID, *sessionID)
+
 		authHeader := ctx.Get("Authorization")
 		if authHeader == "" {
-			sessionID := getOrCreateSessionID(ctx)
-
-			ctx.Locals(ctxSessionID, sessionID)
-			ctx.Locals(ctxIsAuth, false)
-
 			return ctx.Next()
 		}
 
@@ -82,34 +82,18 @@ func (j jwtMiddleware) Handle() fiber.Handler {
 	}
 }
 
-func getOrCreateSessionID(ctx fiber.Ctx) uuid.UUID {
-	if cookie := ctx.Cookies("session_id"); cookie != "" {
-		if id, err := uuid.Parse(cookie); err == nil {
-			return id
-		}
-	}
-
+func getSessionID(ctx fiber.Ctx) *uuid.UUID {
 	if h := ctx.Get("X-Session-ID"); h != "" {
 		if id, err := uuid.Parse(h); err == nil {
-			return id
+			return &id
 		}
 	}
-
-	sessionID := uuid.New()
-	ctx.Cookie(&fiber.Cookie{
-		Name:    "session_id",
-		Value:   sessionID.String(),
-		Path:    "/",
-		Expires: time.Now().UTC().Add(24 * 30 * time.Hour),
-		MaxAge:  30 * 24 * 3600,
-	})
-
-	return sessionID
+	return nil
 }
 
 type UserContext struct {
 	UserID    *uuid.UUID
-	SessionID *uuid.UUID
+	SessionID uuid.UUID
 	Role      string
 	IsAuth    bool
 }
@@ -125,7 +109,7 @@ func GetUserContext(ctx fiber.Ctx) UserContext {
 
 	if v := ctx.Locals(ctxSessionID); v != nil {
 		if id, ok := v.(uuid.UUID); ok {
-			userCtx.SessionID = &id
+			userCtx.SessionID = id
 		}
 	}
 

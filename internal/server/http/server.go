@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"go-shop-backend/internal/core"
 	authHttp "go-shop-backend/internal/delivery/http/auth"
-	cartHttp "go-shop-backend/internal/delivery/http/cart"
 	categoryHttp "go-shop-backend/internal/delivery/http/category"
+	orderHttp "go-shop-backend/internal/delivery/http/order"
 	productHttp "go-shop-backend/internal/delivery/http/product"
 	uploadHttp "go-shop-backend/internal/delivery/http/upload"
 	userHttp "go-shop-backend/internal/delivery/http/user"
@@ -129,6 +129,6 @@ func (s *Server) Init() {
 	uploadHandler := uploadHttp.NewHandler(s.deps.UploadService)
 	uploadHttp.RegisterRoutes(v1, uploadHandler, authMiddleware)
 
-	cartHandler := cartHttp.NewHandler(s.deps.CartService)
-	cartHttp.RegisterRoutes(v1, cartHandler, authMiddleware)
+	orderHandler := orderHttp.NewHandler(s.deps.OrderService)
+	orderHttp.RegisterRoutes(v1, orderHandler, authMiddleware)
 }

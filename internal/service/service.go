@@ -42,8 +42,10 @@ type EntityService interface {
 	Exists(ctx context.Context, entityType dto.EntityType, id uuid.UUID) (bool, error)
 }
 
-type CartService interface {
-	GetCart(ctx context.Context, userID *uuid.UUID, sessionID *uuid.UUID) (*dto.CartResponse, error)
-	AddItem(ctx context.Context, userID *uuid.UUID, sessionID *uuid.UUID, req dto.AddItemRequest) (*dto.CartResponse, error)
-	DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID *uuid.UUID, productID uuid.UUID) (*dto.CartResponse, error)
+type OrderService interface {
+	CreateOrder(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID) (*dto.OrderResponse, error)
+	GetOrder(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)
+	GetOrders(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*dto.OrderResponse, int64, error)
+	AddItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, req dto.AddOrderItemRequest) (*dto.OrderResponse, error)
+	DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error)
 }

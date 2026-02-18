@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  go-shop-backend_internal_dto.AddItemRequest:
+  go-shop-backend_internal_dto.AddOrderItemRequest:
     properties:
       product_id:
         type: string
@@ -9,17 +9,6 @@ definitions:
     required:
     - product_id
     - quantity
-    type: object
-  go-shop-backend_internal_dto.CartResponse:
-    properties:
-      id:
-        type: string
-      items:
-        items:
-          $ref: '#/definitions/go-shop-backend_internal_dto.ItemResponse'
-        type: array
-      total_cost:
-        type: number
     type: object
   go-shop-backend_internal_dto.Entity:
     properties:
@@ -37,14 +26,31 @@ definitions:
     type: string
     x-enum-varnames:
     - EntityProduct
-  go-shop-backend_internal_dto.ItemResponse:
+  go-shop-backend_internal_dto.OrderItemResponse:
     properties:
       product_id:
+        type: string
+      product_name:
         type: string
       quantity:
         type: integer
       unit_price:
-        type: number
+        type: integer
+    type: object
+  go-shop-backend_internal_dto.OrderResponse:
+    properties:
+      completed_at:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.OrderItemResponse'
+        type: array
+      status:
+        type: string
+      total_amount:
+        type: integer
     type: object
   go-shop-backend_internal_dto.ProductCategoryResponse:
     properties:
@@ -70,7 +76,7 @@ definitions:
         minLength: 2
         type: string
       price:
-        type: number
+        type: integer
       stock:
         type: integer
     required:
@@ -80,6 +86,8 @@ definitions:
     type: object
   go-shop-backend_internal_dto.ProductResponse:
     properties:
+      available:
+        type: integer
       categories:
         items:
           $ref: '#/definitions/go-shop-backend_internal_dto.ProductCategoryResponse'
@@ -99,7 +107,7 @@ definitions:
       name:
         type: string
       price:
-        type: number
+        type: integer
       slug:
         type: string
       stock:
@@ -120,7 +128,7 @@ definitions:
         minLength: 2
         type: string
       price:
-        type: number
+        type: integer
       stock:
         minimum: 0
         type: integer
@@ -225,6 +233,15 @@ definitions:
       user:
         $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
     type: object
+  go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.OrderResponse'
+        type: array
+      total:
+        type: integer
+    type: object
   go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse:
     properties:
       data:
@@ -245,31 +262,22 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-any:
     properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result: {}
     type: object
-  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse:
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse:
     properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
-        $ref: '#/definitions/go-shop-backend_internal_dto.CartResponse'
+        $ref: '#/definitions/go-shop-backend_internal_dto.OrderResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse:
     properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
@@ -277,10 +285,7 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse:
     properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
@@ -288,10 +293,7 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse:
     properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
@@ -299,10 +301,7 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
@@ -310,10 +309,7 @@ definitions:
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse
   : properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
@@ -321,10 +317,7 @@ definitions:
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse
   : properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
@@ -332,10 +325,7 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-internal_dto_UserResponse:
     properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
+      details: {}
       error:
         type: string
       result:
@@ -426,89 +416,6 @@ paths:
       summary: Register
       tags:
       - auth
-  /cart:
-    get:
-      consumes:
-      - application/json
-      description: Get user's cart
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Get cart
-      tags:
-      - cart
-  /cart/items:
-    post:
-      consumes:
-      - application/json
-      description: Add item to cart
-      parameters:
-      - description: Item data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.AddItemRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Add item
-      tags:
-      - cart
-  /cart/items/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete item from cart by ID
-      parameters:
-      - description: Item ID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_CartResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Delete item
-      tags:
-      - cart
   /categories/:
     get:
       consumes:
@@ -599,6 +506,233 @@ paths:
       summary: List categories or subcategories
       tags:
       - categories
+  /orders:
+    get:
+      description: Get paginated list of orders
+      parameters:
+      - default: 50
+        description: Maximum number of items to return
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      - description: Session ID
+        format: uuid
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      - description: Order status
+        enum:
+        - draft
+        - pending
+        - paid
+        - canceled
+        - completed
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get list of orders
+      tags:
+      - Orders
+    post:
+      description: Create new order
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Create new order
+      tags:
+      - Orders
+  /orders/{id}:
+    get:
+      description: Get single order by ID
+      parameters:
+      - description: Order ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        format: uuid
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get order by ID
+      tags:
+      - Orders
+  /orders/{id}/items:
+    post:
+      consumes:
+      - application/json
+      description: Add product to existing order
+      parameters:
+      - description: Order ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        format: uuid
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      - description: Add item request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.AddOrderItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Add item to order
+      tags:
+      - Orders
+  /orders/{id}/items/{item_id}:
+    delete:
+      description: Delete item from order
+      parameters:
+      - description: Order ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Item ID
+        format: uuid
+        in: path
+        name: item_id
+        required: true
+        type: string
+      - description: Session ID
+        format: uuid
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Delete item from order
+      tags:
+      - Orders
   /products:
     post:
       consumes:

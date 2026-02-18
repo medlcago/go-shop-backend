@@ -29,11 +29,12 @@ type Dependencies struct {
 	Storage      storage.Storage
 	TokenManager token.Manager
 
-	UserRepository     repository.UserRepository
-	ProductRepository  repository.ProductRepository
-	CategoryRepository repository.CategoryRepository
-	UploadRepository   repository.UploadRepository
-	CartRepository     repository.CartRepository
+	UserRepository      repository.UserRepository
+	ProductRepository   repository.ProductRepository
+	CategoryRepository  repository.CategoryRepository
+	UploadRepository    repository.UploadRepository
+	OrderRepository     repository.OrderRepository
+	OrderItemRepository repository.OrderItemRepository
 
 	AuthService     service.AuthService
 	UserService     service.UserService
@@ -41,7 +42,7 @@ type Dependencies struct {
 	CategoryService service.CategoryService
 	EntityService   service.EntityService
 	UploadService   service.UploadService
-	CartService     service.CartService
+	OrderService    service.OrderService
 }
 
 func NewDependencies(cfg *config.Config) *Dependencies {
@@ -79,7 +80,8 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
 	uploadRepo := gormRepo.NewUploadRepository(db)
-	cartRepo := gormRepo.NewCartRepository(db)
+	orderRepo := gormRepo.NewOrderRepository(db)
+	orderItemRepo := gormRepo.NewOrderItemRepository(db)
 
 	authService := service.NewAuthService(userRepo, jwtManager, passwordHasher)
 	userService := service.NewUserService(userRepo)
@@ -87,7 +89,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload, contentTypeDetector)
 	productService := service.NewProductService(productRepo, uploadService)
 	categoryService := service.NewCategoryService(categoryRepo)
-	cartService := service.NewCartService(cartRepo, productRepo, txManager)
+	orderService := service.NewOrderService(orderRepo, orderItemRepo, productRepo, txManager)
 
 	return &Dependencies{
 		Cfg:       cfg,
@@ -100,11 +102,12 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		Storage:      minioStorage,
 		TokenManager: jwtManager,
 
-		UserRepository:     userRepo,
-		ProductRepository:  productRepo,
-		CategoryRepository: categoryRepo,
-		UploadRepository:   uploadRepo,
-		CartRepository:     cartRepo,
+		UserRepository:      userRepo,
+		ProductRepository:   productRepo,
+		CategoryRepository:  categoryRepo,
+		UploadRepository:    uploadRepo,
+		OrderRepository:     orderRepo,
+		OrderItemRepository: orderItemRepo,
 
 		AuthService:     authService,
 		UserService:     userService,
@@ -112,6 +115,6 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		CategoryService: categoryService,
 		EntityService:   entityService,
 		UploadService:   uploadService,
-		CartService:     cartService,
+		OrderService:    orderService,
 	}
 }
