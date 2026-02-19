@@ -18,10 +18,6 @@ type OrderItemResponse struct {
 	UnitPrice   int64     `json:"unit_price"`
 }
 
-type OrderCreateRequest struct {
-	Status string `json:"status" validate:"required,oneof=PENDING"`
-}
-
 type OrderResponse struct {
 	ID          uuid.UUID           `json:"id"`
 	Status      string              `json:"status"`

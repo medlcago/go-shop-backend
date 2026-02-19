@@ -160,11 +160,11 @@ func (o *orderService) AddItem(
 			if err := o.orderItemRepo.AddItem(ctx, item); err != nil {
 				return err
 			}
-		}
-
-		// item found, update quantity
-		if err = o.orderItemRepo.UpdateQuantity(ctx, item.ID, req.Quantity); err != nil {
-			return err
+		} else {
+			// item found, update quantity
+			if err = o.orderItemRepo.UpdateQuantity(ctx, item.ID, req.Quantity); err != nil {
+				return err
+			}
 		}
 
 		order, err = o.recalculateOrder(ctx, orderID, userID, sessionID)
