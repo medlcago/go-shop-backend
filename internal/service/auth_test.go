@@ -65,9 +65,9 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 	suite.passwordHasher.On("Verify", req.Password, expectedUser.PasswordHash).
 		Return(true, nil).Once()
 
-	payload := map[string]interface{}{
-		"user_id": expectedUser.ID,
-		"role":    expectedUser.Role,
+	payload := token.Payload{
+		UserID:   expectedUser.ID.String(),
+		UserRole: string(expectedUser.Role),
 	}
 
 	suite.tokenManager.On("GenerateAccessToken", payload).
@@ -193,9 +193,9 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 		return user.Email == req.Email && user.PasswordHash == passwordHash
 	})).Return(nil).Once()
 
-	payload := map[string]interface{}{
-		"user_id": userID,
-		"role":    userRole,
+	payload := token.Payload{
+		UserID:   userID.String(),
+		UserRole: string(userRole),
 	}
 
 	suite.tokenManager.On("GenerateAccessToken", payload).Return("test_access_token", nil).Once()

@@ -16,27 +16,10 @@ const (
 	ctxIsAuth    = "isAuth"
 )
 
-type Auth interface {
-	Handle() fiber.Handler
-}
-
-type jwtMiddleware struct {
-	manager token.Manager
-}
-
-func NewJWT(manager token.Manager) Auth {
-	return &jwtMiddleware{
-		manager: manager,
-	}
-}
-
-func (j jwtMiddleware) Handle() fiber.Handler {
+func OptionalAuth(manager token.Manager) fiber.Handler {
 	return func(ctx fiber.Ctx) error {
-		sessionID := getSessionID(ctx)
-		if sessionID == nil {
-			return apperrors.ErrInvalidCredentials
-		}
-		ctx.Locals(ctxSessionID, *sessionID)
+		sid := getSessionID(ctx)
+		ctx.Locals(ctxSessionID, sid)
 
 		authHeader := ctx.Get("Authorization")
 		if authHeader == "" {
@@ -44,39 +27,52 @@ func (j jwtMiddleware) Handle() fiber.Handler {
 		}
 
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			return apperrors.ErrInvalidCredentials
+			return ctx.Next()
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		claims, err := j.manager.ValidateToken(tokenString)
+		claims, err := manager.ValidateToken(tokenString)
 		if err != nil {
-			return apperrors.ErrInvalidCredentials
+			return ctx.Next()
 		}
 
-		t, ok := claims["type"].(string)
-		if !ok || t != token.AccessTokenType {
-			return apperrors.ErrInvalidCredentials
-		}
-
-		userIDStr, ok := claims["user_id"].(string)
-		if !ok {
-			return apperrors.ErrInvalidCredentials
-		}
-
-		userID, err := uuid.Parse(userIDStr)
+		uid, err := uuid.Parse(claims.UserID)
 		if err != nil {
-			return apperrors.ErrInvalidCredentials
+			return ctx.Next()
 		}
 
-		userRole, ok := claims["role"].(string)
-		if !ok {
-			return apperrors.ErrInvalidCredentials
+		if claims.TokenType != token.AccessTokenType {
+			return ctx.Next()
 		}
 
-		ctx.Locals(ctxUserID, userID)
-		ctx.Locals(ctxUserRole, userRole)
+		ctx.Locals(ctxUserID, uid)
+		ctx.Locals(ctxUserRole, claims.UserRole)
 		ctx.Locals(ctxIsAuth, true)
+
+		return ctx.Next()
+	}
+}
+
+func RequireAuth() fiber.Handler {
+	return func(ctx fiber.Ctx) error {
+		userCtx := GetUserContext(ctx)
+
+		if !userCtx.IsAuth {
+			return apperrors.ErrInvalidCredentials
+		}
+
+		return ctx.Next()
+	}
+}
+
+func RequireSessionID() fiber.Handler {
+	return func(ctx fiber.Ctx) error {
+		userCtx := GetUserContext(ctx)
+
+		if userCtx.SessionID == nil {
+			return apperrors.ErrInvalidCredentials
+		}
 
 		return ctx.Next()
 	}
@@ -93,7 +89,7 @@ func getSessionID(ctx fiber.Ctx) *uuid.UUID {
 
 type UserContext struct {
 	UserID    *uuid.UUID
-	SessionID uuid.UUID
+	SessionID *uuid.UUID
 	Role      string
 	IsAuth    bool
 }
@@ -108,7 +104,7 @@ func GetUserContext(ctx fiber.Ctx) UserContext {
 	}
 
 	if v := ctx.Locals(ctxSessionID); v != nil {
-		if id, ok := v.(uuid.UUID); ok {
+		if id, ok := v.(*uuid.UUID); ok {
 			userCtx.SessionID = id
 		}
 	}

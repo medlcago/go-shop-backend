@@ -20,12 +20,16 @@ func NewJWT(secretKey string, accessTokenExpiredTime, refreshTokenExpiredTime ti
 	}
 }
 
-func (j JWT) GenerateAccessToken(payload map[string]any) (string, error) {
-	payload["type"] = AccessTokenType
-	exp := time.Now().UTC().Add(j.accessTokenExpiredTime).Unix()
-	claims := jwt.MapClaims{
-		"payload": payload,
-		"exp":     exp,
+func (j JWT) GenerateAccessToken(payload Payload) (string, error) {
+	exp := time.Now().UTC().Add(j.accessTokenExpiredTime)
+
+	claims := UserClaims{
+		UserID:    payload.UserID,
+		UserRole:  payload.UserRole,
+		TokenType: AccessTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(exp),
+		},
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -37,12 +41,16 @@ func (j JWT) GenerateAccessToken(payload map[string]any) (string, error) {
 	return token, nil
 }
 
-func (j JWT) GenerateRefreshToken(payload map[string]any) (string, error) {
-	payload["type"] = RefreshTokenType
-	exp := time.Now().UTC().Add(j.refreshTokenExpiredTime).Unix()
-	claims := jwt.MapClaims{
-		"payload": payload,
-		"exp":     exp,
+func (j JWT) GenerateRefreshToken(payload Payload) (string, error) {
+	exp := time.Now().UTC().Add(j.refreshTokenExpiredTime)
+
+	claims := UserClaims{
+		UserID:    payload.UserID,
+		UserRole:  payload.UserRole,
+		TokenType: RefreshTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(exp),
+		},
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -54,9 +62,8 @@ func (j JWT) GenerateRefreshToken(payload map[string]any) (string, error) {
 	return token, nil
 }
 
-func (j JWT) ValidateToken(tokenString string) (map[string]interface{}, error) {
-	tokenData := jwt.MapClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, &tokenData, func(token *jwt.Token) (interface{}, error) {
+func (j JWT) ValidateToken(tokenString string) (*UserClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(j.secretKey), nil
 	})
 
@@ -68,5 +75,10 @@ func (j JWT) ValidateToken(tokenString string) (map[string]interface{}, error) {
 		return nil, jwt.ErrInvalidKey
 	}
 
-	return tokenData["payload"].(map[string]interface{}), nil
+	claims, ok := token.Claims.(*UserClaims)
+	if !ok {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	return claims, nil
 }

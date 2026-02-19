@@ -3,6 +3,7 @@ package order
 import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service"
+	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 
@@ -34,8 +35,11 @@ func NewHandler(orderService service.OrderService) *Handler {
 //	@Router			/orders [post]
 func (h *Handler) CreateOrder(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.SessionID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
 
-	resp, err := h.orderService.CreateOrder(ctx, userCtx.UserID, userCtx.SessionID)
+	resp, err := h.orderService.CreateOrder(ctx, userCtx.UserID, *userCtx.SessionID)
 	if err != nil {
 		return err
 	}
@@ -59,10 +63,14 @@ func (h *Handler) CreateOrder(ctx fiber.Ctx) error {
 //	@Failure		500				{object}	response.Response[any]
 //	@Router			/orders/{id} [get]
 func (h *Handler) GetOrder(ctx fiber.Ctx) error {
-	orderID := uuid.MustParse(ctx.Params("id"))
 	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.SessionID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
 
-	resp, err := h.orderService.GetOrder(ctx, userCtx.UserID, userCtx.SessionID, orderID)
+	orderID := uuid.MustParse(ctx.Params("id"))
+
+	resp, err := h.orderService.GetOrder(ctx, userCtx.UserID, *userCtx.SessionID, orderID)
 	if err != nil {
 		return err
 	}
@@ -86,14 +94,17 @@ func (h *Handler) GetOrder(ctx fiber.Ctx) error {
 //	@Failure		500				{object}	response.Response[any]
 //	@Router			/orders [get]
 func (h *Handler) GetOrders(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.SessionID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
+
 	var req dto.ListOrderRequest
 	if err := ctx.Bind().Query(&req); err != nil {
 		return err
 	}
 
-	userCtx := middleware.GetUserContext(ctx)
-
-	resp, total, err := h.orderService.GetOrders(ctx, userCtx.UserID, userCtx.SessionID, req)
+	resp, total, err := h.orderService.GetOrders(ctx, userCtx.UserID, *userCtx.SessionID, req)
 	if err != nil {
 		return err
 	}
@@ -121,15 +132,19 @@ func (h *Handler) GetOrders(ctx fiber.Ctx) error {
 //	@Failure		500				{object}	response.Response[any]
 //	@Router			/orders/{id}/items [post]
 func (h *Handler) AddItem(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.SessionID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
+
 	var req dto.AddOrderItemRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
 		return err
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
-	userCtx := middleware.GetUserContext(ctx)
 
-	resp, err := h.orderService.AddItem(ctx, userCtx.UserID, userCtx.SessionID, orderID, req)
+	resp, err := h.orderService.AddItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, req)
 	if err != nil {
 		return err
 	}
@@ -153,11 +168,15 @@ func (h *Handler) AddItem(ctx fiber.Ctx) error {
 //	@Failure		500				{object}	response.Response[any]
 //	@Router			/orders/{id}/items/{item_id} [delete]
 func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.SessionID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
+
 	orderID := uuid.MustParse(ctx.Params("id"))
 	itemID := uuid.MustParse(ctx.Params("item_id"))
-	userCtx := middleware.GetUserContext(ctx)
 
-	resp, err := h.orderService.DeleteItem(ctx, userCtx.UserID, userCtx.SessionID, orderID, itemID)
+	resp, err := h.orderService.DeleteItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, itemID)
 	if err != nil {
 		return err
 	}

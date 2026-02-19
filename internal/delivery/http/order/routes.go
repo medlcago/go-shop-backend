@@ -6,9 +6,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func RegisterRoutes(r fiber.Router, orderHandler *Handler, auth middleware.Auth) {
+func RegisterRoutes(r fiber.Router, orderHandler *Handler) {
 	orderGroup := r.Group("/orders")
-	orderGroup.Use(auth.Handle())
+	orderGroup.Use(middleware.RequireSessionID())
 	{
 		orderGroup.Post("/", orderHandler.CreateOrder)
 		orderGroup.Get("/", orderHandler.GetOrders)

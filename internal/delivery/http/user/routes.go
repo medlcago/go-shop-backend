@@ -6,9 +6,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func RegisterRoutes(r fiber.Router, userHandler *Handler, auth middleware.Auth) {
+func RegisterRoutes(r fiber.Router, userHandler *Handler) {
 	userGroup := r.Group("/users")
 	{
-		userGroup.Get("/me", auth.Handle(), userHandler.GetMe)
+		userGroup.Get("/me", middleware.RequireAuth(), userHandler.GetMe)
 	}
 }

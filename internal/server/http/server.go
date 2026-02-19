@@ -70,7 +70,7 @@ func (s *Server) runServer(errChan chan<- error) {
 	)
 
 	err := s.app.Listen(addr, fiber.ListenConfig{
-		DisableStartupMessage: s.deps.Cfg.Environment == string(logger.EnvProduction),
+		DisableStartupMessage: !s.IsDevMode(),
 	})
 
 	if err != nil {
@@ -106,29 +106,29 @@ func (s *Server) closeResources() error {
 }
 
 func (s *Server) Init() {
+	s.app.Use(middleware.OptionalAuth(s.deps.TokenManager))
+
 	if s.IsDevMode() {
 		s.app.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
 	}
 
 	v1 := s.app.Group("/api/v1")
 
-	authMiddleware := middleware.NewJWT(s.deps.TokenManager)
-
 	authHandler := authHttp.NewHandler(s.deps.AuthService)
 	authHttp.RegisterRoutes(v1, authHandler)
 
 	userHandler := userHttp.NewHandler(s.deps.UserService)
-	userHttp.RegisterRoutes(v1, userHandler, authMiddleware)
+	userHttp.RegisterRoutes(v1, userHandler)
 
 	productHandler := productHttp.NewHandler(s.deps.ProductService)
-	productHttp.RegisterRoutes(v1, productHandler, authMiddleware)
+	productHttp.RegisterRoutes(v1, productHandler)
 
 	categoryHandler := categoryHttp.NewHandler(s.deps.CategoryService)
 	categoryHttp.RegisterRoutes(v1, categoryHandler)
 
 	uploadHandler := uploadHttp.NewHandler(s.deps.UploadService)
-	uploadHttp.RegisterRoutes(v1, uploadHandler, authMiddleware)
+	uploadHttp.RegisterRoutes(v1, uploadHandler)
 
 	orderHandler := orderHttp.NewHandler(s.deps.OrderService)
-	orderHttp.RegisterRoutes(v1, orderHandler, authMiddleware)
+	orderHttp.RegisterRoutes(v1, orderHandler)
 }

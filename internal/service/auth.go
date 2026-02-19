@@ -69,7 +69,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 
 	passwordHash, err := a.passwordHasher.Hash(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to hash hasher: %w", op, err)
+		return nil, fmt.Errorf("%s: failed to hash password: %w", op, err)
 	}
 
 	user := &models.User{
@@ -96,9 +96,9 @@ func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error
 	)
 
 	var errs []error
-	payload := map[string]interface{}{
-		"user_id": user.ID,
-		"role":    user.Role,
+	payload := token.Payload{
+		UserID:   user.ID.String(),
+		UserRole: string(user.Role),
 	}
 
 	accessToken, err := a.tokenManager.GenerateAccessToken(payload)
