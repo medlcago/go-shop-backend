@@ -11,13 +11,13 @@ type uploadRepository struct {
 	db database.Provider
 }
 
-func NewUploadRepository(db database.Provider) repository.UploadRepository {
+func NewUploadRepository(db database.Provider) *uploadRepository {
 	return &uploadRepository{
 		db: db,
 	}
 }
 
-func (u *uploadRepository) Save(ctx context.Context, req *models.Upload) error {
+func (u *uploadRepository) Create(ctx context.Context, req *models.Upload) error {
 	db := u.db.GetDB(ctx)
 
 	err := db.Create(req).Error

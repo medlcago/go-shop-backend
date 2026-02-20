@@ -14,7 +14,7 @@ type UploadRepositoryMock struct {
 	mock.Mock
 }
 
-func (u *UploadRepositoryMock) Save(ctx context.Context, req *models.Upload) error {
+func (u *UploadRepositoryMock) Create(ctx context.Context, req *models.Upload) error {
 	args := u.Called(ctx, req)
 	return args.Error(0)
 }

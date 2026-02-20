@@ -13,7 +13,7 @@ type orderItem struct {
 	db database.Provider
 }
 
-func NewOrderItemRepository(db database.Provider) repository.OrderItemRepository {
+func NewOrderItemRepository(db database.Provider) *orderItem {
 	return &orderItem{
 		db: db,
 	}

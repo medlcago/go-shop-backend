@@ -84,7 +84,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_Success() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	suite.storage.On("CreatePresignedPost", mock.Anything, mock.MatchedBy(func(opts storage.PresignedPostOptions) bool {
 		return opts.ContentType == "image/png" &&
@@ -155,7 +155,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_EntityNotFound() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(false, nil).Once()
+		Return(apperrors.ErrEntityNotFound).Once()
 
 	resp, err := suite.uploadService.SignURL(ctx, req)
 
@@ -176,7 +176,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_UnknownEntityType() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(false, apperrors.ErrUnknownEntityType).Once()
+		Return(apperrors.ErrUnknownEntityType).Once()
 
 	resp, err := suite.uploadService.SignURL(ctx, req)
 
@@ -197,7 +197,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_EntityServiceError() {
 
 	expectedErr := errors.New("database error")
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(false, errors.New("database error"))
+		Return(errors.New("database error"))
 
 	resp, err := suite.uploadService.SignURL(ctx, req)
 
@@ -217,7 +217,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_StorageError() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	expectedErr := errors.New("storage error")
 	suite.storage.On("CreatePresignedPost", ctx, mock.Anything).
@@ -229,7 +229,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_StorageError() {
 	suite.ErrorContains(err, expectedErr.Error())
 }
 
-// ==================== Save Tests ====================
+// ==================== Create Tests ====================
 
 func (suite *UploadServiceTestSuite) TestSave_Success() {
 	ctx := context.Background()
@@ -265,7 +265,7 @@ func (suite *UploadServiceTestSuite) TestSave_Success() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
 		Return(objectInfo, nil).Once()
@@ -280,7 +280,7 @@ func (suite *UploadServiceTestSuite) TestSave_Success() {
 	suite.ctDetector.On("Detect", obj).
 		Return(detectedCT, nil).Once()
 
-	suite.uploadRepo.On("Save", ctx, mock.MatchedBy(func(u *models.Upload) bool {
+	suite.uploadRepo.On("Create", ctx, mock.MatchedBy(func(u *models.Upload) bool {
 		return u.ObjectKey == req.ObjectKey &&
 			u.EntityID == entityID &&
 			*u.ContentType == detectedCT
@@ -308,7 +308,7 @@ func (suite *UploadServiceTestSuite) TestSave_EntityNotFound() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(false, nil).Once()
+		Return(apperrors.ErrEntityNotFound).Once()
 
 	resp, err := suite.uploadService.Save(ctx, req)
 
@@ -370,7 +370,7 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
 				Metadata: tt.metadata,
 			}
 			suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-				Return(true, nil).Once()
+				Return(nil).Once()
 
 			suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
 				Return(objInfo, nil).Once()
@@ -408,7 +408,7 @@ func (suite *UploadServiceTestSuite) TestSave_FileAlreadyUploaded() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
@@ -455,7 +455,7 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidDetectedContentType() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
@@ -509,7 +509,7 @@ func (suite *UploadServiceTestSuite) TestSave_RepositoryError() {
 	}
 
 	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
@@ -524,7 +524,7 @@ func (suite *UploadServiceTestSuite) TestSave_RepositoryError() {
 		Return("image/jpeg", nil).Once()
 
 	expectedErr := errors.New("database save error")
-	suite.uploadRepo.On("Save", ctx, mock.Anything).
+	suite.uploadRepo.On("Create", ctx, mock.Anything).
 		Return(expectedErr).Once()
 
 	resp, err := suite.uploadService.Save(ctx, req)

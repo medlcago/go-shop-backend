@@ -39,7 +39,7 @@ type PublicURLBuilder interface {
 }
 
 type EntityService interface {
-	Exists(ctx context.Context, entityType dto.EntityType, id uuid.UUID) (bool, error)
+	Exists(ctx context.Context, entityType dto.EntityType, id uuid.UUID) error
 }
 
 type OrderService interface {

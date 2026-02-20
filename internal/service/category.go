@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 	"go-shop-backend/internal/dto"
+	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
-	"go-shop-backend/pkg/utils"
+	"go-shop-backend/pkg/mapper"
 )
 
 type categoryService struct {
 	categoryRepo repository.CategoryRepository
 }
 
-func NewCategoryService(categoryRepo repository.CategoryRepository) CategoryService {
+func NewCategoryService(categoryRepo repository.CategoryRepository) *categoryService {
 	return &categoryService{
 		categoryRepo: categoryRepo,
 	}
@@ -26,10 +27,10 @@ func (c *categoryService) ListCategories(ctx context.Context, req dto.ListCatego
 		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var res []*dto.ProductCategoryResponse
-	if err := utils.Copy(&res, categories); err != nil {
-		return nil, 0, fmt.Errorf("%s: failed to copy categories: %w", op, err)
+	response, err := mapper.MapList[*models.Category, *dto.ProductCategoryResponse](categories)
+	if err != nil {
+		return nil, 0, fmt.Errorf("%s: failed to map categories: %w", op, err)
 	}
 
-	return res, totalCategories, nil
+	return response, totalCategories, nil
 }

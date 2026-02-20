@@ -12,7 +12,7 @@ type EntityServiceMock struct {
 	mock.Mock
 }
 
-func (e *EntityServiceMock) Exists(ctx context.Context, entityType dto.EntityType, id uuid.UUID) (bool, error) {
+func (e *EntityServiceMock) Exists(ctx context.Context, entityType dto.EntityType, id uuid.UUID) error {
 	args := e.Called(ctx, entityType, id)
-	return args.Bool(0), args.Error(1)
+	return args.Error(0)
 }

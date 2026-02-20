@@ -39,7 +39,7 @@ func NewUploadService(
 	uploadRepo repository.UploadRepository,
 	uploadConfig config.Upload,
 	ctDetector ContentTypeDetector,
-) UploadService {
+) *uploadService {
 	return &uploadService{
 		storage:       storage,
 		entityService: entityService,
@@ -56,14 +56,9 @@ func (u *uploadService) SignURL(ctx context.Context, req dto.SignURLRequest) (*d
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	exists, err := u.entityService.Exists(ctx, req.Entity.Type, req.Entity.ID)
-
+	err := u.entityService.Exists(ctx, req.Entity.Type, req.Entity.ID)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	if !exists {
-		return nil, apperrors.ErrEntityNotFound
 	}
 
 	uploadID := uuid.New()
@@ -85,7 +80,7 @@ func (u *uploadService) SignURL(ctx context.Context, req dto.SignURLRequest) (*d
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	resp := &dto.SignURLResponse{
+	response := &dto.SignURLResponse{
 		UploadID:    uploadID,
 		UploadURL:   result.URL,
 		Filename:    objectKey,
@@ -94,19 +89,15 @@ func (u *uploadService) SignURL(ctx context.Context, req dto.SignURLRequest) (*d
 		FormData:    result.Fields,
 	}
 
-	return resp, nil
+	return response, nil
 }
 
 func (u *uploadService) Save(ctx context.Context, req dto.UploadRequest) (*dto.UploadResponse, error) {
-	const op = "uploadService.Save"
+	const op = "uploadService.Create"
 
-	entityExists, err := u.entityService.Exists(ctx, req.Entity.Type, req.Entity.ID)
+	err := u.entityService.Exists(ctx, req.Entity.Type, req.Entity.ID)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	if !entityExists {
-		return nil, apperrors.ErrEntityNotFound
 	}
 
 	obj, err := u.storage.GetObjectInfo(ctx, req.ObjectKey)
@@ -153,13 +144,13 @@ func (u *uploadService) Save(ctx context.Context, req dto.UploadRequest) (*dto.U
 		IsMain:      false,
 	}
 
-	if err := u.uploadRepo.Save(ctx, upload); err != nil {
+	if err := u.uploadRepo.Create(ctx, upload); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	url := u.PublicURL(ctx, req.ObjectKey)
 
-	resp := &dto.UploadResponse{
+	response := &dto.UploadResponse{
 		URL:         url,
 		ContentType: upload.ContentType,
 		IsMain:      upload.IsMain,
@@ -167,7 +158,7 @@ func (u *uploadService) Save(ctx context.Context, req dto.UploadRequest) (*dto.U
 		UpdatedAt:   upload.UpdatedAt,
 	}
 
-	return resp, nil
+	return response, nil
 }
 
 func (u *uploadService) PublicURL(ctx context.Context, objectKey string) string {

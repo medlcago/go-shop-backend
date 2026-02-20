@@ -46,7 +46,7 @@ type OrderItem struct {
 
 	ProductID   uuid.UUID `gorm:"type:uuid;not null;index"`
 	ProductName string    `gorm:"type:varchar(255);not null"`
-	Product     *Product  `gorm:"constraint:OnUpdate:CASCADE;"`
+	Product     *Product  `gorm:"constraint:OnUpdate:RESTRICT;"`
 
 	Quantity  int   `gorm:"not null;check:quantity > 0"`
 	UnitPrice int64 `gorm:"not null;check:unit_price >= 0"`

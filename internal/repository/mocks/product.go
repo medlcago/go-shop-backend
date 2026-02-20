@@ -31,7 +31,7 @@ func (p *ProductRepositoryMock) ListProductsByCategory(ctx context.Context, req 
 	return args.Get(0).([]*models.Product), int64(args.Int(1)), args.Error(2)
 }
 
-func (p *ProductRepositoryMock) CreateProduct(ctx context.Context, product *models.Product) error {
+func (p *ProductRepositoryMock) Create(ctx context.Context, product *models.Product) error {
 	args := p.Called(ctx, product)
 	return args.Error(0)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, user *models.User) error
+	Create(ctx context.Context, user *models.User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByIDUnscoped(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
@@ -19,7 +19,7 @@ type UserRepository interface {
 type ProductRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Product, error)
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
-	CreateProduct(ctx context.Context, product *models.Product) error
+	Create(ctx context.Context, product *models.Product) error
 	UpdateProduct(ctx context.Context, product *models.Product) error
 	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 	Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error)
@@ -30,7 +30,7 @@ type CategoryRepository interface {
 }
 
 type UploadRepository interface {
-	Save(ctx context.Context, req *models.Upload) error
+	Create(ctx context.Context, req *models.Upload) error
 	Exists(ctx context.Context, objectKey string) (bool, error)
 }
 

@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"go-shop-backend/internal/dto"
+	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
-	"go-shop-backend/pkg/utils"
+	"go-shop-backend/pkg/mapper"
 
 	"github.com/google/uuid"
 )
@@ -16,7 +17,7 @@ type userService struct {
 	userRepo repository.UserRepository
 }
 
-func NewUserService(userRepo repository.UserRepository) UserService {
+func NewUserService(userRepo repository.UserRepository) *userService {
 	return &userService{
 		userRepo: userRepo,
 	}
@@ -37,10 +38,10 @@ func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.U
 		return nil, apperrors.ErrUserProfileDeleted
 	}
 
-	var resp dto.UserResponse
-	if err := utils.Copy(&resp, user); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy user: %w", op, err)
+	response, err := mapper.MapOne[*models.User, dto.UserResponse](user)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map user: %w", op, err)
 	}
 
-	return &resp, nil
+	return response, nil
 }

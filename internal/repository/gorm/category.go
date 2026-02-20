@@ -15,7 +15,7 @@ type categoryRepository struct {
 	db database.Provider
 }
 
-func NewCategoryRepository(db database.Provider) repository.CategoryRepository {
+func NewCategoryRepository(db database.Provider) *categoryRepository {
 	return &categoryRepository{
 		db: db,
 	}

@@ -10,7 +10,6 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/hasher"
 	"go-shop-backend/pkg/token"
-	"go-shop-backend/pkg/utils"
 )
 
 type authService struct {
@@ -19,7 +18,11 @@ type authService struct {
 	passwordHasher hasher.Hasher
 }
 
-func NewAuthService(userRepo repository.UserRepository, tokenManager token.Manager, passwordHasher hasher.Hasher) AuthService {
+func NewAuthService(
+	userRepo repository.UserRepository,
+	tokenManager token.Manager,
+	passwordHasher hasher.Hasher,
+) *authService {
 	return &authService{
 		userRepo:       userRepo,
 		tokenManager:   tokenManager,
@@ -56,7 +59,7 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return buildUserTokenResponse(user, tokenResponse)
+	return buildUserTokenResponse(user, tokenResponse), nil
 }
 
 func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error) {
@@ -77,7 +80,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		PasswordHash: passwordHash,
 	}
 
-	if err := a.userRepo.CreateUser(ctx, user); err != nil {
+	if err := a.userRepo.Create(ctx, user); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +89,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return buildUserTokenResponse(user, tokenResponse)
+	return buildUserTokenResponse(user, tokenResponse), nil
 }
 
 func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error) {
@@ -122,15 +125,16 @@ func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error
 	}, nil
 }
 
-func buildUserTokenResponse(user *models.User, token *dto.TokenResponse) (*dto.UserTokenResponse, error) {
-	resp := &dto.UserTokenResponse{
+func buildUserTokenResponse(user *models.User, token *dto.TokenResponse) *dto.UserTokenResponse {
+	response := &dto.UserTokenResponse{
 		TokenResponse: token,
-		User:          &dto.UserResponse{},
+		User: &dto.UserResponse{
+			ID:        user.ID,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			Role:      string(user.Role),
+		},
 	}
 
-	if err := utils.Copy(resp.User, user); err != nil {
-		return nil, fmt.Errorf("failed to copy user: %w", err)
-	}
-
-	return resp, nil
+	return response
 }

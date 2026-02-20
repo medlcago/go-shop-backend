@@ -187,7 +187,7 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 	suite.passwordHasher.On("Hash", req.Password).
 		Return(passwordHash, nil).Once()
 
-	suite.userRepo.On("CreateUser", mock.Anything, mock.MatchedBy(func(user *models.User) bool {
+	suite.userRepo.On("Create", mock.Anything, mock.MatchedBy(func(user *models.User) bool {
 		user.ID = userID
 		user.Role = userRole
 		return user.Email == req.Email && user.PasswordHash == passwordHash
@@ -266,7 +266,7 @@ func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
 		Return("test123", nil).Once()
 
 	repoErr := errors.New("database error")
-	suite.userRepo.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
+	suite.userRepo.On("Create", mock.Anything, mock.AnythingOfType("*models.User")).
 		Return(repoErr).Once()
 
 	result, err := suite.authService.Register(ctx, req)

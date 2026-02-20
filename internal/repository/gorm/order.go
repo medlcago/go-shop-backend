@@ -15,7 +15,7 @@ type orderRepository struct {
 	db database.Provider
 }
 
-func NewOrderRepository(db database.Provider) repository.OrderRepository {
+func NewOrderRepository(db database.Provider) *orderRepository {
 	return &orderRepository{
 		db: db,
 	}

@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/mapper"
 	"go-shop-backend/pkg/utils"
 
 	"github.com/google/uuid"
@@ -18,7 +19,10 @@ type productService struct {
 	urlBuilder  PublicURLBuilder
 }
 
-func NewProductService(productRepo repository.ProductRepository, urlBuilder PublicURLBuilder) ProductService {
+func NewProductService(
+	productRepo repository.ProductRepository,
+	urlBuilder PublicURLBuilder,
+) *productService {
 	return &productService{
 		productRepo: productRepo,
 		urlBuilder:  urlBuilder,
@@ -46,14 +50,14 @@ func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var resp dto.ProductResponse
-	if err := utils.Copy(&resp, product); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
+	response, err := mapper.MapOne[*models.Product, dto.ProductResponse](product)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map product: %w", op, err)
 	}
 
-	p.attachImageURLs(ctx, resp.Images, product.Images)
+	p.attachImageURLs(ctx, response.Images, product.Images)
 
-	return &resp, nil
+	return response, nil
 }
 
 func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*dto.ProductResponse, int64, error) {
@@ -64,26 +68,28 @@ func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRe
 		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	resp := make([]*dto.ProductResponse, len(products))
-	if err := utils.Copy(&resp, products); err != nil {
-		return nil, 0, fmt.Errorf("%s: failed to copy products: %w", op, err)
+	response, err := mapper.MapList[*models.Product, *dto.ProductResponse](products)
+	if err != nil {
+		return nil, 0, fmt.Errorf("%s: failed to map products: %w", op, err)
 	}
 
-	for i := range resp {
-		p.attachImageURLs(ctx, resp[i].Images, products[i].Images)
+	for i := range response {
+		p.attachImageURLs(ctx, response[i].Images, products[i].Images)
 	}
 
-	return resp, total, nil
+	return response, total, nil
 }
 
 func (p *productService) CreateProduct(ctx context.Context, req dto.ProductCreateRequest) (*dto.ProductResponse, error) {
 	const op = "productService.CreateProduct"
 
-	var product models.Product
-	if err := utils.Copy(&product, req); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
+	product := &models.Product{
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
+		IsActive:    true,
 	}
-	product.IsActive = true
 
 	if req.IsActive != nil {
 		product.IsActive = *req.IsActive
@@ -91,17 +97,17 @@ func (p *productService) CreateProduct(ctx context.Context, req dto.ProductCreat
 
 	product.Slug = utils.Slugify(product.Name)
 
-	err := p.productRepo.CreateProduct(ctx, &product)
+	err := p.productRepo.Create(ctx, product)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var resp dto.ProductResponse
-	if err := utils.Copy(&resp, product); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
+	response, err := mapper.MapOne[*models.Product, dto.ProductResponse](product)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map product: %w", op, err)
 	}
 
-	return &resp, nil
+	return response, nil
 }
 
 func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error) {
@@ -137,14 +143,14 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var resp dto.ProductResponse
-	if err := utils.Copy(&resp, product); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy product: %w", op, err)
+	response, err := mapper.MapOne[*models.Product, dto.ProductResponse](product)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map product: %w", op, err)
 	}
 
-	p.attachImageURLs(ctx, resp.Images, product.Images)
+	p.attachImageURLs(ctx, response.Images, product.Images)
 
-	return &resp, nil
+	return response, nil
 }
 
 func (p *productService) Search(ctx context.Context, req dto.SearchProductRequest) ([]*dto.ProductResponse, int64, error) {
@@ -155,14 +161,14 @@ func (p *productService) Search(ctx context.Context, req dto.SearchProductReques
 		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	resp := make([]*dto.ProductResponse, len(products))
-	if err := utils.Copy(&resp, products); err != nil {
-		return nil, 0, fmt.Errorf("%s: failed to copy products: %w", op, err)
+	response, err := mapper.MapList[*models.Product, *dto.ProductResponse](products)
+	if err != nil {
+		return nil, 0, fmt.Errorf("%s: failed to map products: %w", op, err)
 	}
 
-	for i := range resp {
-		p.attachImageURLs(ctx, resp[i].Images, products[i].Images)
+	for i := range response {
+		p.attachImageURLs(ctx, response[i].Images, products[i].Images)
 	}
 
-	return resp, total, nil
+	return response, total, nil
 }

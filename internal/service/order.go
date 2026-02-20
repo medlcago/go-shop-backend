@@ -9,7 +9,7 @@ import (
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/database"
-	"go-shop-backend/pkg/utils"
+	"go-shop-backend/pkg/mapper"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +26,7 @@ func NewOrderService(
 	orderItemRepo repository.OrderItemRepository,
 	productRepo repository.ProductRepository,
 	txManager database.TxManager,
-) OrderService {
+) *orderService {
 	return &orderService{
 		orderRepo:     orderRepo,
 		orderItemRepo: orderItemRepo,
@@ -48,12 +48,12 @@ func (o *orderService) CreateOrder(ctx context.Context, userID *uuid.UUID, sessi
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var response dto.OrderResponse
-	if err := utils.Copy(&response, order); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy order: %w", op, err)
+	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map order: %w", op, err)
 	}
 
-	return &response, nil
+	return response, nil
 
 }
 
@@ -68,12 +68,12 @@ func (o *orderService) GetOrder(ctx context.Context, userID *uuid.UUID, sessionI
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var response dto.OrderResponse
-	if err := utils.Copy(&response, order); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy order: %w", op, err)
+	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map order: %w", op, err)
 	}
 
-	return &response, nil
+	return response, nil
 
 }
 
@@ -85,9 +85,9 @@ func (o *orderService) GetOrders(ctx context.Context, userID *uuid.UUID, session
 		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	response := make([]*dto.OrderResponse, 0, len(orders))
-	if err := utils.Copy(&response, orders); err != nil {
-		return nil, 0, fmt.Errorf("%s: failed to copy orders: %w", op, err)
+	response, err := mapper.MapList[*models.Order, *dto.OrderResponse](orders)
+	if err != nil {
+		return nil, 0, fmt.Errorf("%s: failed to map orders: %w", op, err)
 	}
 
 	return response, total, nil
@@ -176,12 +176,12 @@ func (o *orderService) AddItem(
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var response dto.OrderResponse
-	if err := utils.Copy(&response, order); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy order: %w", op, err)
+	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map order: %w", op, err)
 	}
 
-	return &response, nil
+	return response, nil
 }
 
 func (o *orderService) DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error) {
@@ -214,12 +214,12 @@ func (o *orderService) DeleteItem(ctx context.Context, userID *uuid.UUID, sessio
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var response dto.OrderResponse
-	if err := utils.Copy(&response, order); err != nil {
-		return nil, fmt.Errorf("%s: failed to copy order: %w", op, err)
+	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map order: %w", op, err)
 	}
 
-	return &response, nil
+	return response, nil
 }
 
 func (o *orderService) calculateTotal(order *models.Order) int64 {

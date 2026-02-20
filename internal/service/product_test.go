@@ -260,7 +260,7 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_Success_DefaultIsActive(
 		IsActive:    true,
 		Slug:        slug,
 	}
-	suite.productRepo.On("CreateProduct", ctx, productModel).Return(nil).Once()
+	suite.productRepo.On("Create", ctx, productModel).Return(nil).Once()
 
 	product, err := suite.productService.CreateProduct(ctx, req)
 
@@ -286,7 +286,7 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_Success_IsActiveFalse() 
 		IsActive: &isActive,
 	}
 
-	suite.productRepo.On("CreateProduct", ctx, mock.MatchedBy(func(product *models.Product) bool {
+	suite.productRepo.On("Create", ctx, mock.MatchedBy(func(product *models.Product) bool {
 		return !product.IsActive
 	})).Return(nil).Once()
 
@@ -306,7 +306,7 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_RepositoryError() {
 	}
 
 	repoErr := errors.New("query execution failed")
-	suite.productRepo.On("CreateProduct", ctx, mock.Anything).Return(repoErr).Once()
+	suite.productRepo.On("Create", ctx, mock.Anything).Return(repoErr).Once()
 
 	product, err := suite.productService.CreateProduct(ctx, req)
 

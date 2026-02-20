@@ -23,7 +23,7 @@ type productRepository struct {
 	db database.Provider
 }
 
-func NewProductRepository(db database.Provider) repository.ProductRepository {
+func NewProductRepository(db database.Provider) *productRepository {
 	return &productRepository{
 		db: db,
 	}
@@ -96,7 +96,7 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 	return products, total, nil
 }
 
-func (p *productRepository) CreateProduct(ctx context.Context, product *models.Product) error {
+func (p *productRepository) Create(ctx context.Context, product *models.Product) error {
 	db := p.db.GetDB(ctx)
 
 	err := db.Create(product).Error

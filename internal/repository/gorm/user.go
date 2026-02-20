@@ -13,13 +13,13 @@ type userRepository struct {
 	db database.Provider
 }
 
-func NewUserRepository(db database.Provider) repository.UserRepository {
+func NewUserRepository(db database.Provider) *userRepository {
 	return &userRepository{
 		db: db,
 	}
 }
 
-func (u *userRepository) CreateUser(ctx context.Context, user *models.User) error {
+func (u *userRepository) Create(ctx context.Context, user *models.User) error {
 	db := u.db.GetDB(ctx)
 
 	err := db.Create(user).Error
