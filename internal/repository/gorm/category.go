@@ -5,10 +5,8 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
+	"go-shop-backend/internal/repository/gorm/scopes"
 	"go-shop-backend/pkg/database"
-	"go-shop-backend/pkg/paging"
-
-	"github.com/google/uuid"
 )
 
 type categoryRepository struct {
@@ -24,16 +22,13 @@ func NewCategoryRepository(db database.Provider) *categoryRepository {
 func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error) {
 	db := c.db.GetDB(ctx)
 
-	query := db.Model(&models.Category{})
-
-	if req.ID != uuid.Nil {
-		query = query.Where("parent_id = ?", req.ID)
-	} else {
-		query = query.Where("parent_id IS NULL")
-	}
+	db = db.Model(&models.Category{}).
+		Scopes(
+			scopes.CategoryWithParentID(req.ID),
+		)
 
 	var total int64
-	if err := query.Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, repository.HandleSQLError(err)
 	}
 
@@ -41,10 +36,12 @@ func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCat
 		return nil, 0, nil
 	}
 
-	pagination := paging.New(req.Limit, req.Offset)
-
 	var categories []*models.Category
-	if err := query.Limit(pagination.Limit).Offset(pagination.Offset).Find(&categories).Error; err != nil {
+	if err := db.
+		Scopes(
+			scopes.Paginate(req.Limit, req.Offset),
+		).
+		Find(&categories).Error; err != nil {
 		return nil, 0, repository.HandleSQLError(err)
 	}
 

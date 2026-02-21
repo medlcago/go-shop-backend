@@ -6,18 +6,12 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
+	"go-shop-backend/internal/repository/gorm/scopes"
 	"go-shop-backend/pkg/database"
-	"go-shop-backend/pkg/paging"
 	"go-shop-backend/pkg/utils"
 
 	"github.com/google/uuid"
 )
-
-var productAllowedOrderBy = map[string]struct{}{
-	"id":         {},
-	"created_at": {},
-	"price":      {},
-}
 
 type productRepository struct {
 	db database.Provider
@@ -35,7 +29,9 @@ func (p *productRepository) GetByID(ctx context.Context, id uuid.UUID, preload b
 	db = db.Where("id = ?", id)
 
 	if preload {
-		db = db.Preload("Categories").Preload("Images")
+		db = db.Scopes(
+			scopes.ProductWithRelations(),
+		)
 	}
 
 	var product models.Product
@@ -49,20 +45,15 @@ func (p *productRepository) GetByID(ctx context.Context, id uuid.UUID, preload b
 func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error) {
 	db := p.db.GetDB(ctx)
 
-	query := db.Model(&models.Product{}).
-		Where("is_active = ?", true).
-		Where("stock > ?", 0)
-
-	if req.CategoryID != uuid.Nil {
-		query = query.
-			Joins("JOIN product_categories pc ON pc.product_id = products.id").
-			Where("pc.category_id = ?", req.CategoryID)
-	}
+	db = db.Model(&models.Product{}).
+		Group("products.id").
+		Scopes(
+			scopes.AvailableProducts(),
+			scopes.ProductWithCategory(req.CategoryID),
+		)
 
 	var total int64
-	if err := query.
-		Group("products.id").
-		Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, repository.HandleSQLError(err)
 	}
 
@@ -70,25 +61,14 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 		return nil, 0, nil
 	}
 
-	order := "products.created_at"
-	if _, ok := productAllowedOrderBy[req.OrderBy]; ok {
-		order = "products." + req.OrderBy
-		if req.OrderDesc {
-			order += " DESC"
-		}
-	}
-
-	pagination := paging.New(req.Limit, req.Offset)
-
 	var products []*models.Product
 
-	if err := query.
-		Group("products.id").
-		Limit(pagination.Limit).
-		Offset(pagination.Offset).
-		Order(order).
-		Preload("Categories").
-		Preload("Images").
+	if err := db.
+		Scopes(
+			scopes.Paginate(req.Limit, req.Offset),
+			scopes.ProductOrderBy(req.OrderBy, req.OrderDesc),
+			scopes.ProductWithRelations(),
+		).
 		Find(&products).Error; err != nil {
 		return nil, 0, repository.HandleSQLError(err)
 	}
@@ -103,10 +83,10 @@ func (p *productRepository) Create(ctx context.Context, product *models.Product)
 	return repository.HandleSQLError(err)
 }
 
-func (p *productRepository) UpdateProduct(ctx context.Context, product *models.Product) error {
+func (p *productRepository) Update(ctx context.Context, product *models.Product) error {
 	db := p.db.GetDB(ctx)
 
-	err := db.Updates(product).Error
+	err := db.Select("*").Updates(product).Error
 	return repository.HandleSQLError(err)
 }
 func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -121,22 +101,21 @@ func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, err
 }
 
 func (p *productRepository) Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error) {
-	db := p.db.GetDB(ctx)
-
 	if req.Query == "" {
 		return nil, 0, nil
 	}
 
-	tsQuery := utils.BuildSearchQuery(req.Query)
+	db := p.db.GetDB(ctx)
 
-	fullTsQuery := "to_tsquery('english', @query)"
-
-	namedQuery := sql.Named("query", tsQuery)
+	query := utils.BuildSearchQuery(req.Query)
+	tsQuery := "to_tsquery('english', @query)"
+	namedQuery := sql.Named("query", query)
 
 	db = db.Model(&models.Product{}).
-		Where("is_active = ?", true).
-		Where("stock > ?", 0).
-		Where("search_vector @@ "+fullTsQuery, namedQuery)
+		Scopes(
+			scopes.AvailableProducts(),
+		).
+		Where("search_vector @@ "+tsQuery, namedQuery)
 
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
@@ -147,14 +126,14 @@ func (p *productRepository) Search(ctx context.Context, req dto.SearchProductReq
 		return nil, 0, nil
 	}
 
-	pagination := paging.New(req.Limit, req.Offset)
-
 	var products []*models.Product
 
-	err := db.Select("products.*, ts_rank(search_vector, "+fullTsQuery+") AS rank", namedQuery).
+	err := db.Select("products.*, ts_rank(search_vector, "+tsQuery+") AS rank", namedQuery).
 		Order("rank DESC").
-		Limit(pagination.Limit).
-		Offset(pagination.Offset).
+		Scopes(
+			scopes.Paginate(req.Limit, req.Offset),
+			scopes.ProductWithRelations(),
+		).
 		Find(&products).Error
 
 	if err != nil {

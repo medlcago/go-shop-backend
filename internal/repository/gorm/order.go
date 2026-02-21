@@ -5,8 +5,8 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
+	"go-shop-backend/internal/repository/gorm/scopes"
 	"go-shop-backend/pkg/database"
-	"go-shop-backend/pkg/paging"
 
 	"github.com/google/uuid"
 )
@@ -31,7 +31,7 @@ func (o *orderRepository) Create(ctx context.Context, order *models.Order) error
 func (o *orderRepository) Update(ctx context.Context, order *models.Order) error {
 	db := o.db.GetDB(ctx)
 
-	err := db.Updates(order).Error
+	err := db.Select("*").Updates(order).Error
 	return repository.HandleSQLError(err)
 }
 
@@ -44,20 +44,15 @@ func (o *orderRepository) GetByOwner(
 ) (*models.Order, error) {
 	db := o.db.GetDB(ctx)
 
-	db = db.Where("id = ?", orderID)
-
-	if userID != nil {
-		db = db.Where(
-			"(user_id = ? OR session_id = ?)",
-			*userID,
-			sessionID,
+	db = db.Where("id = ?", orderID).
+		Scopes(
+			scopes.OrderOwner(userID, sessionID),
 		)
-	} else {
-		db = db.Where("session_id = ?", sessionID)
-	}
 
 	if preload {
-		db = db.Preload("Items")
+		db = db.Scopes(
+			scopes.OrderWithRelations(),
+		)
 	}
 
 	var order models.Order
@@ -78,19 +73,10 @@ func (o *orderRepository) GetListByOwner(
 ) ([]*models.Order, int64, error) {
 	db := o.db.GetDB(ctx)
 
-	if userID != nil {
-		db = db.Where(
-			"(user_id = ? OR session_id = ?)",
-			*userID,
-			sessionID,
-		)
-	} else {
-		db = db.Where("session_id = ?", sessionID)
-	}
-
-	if req.Status != "" {
-		db = db.Where("status = ?", req.Status)
-	}
+	db = db.Scopes(
+		scopes.OrderOwner(userID, sessionID),
+		scopes.OrderStatus(req.Status),
+	)
 
 	var total int64
 	if err := db.Model(&models.Order{}).Count(&total).Error; err != nil {
@@ -101,12 +87,12 @@ func (o *orderRepository) GetListByOwner(
 		return nil, 0, nil
 	}
 
-	pagination := paging.New(req.Limit, req.Offset)
-
 	var orders []*models.Order
-	err := db.Preload("Items").
-		Limit(pagination.Limit).
-		Offset(pagination.Offset).
+	err := db.
+		Scopes(
+			scopes.OrderWithRelations(),
+			scopes.Paginate(req.Limit, req.Offset),
+		).
 		Find(&orders).Error
 
 	if err != nil {

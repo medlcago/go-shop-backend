@@ -36,7 +36,7 @@ func (p *ProductRepositoryMock) Create(ctx context.Context, product *models.Prod
 	return args.Error(0)
 }
 
-func (p *ProductRepositoryMock) UpdateProduct(ctx context.Context, product *models.Product) error {
+func (p *ProductRepositoryMock) Update(ctx context.Context, product *models.Product) error {
 	args := p.Called(ctx, product)
 	return args.Error(0)
 }

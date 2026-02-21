@@ -20,7 +20,7 @@ type ProductRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Product, error)
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
 	Create(ctx context.Context, product *models.Product) error
-	UpdateProduct(ctx context.Context, product *models.Product) error
+	Update(ctx context.Context, product *models.Product) error
 	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 	Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error)
 }

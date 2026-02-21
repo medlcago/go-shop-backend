@@ -139,7 +139,7 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 		product.IsActive = *req.IsActive
 	}
 
-	if err := p.productRepo.UpdateProduct(ctx, product); err != nil {
+	if err := p.productRepo.Update(ctx, product); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 

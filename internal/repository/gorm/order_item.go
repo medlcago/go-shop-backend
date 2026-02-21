@@ -9,16 +9,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type orderItem struct {
+type orderItemRepository struct {
 	db database.Provider
 }
 
-func NewOrderItemRepository(db database.Provider) *orderItem {
-	return &orderItem{
+func NewOrderItemRepository(db database.Provider) *orderItemRepository {
+	return &orderItemRepository{
 		db: db,
 	}
 }
-func (o *orderItem) GetItem(ctx context.Context, productID uuid.UUID, orderID uuid.UUID) (*models.OrderItem, error) {
+func (o *orderItemRepository) GetItem(ctx context.Context, productID uuid.UUID, orderID uuid.UUID) (*models.OrderItem, error) {
 	db := o.db.GetDB(ctx)
 
 	var item models.OrderItem
@@ -29,14 +29,14 @@ func (o *orderItem) GetItem(ctx context.Context, productID uuid.UUID, orderID uu
 	return &item, nil
 }
 
-func (o *orderItem) AddItem(ctx context.Context, orderItem *models.OrderItem) error {
+func (o *orderItemRepository) AddItem(ctx context.Context, orderItem *models.OrderItem) error {
 	db := o.db.GetDB(ctx)
 
 	err := db.Create(orderItem).Error
 	return repository.HandleSQLError(err)
 }
 
-func (o *orderItem) UpdateQuantity(ctx context.Context, itemID uuid.UUID, qty int) error {
+func (o *orderItemRepository) UpdateQuantity(ctx context.Context, itemID uuid.UUID, qty int) error {
 	db := o.db.GetDB(ctx)
 
 	err := db.Model(&models.OrderItem{}).
@@ -46,7 +46,7 @@ func (o *orderItem) UpdateQuantity(ctx context.Context, itemID uuid.UUID, qty in
 	return repository.HandleSQLError(err)
 }
 
-func (o *orderItem) DeleteItem(ctx context.Context, orderID uuid.UUID, productID uuid.UUID) error {
+func (o *orderItemRepository) DeleteItem(ctx context.Context, orderID uuid.UUID, productID uuid.UUID) error {
 	db := o.db.GetDB(ctx)
 
 	err := db.Where("order_id = ? AND product_id = ?", orderID, productID).

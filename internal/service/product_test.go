@@ -351,7 +351,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 		Once()
 
 	suite.productRepo.
-		On("UpdateProduct", ctx, existingProduct).
+		On("Update", ctx, existingProduct).
 		Return(nil).
 		Once()
 
@@ -395,7 +395,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() 
 		Once()
 
 	suite.productRepo.
-		On("UpdateProduct", ctx, existingProduct).
+		On("Update", ctx, existingProduct).
 		Return(nil).
 		Once()
 
@@ -455,7 +455,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() 
 		Once()
 
 	suite.productRepo.
-		On("UpdateProduct", ctx, existingProduct).
+		On("Update", ctx, existingProduct).
 		Return(repoErr).
 		Once()
 

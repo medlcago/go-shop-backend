@@ -1,0 +1,98 @@
+package scopes
+
+import (
+	"go-shop-backend/pkg/paging"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+func Paginate(limit, offset int) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		pagination := paging.New(limit, offset)
+		return db.Limit(pagination.Limit).Offset(pagination.Offset)
+	}
+}
+
+func ProductOrderBy(orderBy string, orderDesc bool) func(db *gorm.DB) *gorm.DB {
+	allowedOrderBy := map[string]struct{}{
+		"id":         {},
+		"created_at": {},
+		"price":      {},
+	}
+
+	return func(db *gorm.DB) *gorm.DB {
+		order := "products.created_at"
+		if _, ok := allowedOrderBy[orderBy]; ok {
+			order = "products." + orderBy
+			if orderDesc {
+				order += " DESC"
+			}
+		}
+
+		return db.Order(order)
+	}
+}
+
+func ProductWithCategory(categoryID uuid.UUID) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if categoryID == uuid.Nil {
+			return db
+		}
+
+		return db.Joins("JOIN product_categories pc ON pc.product_id = products.id").
+			Where("pc.category_id = ?", categoryID)
+	}
+}
+
+func AvailableProducts() func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("is_active = ? AND stock > ?", true, 0)
+	}
+}
+
+func ProductWithRelations() func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload("Categories").Preload("Images")
+	}
+}
+
+func OrderStatus(status string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if status == "" {
+			return db
+		}
+
+		return db.Where("status = ?", status)
+	}
+}
+
+func OrderOwner(userID *uuid.UUID, sessionID uuid.UUID) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if userID != nil {
+			return db.Where(
+				"(user_id = ? OR session_id = ?)",
+				*userID,
+				sessionID,
+			)
+		}
+
+		return db.Where("session_id = ?", sessionID)
+	}
+}
+
+func OrderWithRelations() func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload("Items")
+	}
+}
+
+func CategoryWithParentID(parentID uuid.UUID) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if parentID == uuid.Nil {
+			return db.Where("parent_id IS NULL")
+		}
+
+		return db.Where("parent_id = ?", parentID)
+	}
+}
