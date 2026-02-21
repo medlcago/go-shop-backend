@@ -31,3 +31,8 @@ func (o *OrderItemRepositoryMock) DeleteItem(ctx context.Context, orderID uuid.U
 	args := o.Called(ctx, orderID, productID)
 	return args.Error(0)
 }
+
+func (o *OrderItemRepositoryMock) Clear(ctx context.Context, orderID uuid.UUID) error {
+	args := o.Called(ctx, orderID)
+	return args.Error(0)
+}

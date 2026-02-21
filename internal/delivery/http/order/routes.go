@@ -15,5 +15,6 @@ func RegisterRoutes(r fiber.Router, orderHandler *Handler) {
 		orderGroup.Get("/:id<guid>", orderHandler.GetOrder)
 		orderGroup.Post("/:id<guid>/items", orderHandler.AddItem)
 		orderGroup.Delete("/:id<guid>/items/:item_id<guid>", orderHandler.DeleteItem)
+		orderGroup.Delete("/:id<guid>/items", orderHandler.ClearItems)
 	}
 }

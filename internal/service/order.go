@@ -35,7 +35,11 @@ func NewOrderService(
 	}
 }
 
-func (o *orderService) CreateOrder(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID) (*dto.OrderResponse, error) {
+func (o *orderService) CreateOrder(
+	ctx context.Context,
+	userID *uuid.UUID,
+	sessionID uuid.UUID,
+) (*dto.OrderResponse, error) {
 	const op = "orderService.CreateOrder"
 
 	order := &models.Order{
@@ -57,14 +61,16 @@ func (o *orderService) CreateOrder(ctx context.Context, userID *uuid.UUID, sessi
 
 }
 
-func (o *orderService) GetOrder(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error) {
+func (o *orderService) GetOrder(
+	ctx context.Context,
+	userID *uuid.UUID,
+	sessionID uuid.UUID,
+	orderID uuid.UUID,
+) (*dto.OrderResponse, error) {
 	const op = "orderService.GerOrder"
 
-	order, err := o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, true)
+	order, err := o.getOrder(ctx, orderID, userID, sessionID, true)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, apperrors.ErrForbidden
-		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -77,7 +83,12 @@ func (o *orderService) GetOrder(ctx context.Context, userID *uuid.UUID, sessionI
 
 }
 
-func (o *orderService) GetOrders(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*dto.OrderResponse, int64, error) {
+func (o *orderService) GetOrders(
+	ctx context.Context,
+	userID *uuid.UUID,
+	sessionID uuid.UUID,
+	req dto.ListOrderRequest,
+) ([]*dto.OrderResponse, int64, error) {
 	const op = "orderService.GetDraftOrder"
 
 	orders, total, err := o.orderRepo.GetListByOwner(ctx, userID, sessionID, req)
@@ -107,17 +118,13 @@ func (o *orderService) AddItem(
 		return nil, apperrors.ErrInvalidQuantity
 	}
 
-	var (
-		order *models.Order
-		err   error
-	)
+	var order *models.Order
 
 	addItem := func(ctx context.Context) error {
-		order, err = o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, false)
+		var err error
+
+		order, err = o.getOrder(ctx, orderID, userID, sessionID, false)
 		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				return apperrors.ErrForbidden
-			}
 			return err
 		}
 
@@ -171,7 +178,7 @@ func (o *orderService) AddItem(
 		return err
 	}
 
-	err = o.txManager.Wrap(ctx, addItem)
+	err := o.txManager.Wrap(ctx, addItem)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -184,21 +191,27 @@ func (o *orderService) AddItem(
 	return response, nil
 }
 
-func (o *orderService) DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error) {
+func (o *orderService) DeleteItem(
+	ctx context.Context,
+	userID *uuid.UUID,
+	sessionID uuid.UUID,
+	orderID uuid.UUID,
+	itemID uuid.UUID,
+) (*dto.OrderResponse, error) {
 	const op = "orderService.DeleteItem"
 
-	var (
-		order *models.Order
-		err   error
-	)
+	var order *models.Order
 
 	deleteItem := func(ctx context.Context) error {
-		_, err := o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, false)
+		var err error
+
+		order, err = o.getOrder(ctx, orderID, userID, sessionID, false)
 		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				return apperrors.ErrForbidden
-			}
 			return err
+		}
+
+		if !order.CanEdit() {
+			return apperrors.ErrInvalidOrderStatus
 		}
 
 		if err = o.orderItemRepo.DeleteItem(ctx, orderID, itemID); err != nil {
@@ -209,7 +222,50 @@ func (o *orderService) DeleteItem(ctx context.Context, userID *uuid.UUID, sessio
 		return err
 	}
 
-	err = o.txManager.Wrap(ctx, deleteItem)
+	err := o.txManager.Wrap(ctx, deleteItem)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to map order: %w", op, err)
+	}
+
+	return response, nil
+}
+
+func (o *orderService) Clear(
+	ctx context.Context,
+	userID *uuid.UUID,
+	sessionID uuid.UUID,
+	orderID uuid.UUID,
+) (*dto.OrderResponse, error) {
+	const op = "orderService.Clear"
+
+	var order *models.Order
+
+	clearItems := func(ctx context.Context) error {
+		var err error
+
+		order, err = o.getOrder(ctx, orderID, userID, sessionID, false)
+		if err != nil {
+			return err
+		}
+
+		if !order.CanEdit() {
+			return apperrors.ErrInvalidOrderStatus
+		}
+
+		if err := o.orderItemRepo.Clear(ctx, orderID); err != nil {
+			return err
+		}
+
+		order, err = o.recalculateOrder(ctx, orderID, userID, sessionID)
+		return err
+	}
+
+	err := o.txManager.Wrap(ctx, clearItems)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -232,13 +288,31 @@ func (o *orderService) calculateTotal(order *models.Order) int64 {
 	return total
 }
 
+func (o *orderService) getOrder(
+	ctx context.Context,
+	orderID uuid.UUID,
+	userID *uuid.UUID,
+	sessionID uuid.UUID,
+	preload bool,
+) (*models.Order, error) {
+	order, err := o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, preload)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperrors.ErrForbidden
+		}
+		return nil, err
+	}
+
+	return order, nil
+}
+
 func (o *orderService) recalculateOrder(
 	ctx context.Context,
 	orderID uuid.UUID,
 	userID *uuid.UUID,
 	sessionID uuid.UUID,
 ) (*models.Order, error) {
-	order, err := o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, true)
+	order, err := o.getOrder(ctx, orderID, userID, sessionID, true)
 	if err != nil {
 		return nil, err
 	}

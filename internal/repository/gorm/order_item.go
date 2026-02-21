@@ -54,3 +54,12 @@ func (o *orderItemRepository) DeleteItem(ctx context.Context, orderID uuid.UUID,
 
 	return repository.HandleSQLError(err)
 }
+
+func (o *orderItemRepository) Clear(ctx context.Context, orderID uuid.UUID) error {
+	db := o.db.GetDB(ctx)
+
+	err := db.Where("order_id = ?", orderID).
+		Delete(&models.OrderItem{}).Error
+
+	return repository.HandleSQLError(err)
+}
