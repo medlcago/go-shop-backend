@@ -7,10 +7,11 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
-	"go-shop-backend/internal/repository/mocks"
+	repoMocks "go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/pkg/apperrors"
-	"go-shop-backend/pkg/hasher"
+	hasherMocks "go-shop-backend/pkg/hasher/mocks"
 	"go-shop-backend/pkg/token"
+	tokenMocks "go-shop-backend/pkg/token/mocks"
 	"testing"
 	"time"
 
@@ -22,21 +23,17 @@ import (
 
 type AuthServiceTestSuite struct {
 	suite.Suite
-	userRepo       *mocks.UserRepositoryMock
-	tokenManager   *token.ManagerMock
-	passwordHasher *hasher.MockHasher
+	userRepo       *repoMocks.MockUserRepository
+	tokenManager   *tokenMocks.MockManager
+	passwordHasher *hasherMocks.MockHasher
 	authService    AuthService
 }
 
 func (suite *AuthServiceTestSuite) SetupTest() {
-	suite.userRepo = new(mocks.UserRepositoryMock)
-	suite.tokenManager = new(token.ManagerMock)
-	suite.passwordHasher = new(hasher.MockHasher)
+	suite.userRepo = repoMocks.NewMockUserRepository(suite.T())
+	suite.tokenManager = tokenMocks.NewMockManager(suite.T())
+	suite.passwordHasher = hasherMocks.NewMockHasher(suite.T())
 	suite.authService = NewAuthService(suite.userRepo, suite.tokenManager, suite.passwordHasher)
-}
-
-func (suite *AuthServiceTestSuite) TearDownTest() {
-	suite.userRepo.AssertExpectations(suite.T())
 }
 
 func TestAuthServiceTestSuite(t *testing.T) {
@@ -59,10 +56,10 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 		Role:         models.UserRoleCustomer,
 	}
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
 		Return(expectedUser, nil).Once()
 
-	suite.passwordHasher.On("Verify", req.Password, expectedUser.PasswordHash).
+	suite.passwordHasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
 		Return(true, nil).Once()
 
 	payload := token.Payload{
@@ -70,9 +67,10 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 		UserRole: string(expectedUser.Role),
 	}
 
-	suite.tokenManager.On("GenerateAccessToken", payload).
+	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
 		Return("test_access_token", nil).Once()
-	suite.tokenManager.On("GenerateRefreshToken", payload).
+
+	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
 		Return("test_refresh_token", nil).Once()
 
 	result, err := suite.authService.Login(ctx, req)
@@ -95,12 +93,11 @@ func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
 		Password: "password123",
 	}
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
-		Return(&models.User{}, repository.ErrRecordNotFound).Once()
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+		Return(nil, repository.ErrRecordNotFound).Once()
 
 	tokenResp, err := suite.authService.Login(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(tokenResp)
 	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
 }
@@ -112,15 +109,14 @@ func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
 		Password: "password123",
 	}
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
-	suite.passwordHasher.On("Verify", req.Password, mock.Anything).
+	suite.passwordHasher.EXPECT().Verify(req.Password, mock.Anything).
 		Return(true, nil).Once()
 
 	tokenResp, err := suite.authService.Login(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(tokenResp)
 	suite.ErrorIs(err, apperrors.ErrUserProfileDeleted)
 }
@@ -137,15 +133,14 @@ func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 		PasswordHash: "test123",
 	}
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
 		Return(user, nil).Once()
 
-	suite.passwordHasher.On("Verify", req.Password, user.PasswordHash).
+	suite.passwordHasher.EXPECT().Verify(req.Password, user.PasswordHash).
 		Return(false, nil).Once()
 
 	tokenResp, err := suite.authService.Login(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(tokenResp)
 	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
 }
@@ -158,12 +153,11 @@ func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
 	}
 
 	repoErr := errors.New("database error")
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
-		Return(&models.User{}, repoErr).Once()
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+		Return(nil, repoErr).Once()
 
 	result, err := suite.authService.Login(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(result)
 	suite.ErrorContains(err, repoErr.Error())
 }
@@ -181,13 +175,13 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 	userRole := models.UserRoleSeller
 	passwordHash := "test123"
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
-		Return(&models.User{}, repository.ErrRecordNotFound).Once()
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+		Return(nil, repository.ErrRecordNotFound).Once()
 
-	suite.passwordHasher.On("Hash", req.Password).
+	suite.passwordHasher.EXPECT().Hash(req.Password).
 		Return(passwordHash, nil).Once()
 
-	suite.userRepo.On("Create", mock.Anything, mock.MatchedBy(func(user *models.User) bool {
+	suite.userRepo.EXPECT().Create(ctx, mock.MatchedBy(func(user *models.User) bool {
 		user.ID = userID
 		user.Role = userRole
 		return user.Email == req.Email && user.PasswordHash == passwordHash
@@ -198,8 +192,11 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 		UserRole: string(userRole),
 	}
 
-	suite.tokenManager.On("GenerateAccessToken", payload).Return("test_access_token", nil).Once()
-	suite.tokenManager.On("GenerateRefreshToken", payload).Return("test_refresh_token", nil).Once()
+	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
+		Return("test_access_token", nil).Once()
+
+	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
+		Return("test_refresh_token", nil).Once()
 
 	result, err := suite.authService.Register(ctx, req)
 
@@ -225,12 +222,11 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 		Email: req.Email,
 	}
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
 		Return(user, nil).Once()
 
 	result, err := suite.authService.Register(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(result)
 	suite.ErrorIs(err, apperrors.ErrEmailTaken)
 }
@@ -242,12 +238,11 @@ func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
 		Password: "password123",
 	}
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
 	result, err := suite.authService.Register(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(result)
 	suite.ErrorIs(err, apperrors.ErrEmailTaken)
 }
@@ -259,19 +254,18 @@ func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
 		Password: "password123",
 	}
 
-	suite.userRepo.On("GetByEmailUnscoped", mock.Anything, req.Email).
-		Return(&models.User{}, repository.ErrRecordNotFound).Once()
+	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+		Return(nil, repository.ErrRecordNotFound).Once()
 
-	suite.passwordHasher.On("Hash", req.Password).
+	suite.passwordHasher.EXPECT().Hash(req.Password).
 		Return("test123", nil).Once()
 
 	repoErr := errors.New("database error")
-	suite.userRepo.On("Create", mock.Anything, mock.AnythingOfType("*models.User")).
+	suite.userRepo.EXPECT().Create(ctx, mock.AnythingOfType("*models.User")).
 		Return(repoErr).Once()
 
 	result, err := suite.authService.Register(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(result)
 	suite.ErrorContains(err, repoErr.Error())
 }

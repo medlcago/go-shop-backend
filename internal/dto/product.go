@@ -7,7 +7,7 @@ import (
 )
 
 type ProductResponse struct {
-	ID          string    `json:"id"`
+	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Description *string   `json:"description"`
 	Price       int64     `json:"price"`

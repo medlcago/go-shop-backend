@@ -3,7 +3,7 @@ package auth
 import (
 	"errors"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/service/mocks"
+	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
@@ -19,15 +19,15 @@ import (
 func TestAuthHandler_Login(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.AuthServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockAuthService)
 		expectedCode int
 		expectedBody any
 		requestBody  any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
+			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
+				serviceMock.EXPECT().Login(mock.Anything, dto.UserLoginRequest{
 					Email:    "superuser@test.com",
 					Password: "test123",
 				}).Return(&dto.UserTokenResponse{}, nil).Once()
@@ -41,8 +41,8 @@ func TestAuthHandler_Login(t *testing.T) {
 		},
 		{
 			name: "invalid credentials",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
+			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
+				serviceMock.EXPECT().Login(mock.Anything, dto.UserLoginRequest{
 					Email:    "superuser@test.com",
 					Password: "123123",
 				}).Return(&dto.UserTokenResponse{}, apperrors.ErrInvalidCredentials).Once()
@@ -56,8 +56,8 @@ func TestAuthHandler_Login(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
+			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
+				serviceMock.EXPECT().Login(mock.Anything, dto.UserLoginRequest{
 					Email:    "superuser@test.com",
 					Password: "123123",
 				}).Return(&dto.UserTokenResponse{}, errors.New("unexpected error")).Once()
@@ -71,8 +71,8 @@ func TestAuthHandler_Login(t *testing.T) {
 		},
 		{
 			name: "invalid email",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Login", mock.Anything, dto.UserLoginRequest{
+			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
+				serviceMock.EXPECT().Login(mock.Anything, dto.UserLoginRequest{
 					Email:    "test",
 					Password: "123123",
 				}).Return(&dto.UserTokenResponse{}, apperrors.ErrInvalidCredentials).Once()
@@ -90,7 +90,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.AuthServiceMock)
+			mockService := serviceMocks.NewMockAuthService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}
@@ -120,15 +120,15 @@ func TestAuthHandler_Login(t *testing.T) {
 func TestAuthHandler_Register(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.AuthServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockAuthService)
 		expectedCode int
 		expectedBody any
 		requestBody  any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
+				serviceMock.EXPECT().Register(mock.Anything, dto.UserRegisterRequest{
 					Email:    "superuser@test.com",
 					Password: "test123",
 				}).Return(&dto.UserTokenResponse{}, nil).Once()
@@ -142,8 +142,8 @@ func TestAuthHandler_Register(t *testing.T) {
 		},
 		{
 			name: "email already in use",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
+				serviceMock.EXPECT().Register(mock.Anything, dto.UserRegisterRequest{
 					Email:    "test@test.com",
 					Password: "123123",
 				}).Return(&dto.UserTokenResponse{}, apperrors.ErrEmailTaken).Once()
@@ -157,8 +157,8 @@ func TestAuthHandler_Register(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.AuthServiceMock) {
-				serviceMock.On("Register", mock.Anything, dto.UserRegisterRequest{
+			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
+				serviceMock.EXPECT().Register(mock.Anything, dto.UserRegisterRequest{
 					Email:    "test@test.com",
 					Password: "123123",
 				}).Return(&dto.UserTokenResponse{}, errors.New("unexpected error")).Once()
@@ -206,7 +206,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.AuthServiceMock)
+			mockService := serviceMocks.NewMockAuthService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}

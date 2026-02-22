@@ -3,7 +3,7 @@ package upload
 import (
 	"errors"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/service/mocks"
+	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
 	"net/http"
@@ -20,15 +20,15 @@ import (
 func TestUploadHandler_SignURL(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.UploadServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockUploadService)
 		requestBody  any
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.UploadServiceMock) {
-				serviceMock.On("SignURL", mock.Anything, dto.SignURLRequest{
+			setupMock: func(serviceMock *serviceMocks.MockUploadService) {
+				serviceMock.EXPECT().SignURL(mock.Anything, dto.SignURLRequest{
 					ContentType: "image/jpeg",
 					Entity: dto.Entity{
 						ID:   uuid.MustParse("e0261a9b-7cb0-4e62-8d6f-72f1fe12fad6"),
@@ -72,8 +72,8 @@ func TestUploadHandler_SignURL(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.UploadServiceMock) {
-				serviceMock.On("SignURL", mock.Anything, mock.Anything).
+			setupMock: func(serviceMock *serviceMocks.MockUploadService) {
+				serviceMock.EXPECT().SignURL(mock.Anything, mock.Anything).
 					Return(&dto.SignURLResponse{}, errors.New("internal server error")).Once()
 			},
 			requestBody: dto.SignURLRequest{
@@ -93,7 +93,7 @@ func TestUploadHandler_SignURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.UploadServiceMock)
+			mockService := serviceMocks.NewMockUploadService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}
@@ -122,15 +122,15 @@ func TestUploadHandler_SignURL(t *testing.T) {
 func TestUploadHandler_Save(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.UploadServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockUploadService)
 		requestBody  any
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.UploadServiceMock) {
-				serviceMock.On("Save", mock.Anything, dto.UploadRequest{
+			setupMock: func(serviceMock *serviceMocks.MockUploadService) {
+				serviceMock.EXPECT().Save(mock.Anything, dto.UploadRequest{
 					UploadID:  uuid.MustParse("e0261a9b-7cb0-4e62-8d6f-72f1fe12fad6"),
 					ObjectKey: "key",
 					Entity: dto.Entity{
@@ -158,8 +158,8 @@ func TestUploadHandler_Save(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.UploadServiceMock) {
-				serviceMock.On("Save", mock.Anything, mock.Anything).
+			setupMock: func(serviceMock *serviceMocks.MockUploadService) {
+				serviceMock.EXPECT().Save(mock.Anything, mock.Anything).
 					Return(&dto.UploadResponse{}, errors.New("internal server error")).Once()
 			},
 			requestBody: dto.UploadRequest{
@@ -179,7 +179,7 @@ func TestUploadHandler_Save(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.UploadServiceMock)
+			mockService := serviceMocks.NewMockUploadService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/service/mocks"
+	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
@@ -22,14 +22,14 @@ import (
 func TestProductHandler_GetProductByID(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.ProductServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockProductService)
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("GetProductByID", mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().GetProductByID(mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
 					Return(&dto.ProductResponse{}, nil).Once()
 			},
 			expectedCode: http.StatusOK,
@@ -37,8 +37,8 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 		},
 		{
 			name: "not found",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("GetProductByID", mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().GetProductByID(mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
 					Return(&dto.ProductResponse{}, apperrors.ErrProductNotFound).Once()
 			},
 			expectedCode: http.StatusNotFound,
@@ -46,8 +46,8 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("GetProductByID", mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().GetProductByID(mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
 					Return(&dto.ProductResponse{}, errors.New("unexpected error"))
 			},
 			expectedCode: http.StatusInternalServerError,
@@ -59,7 +59,7 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.ProductServiceMock)
+			mockService := serviceMocks.NewMockProductService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}
@@ -88,15 +88,15 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 func TestProductHandler_ListProducts(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.ProductServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockProductService)
 		query        string
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("ListProducts", mock.Anything, dto.ListProductRequest{}).
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{}).
 					Return([]*dto.ProductResponse{}, 2, nil).Once()
 			},
 			expectedCode: http.StatusOK,
@@ -104,8 +104,8 @@ func TestProductHandler_ListProducts(t *testing.T) {
 		},
 		{
 			name: "empty list",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("ListProducts", mock.Anything, dto.ListProductRequest{}).
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{}).
 					Return([]*dto.ProductResponse{}, 0, nil).Once()
 			},
 			expectedCode: http.StatusOK,
@@ -113,21 +113,17 @@ func TestProductHandler_ListProducts(t *testing.T) {
 		},
 		{
 			name: "default parameters",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("ListProducts", mock.Anything, dto.ListProductRequest{
-					Limit:     0,
-					Offset:    0,
-					OrderBy:   "",
-					OrderDesc: false,
-				}).Return([]*dto.ProductResponse{}, 3, nil).Once()
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{}).
+					Return([]*dto.ProductResponse{}, 3, nil).Once()
 			},
 			expectedCode: http.StatusOK,
 			expectedBody: response.NewResponse(response.NewPaginated([]*dto.ProductResponse{}, 3)),
 		},
 		{
 			name: "with pagination parameters",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("ListProducts", mock.Anything, dto.ListProductRequest{
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{
 					Limit:     20,
 					Offset:    10,
 					OrderBy:   "created_at",
@@ -140,8 +136,8 @@ func TestProductHandler_ListProducts(t *testing.T) {
 		},
 		{
 			name: "with category filter",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("ListProducts", mock.Anything, dto.ListProductRequest{
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{
 					CategoryID: uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
 				}).Return([]*dto.ProductResponse{}, 3, nil).Once()
 			},
@@ -166,8 +162,8 @@ func TestProductHandler_ListProducts(t *testing.T) {
 		{
 			name:  "negative limit and offset",
 			query: "limit=-10&offset=-10",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("ListProducts", mock.Anything, dto.ListProductRequest{
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{
 					Limit:  -10,
 					Offset: -10,
 				}).Return([]*dto.ProductResponse{}, 2, nil).Once()
@@ -177,8 +173,8 @@ func TestProductHandler_ListProducts(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("ListProducts", mock.Anything, dto.ListProductRequest{}).
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{}).
 					Return([]*dto.ProductResponse{}, 0, errors.New("unexpected error")).Once()
 			},
 			expectedCode: http.StatusInternalServerError,
@@ -190,7 +186,7 @@ func TestProductHandler_ListProducts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.ProductServiceMock)
+			mockService := serviceMocks.NewMockProductService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}
@@ -218,15 +214,15 @@ func TestProductHandler_ListProducts(t *testing.T) {
 func TestProductHandler_CreateProduct(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.ProductServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockProductService)
 		requestBody  any
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("CreateProduct", mock.Anything, dto.ProductCreateRequest{
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().CreateProduct(mock.Anything, dto.ProductCreateRequest{
 					Name:  "test product",
 					Price: 100,
 					Stock: 10,
@@ -250,8 +246,8 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("CreateProduct", mock.Anything, dto.ProductCreateRequest{
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().CreateProduct(mock.Anything, dto.ProductCreateRequest{
 					Name:  "test product",
 					Price: 100,
 					Stock: 10,
@@ -272,7 +268,7 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.ProductServiceMock)
+			mockService := serviceMocks.NewMockProductService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}
@@ -301,15 +297,15 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 func TestProductHandler_UpdateProduct(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.ProductServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockProductService)
 		requestBody  any
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("UpdateProduct", mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().UpdateProduct(mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
 					dto.ProductUpdateRequest{Name: utils.Ptr("test product")}).
 					Return(&dto.ProductResponse{Name: "test product"}, nil).Once()
 			},
@@ -319,8 +315,8 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 		},
 		{
 			name: "product not found",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("UpdateProduct", mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().UpdateProduct(mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
 					dto.ProductUpdateRequest{}).
 					Return(&dto.ProductResponse{}, apperrors.ErrProductNotFound).Once()
 			},
@@ -336,8 +332,8 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.ProductServiceMock) {
-				serviceMock.On("UpdateProduct", mock.Anything, mock.Anything, mock.Anything).
+			setupMock: func(serviceMock *serviceMocks.MockProductService) {
+				serviceMock.EXPECT().UpdateProduct(mock.Anything, mock.Anything, mock.Anything).
 					Return(&dto.ProductResponse{}, errors.New("unexpected error")).Once()
 			},
 			requestBody:  dto.ProductUpdateRequest{},
@@ -350,7 +346,7 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.ProductServiceMock)
+			mockService := serviceMocks.NewMockProductService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}

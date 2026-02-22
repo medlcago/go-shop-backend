@@ -3,3 +3,6 @@ doc:
 
 test:
 	go test ./...
+
+mocks:
+	mockery --config .mockery.yaml
