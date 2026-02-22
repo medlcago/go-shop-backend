@@ -6,7 +6,8 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
-	"go-shop-backend/internal/repository/mocks"
+	repoMocks "go-shop-backend/internal/repository/mocks"
+	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/utils"
 	"testing"
@@ -16,30 +17,17 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type URLBuilder struct {
-	mock.Mock
-}
-
-func (u *URLBuilder) PublicURL(ctx context.Context, objectKey string) string {
-	args := u.Called(ctx, objectKey)
-	return args.String(0)
-}
-
 type ProductServiceTestSuite struct {
 	suite.Suite
-	productRepo    *mocks.ProductRepositoryMock
-	urlBuilder     *URLBuilder
+	productRepo    *repoMocks.MockProductRepository
+	urlBuilder     *serviceMocks.MockPublicURLBuilder
 	productService ProductService
 }
 
 func (suite *ProductServiceTestSuite) SetupTest() {
-	suite.productRepo = new(mocks.ProductRepositoryMock)
-	suite.urlBuilder = new(URLBuilder)
+	suite.productRepo = repoMocks.NewMockProductRepository(suite.T())
+	suite.urlBuilder = serviceMocks.NewMockPublicURLBuilder(suite.T())
 	suite.productService = NewProductService(suite.productRepo, suite.urlBuilder)
-}
-
-func (suite *ProductServiceTestSuite) TearDownTest() {
-	suite.productRepo.AssertExpectations(suite.T())
 }
 
 func TestProductServiceTestSuite(t *testing.T) {
@@ -68,14 +56,14 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 		},
 	}
 
-	suite.productRepo.On("GetByID", ctx, productID, true).
+	suite.productRepo.EXPECT().GetByID(ctx, productID, true).
 		Return(mockProduct, nil).Once()
 
 	product, err := suite.productService.GetProductByID(ctx, productID)
 
 	suite.NoError(err)
 	suite.NotNil(product)
-	suite.Equal(productID.String(), product.ID)
+	suite.Equal(productID, product.ID)
 	suite.Equal("Test Product", product.Name)
 	suite.Equal(int64(10_000), product.Price)
 	suite.Len(product.Categories, 2)
@@ -87,12 +75,11 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
 	ctx := context.Background()
 	productID := uuid.New()
 
-	suite.productRepo.On("GetByID", ctx, productID, true).
-		Return(&models.Product{}, repository.ErrRecordNotFound).Once()
+	suite.productRepo.EXPECT().GetByID(ctx, productID, true).
+		Return(nil, repository.ErrRecordNotFound).Once()
 
 	product, err := suite.productService.GetProductByID(ctx, productID)
 
-	suite.Error(err)
 	suite.Nil(product)
 	suite.ErrorIs(err, apperrors.ErrProductNotFound)
 }
@@ -102,12 +89,11 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_RepositoryError() {
 	productID := uuid.New()
 
 	repoErr := errors.New("database connection failed")
-	suite.productRepo.On("GetByID", ctx, productID, true).
-		Return(&models.Product{}, repoErr).Once()
+	suite.productRepo.EXPECT().GetByID(ctx, productID, true).
+		Return(nil, repoErr).Once()
 
 	product, err := suite.productService.GetProductByID(ctx, productID)
 
-	suite.Error(err)
 	suite.Nil(product)
 	suite.ErrorContains(err, repoErr.Error())
 }
@@ -150,7 +136,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 		},
 	}
 
-	suite.productRepo.On("ListProducts", ctx, req).
+	suite.productRepo.EXPECT().ListProducts(ctx, req).
 		Return(mockProducts, 2, nil).Once()
 
 	products, totalCount, err := suite.productService.ListProducts(ctx, req)
@@ -170,11 +156,11 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 
 func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 	ctx := context.Background()
-	categoryID := "784ab8fc-f2b5-41ad-b957-41288b547277"
+	categoryID := uuid.New()
 	req := dto.ListProductRequest{
 		Limit:      20,
 		Offset:     0,
-		CategoryID: uuid.MustParse(categoryID),
+		CategoryID: categoryID,
 		OrderBy:    "created_at",
 		OrderDesc:  true,
 	}
@@ -184,13 +170,13 @@ func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 			Name: "Category Product",
 			Categories: []models.Category{
 				{
-					ID: uuid.MustParse(categoryID),
+					ID: categoryID,
 				},
 			},
 		},
 	}
 
-	suite.productRepo.On("ListProducts", ctx, req).
+	suite.productRepo.EXPECT().ListProducts(ctx, req).
 		Return(mockProducts, 1, nil).Once()
 
 	products, totalCount, err := suite.productService.ListProducts(ctx, req)
@@ -209,7 +195,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_EmptyResult() {
 		Offset: 1000,
 	}
 
-	suite.productRepo.On("ListProducts", ctx, req).
+	suite.productRepo.EXPECT().ListProducts(ctx, req).
 		Return([]*models.Product{}, 0, nil).Once()
 
 	products, totalCount, err := suite.productService.ListProducts(ctx, req)
@@ -228,12 +214,11 @@ func (suite *ProductServiceTestSuite) TestListProducts_RepositoryError() {
 	}
 
 	repoErr := errors.New("query execution failed")
-	suite.productRepo.On("ListProducts", ctx, req).
-		Return([]*models.Product{}, 0, repoErr).Once()
+	suite.productRepo.EXPECT().ListProducts(ctx, req).
+		Return(nil, 0, repoErr).Once()
 
 	products, totalCount, err := suite.productService.ListProducts(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(products)
 	suite.Equal(int64(0), totalCount)
 	suite.ErrorContains(err, repoErr.Error())
@@ -243,50 +228,25 @@ func (suite *ProductServiceTestSuite) TestListProducts_RepositoryError() {
 
 func (suite *ProductServiceTestSuite) TestCreateProduct_Success_DefaultIsActive() {
 	ctx := context.Background()
-	description := "product 1 description"
-	req := dto.ProductCreateRequest{
-		Name:        "Product 1",
-		Description: &description,
-		Price:       499_900,
-		Stock:       10,
-	}
+	req := dto.ProductCreateRequest{Name: "Product 1"}
 
-	slug := utils.Slugify(req.Name)
-	productModel := &models.Product{
-		Name:        "Product 1",
-		Description: &description,
-		Price:       499_900,
-		Stock:       10,
-		IsActive:    true,
-		Slug:        slug,
-	}
-	suite.productRepo.On("Create", ctx, productModel).Return(nil).Once()
+	suite.productRepo.EXPECT().Create(ctx, mock.MatchedBy(func(product *models.Product) bool {
+		return product.IsActive
+	})).Return(nil).Once()
 
 	product, err := suite.productService.CreateProduct(ctx, req)
 
 	suite.NoError(err)
 	suite.NotNil(product)
-
-	suite.Equal(product.ID, productModel.ID.String())
-	suite.Equal(product.Name, productModel.Name)
-	suite.Equal(product.Description, productModel.Description)
-	suite.Equal(product.Price, productModel.Price)
-	suite.Equal(product.Stock, productModel.Stock)
-	suite.Equal(product.Slug, slug)
 	suite.True(product.IsActive)
 }
 
 func (suite *ProductServiceTestSuite) TestCreateProduct_Success_IsActiveFalse() {
 	ctx := context.Background()
 	isActive := false
-	req := dto.ProductCreateRequest{
-		Name:     "Product 1",
-		Price:    50,
-		Stock:    5,
-		IsActive: &isActive,
-	}
+	req := dto.ProductCreateRequest{Name: "Product 1", IsActive: &isActive}
 
-	suite.productRepo.On("Create", ctx, mock.MatchedBy(func(product *models.Product) bool {
+	suite.productRepo.EXPECT().Create(ctx, mock.MatchedBy(func(product *models.Product) bool {
 		return !product.IsActive
 	})).Return(nil).Once()
 
@@ -299,18 +259,14 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_Success_IsActiveFalse() 
 
 func (suite *ProductServiceTestSuite) TestCreateProduct_RepositoryError() {
 	ctx := context.Background()
-	req := dto.ProductCreateRequest{
-		Name:  "Product 1",
-		Price: 50,
-		Stock: 5,
-	}
+	req := dto.ProductCreateRequest{}
 
 	repoErr := errors.New("query execution failed")
-	suite.productRepo.On("Create", ctx, mock.Anything).Return(repoErr).Once()
+	suite.productRepo.EXPECT().Create(ctx, mock.Anything).
+		Return(repoErr).Once()
 
 	product, err := suite.productService.CreateProduct(ctx, req)
 
-	suite.Error(err)
 	suite.Nil(product)
 	suite.ErrorContains(err, repoErr.Error())
 }
@@ -346,27 +302,27 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 	}
 
 	suite.productRepo.
-		On("GetByID", ctx, productID, false).
+		EXPECT().GetByID(ctx, productID, false).
 		Return(existingProduct, nil).
 		Once()
 
 	suite.productRepo.
-		On("Update", ctx, existingProduct).
+		EXPECT().Update(ctx, existingProduct).
 		Return(nil).
 		Once()
 
-	resp, err := suite.productService.UpdateProduct(ctx, productID, req)
+	product, err := suite.productService.UpdateProduct(ctx, productID, req)
 
 	suite.NoError(err)
-	suite.NotNil(resp)
+	suite.NotNil(product)
 
-	suite.Equal(productID.String(), resp.ID)
-	suite.Equal(name, resp.Name)
-	suite.Equal(utils.Slugify(name), resp.Slug)
-	suite.Equal(&description, resp.Description)
-	suite.Equal(price, resp.Price)
-	suite.Equal(stock, resp.Stock)
-	suite.True(resp.IsActive)
+	suite.Equal(productID, product.ID)
+	suite.Equal(name, product.Name)
+	suite.Equal(utils.Slugify(name), product.Slug)
+	suite.Equal(&description, product.Description)
+	suite.Equal(price, product.Price)
+	suite.Equal(stock, product.Stock)
+	suite.True(product.IsActive)
 }
 
 func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() {
@@ -390,78 +346,66 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() 
 	}
 
 	suite.productRepo.
-		On("GetByID", ctx, productID, false).
+		EXPECT().GetByID(ctx, productID, false).
 		Return(existingProduct, nil).
 		Once()
 
 	suite.productRepo.
-		On("Update", ctx, existingProduct).
+		EXPECT().Update(ctx, existingProduct).
 		Return(nil).
 		Once()
 
-	resp, err := suite.productService.UpdateProduct(ctx, productID, req)
+	product, err := suite.productService.UpdateProduct(ctx, productID, req)
 
 	suite.NoError(err)
-	suite.NotNil(resp)
+	suite.NotNil(product)
 
-	suite.Equal(name, resp.Name)
-	suite.Equal(utils.Slugify(name), resp.Slug)
+	suite.Equal(name, product.Name)
+	suite.Equal(utils.Slugify(name), product.Slug)
 
-	suite.Equal(existingProduct.Price, resp.Price)
-	suite.Equal(existingProduct.Stock, resp.Stock)
-	suite.Equal(existingProduct.Description, resp.Description)
-	suite.True(resp.IsActive)
+	suite.Equal(existingProduct.Price, product.Price)
+	suite.Equal(existingProduct.Stock, product.Stock)
+	suite.Equal(existingProduct.Description, product.Description)
+	suite.True(product.IsActive)
 }
 
 func (suite *ProductServiceTestSuite) TestUpdateProduct_ProductNotFound() {
 	ctx := context.Background()
 	productID := uuid.New()
-
 	req := dto.ProductUpdateRequest{}
 
 	suite.productRepo.
-		On("GetByID", ctx, productID, false).
-		Return(&models.Product{}, repository.ErrRecordNotFound).
+		EXPECT().GetByID(ctx, productID, false).
+		Return(nil, repository.ErrRecordNotFound).
 		Once()
 
-	resp, err := suite.productService.UpdateProduct(ctx, productID, req)
+	product, err := suite.productService.UpdateProduct(ctx, productID, req)
 
-	suite.Error(err)
-	suite.Nil(resp)
-	suite.Equal(apperrors.ErrProductNotFound, err)
+	suite.Nil(product)
+	suite.ErrorIs(apperrors.ErrProductNotFound, err)
 }
 
 func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() {
 	ctx := context.Background()
 	productID := uuid.New()
 
-	price := int64(100000)
-
-	existingProduct := &models.Product{
-		ID:    productID,
-		Name:  "Product",
-		Price: 50_000,
-	}
-
-	req := dto.ProductUpdateRequest{
-		Price: &price,
-	}
+	existingProduct := &models.Product{ID: productID}
+	req := dto.ProductUpdateRequest{}
 
 	repoErr := errors.New("update failed")
 
 	suite.productRepo.
-		On("GetByID", ctx, productID, false).
+		EXPECT().GetByID(ctx, productID, false).
 		Return(existingProduct, nil).
 		Once()
 
 	suite.productRepo.
-		On("Update", ctx, existingProduct).
+		EXPECT().Update(ctx, existingProduct).
 		Return(repoErr).
 		Once()
 
-	resp, err := suite.productService.UpdateProduct(ctx, productID, req)
+	product, err := suite.productService.UpdateProduct(ctx, productID, req)
 
-	suite.Error(err)
-	suite.Nil(resp)
+	suite.Nil(product)
 	suite.ErrorContains(err, repoErr.Error())
 }

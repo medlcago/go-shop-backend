@@ -6,7 +6,7 @@ import (
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
-	"go-shop-backend/internal/repository/mocks"
+	repoMocks "go-shop-backend/internal/repository/mocks"
 	"testing"
 
 	"github.com/google/uuid"
@@ -15,17 +15,13 @@ import (
 
 type CategoryServiceTestSuite struct {
 	suite.Suite
-	categoryRepo    *mocks.CategoryRepositoryMock
+	categoryRepo    *repoMocks.MockCategoryRepository
 	categoryService CategoryService
 }
 
 func (suite *CategoryServiceTestSuite) SetupTest() {
-	suite.categoryRepo = new(mocks.CategoryRepositoryMock)
+	suite.categoryRepo = repoMocks.NewMockCategoryRepository(suite.T())
 	suite.categoryService = NewCategoryService(suite.categoryRepo)
-}
-
-func (suite *CategoryServiceTestSuite) TearDownTest() {
-	suite.categoryRepo.AssertExpectations(suite.T())
 }
 
 func TestCategoryServiceTestSuite(t *testing.T) {
@@ -50,7 +46,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 		},
 	}
 
-	suite.categoryRepo.On("ListCategories", ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
 		Return(mockCategories, 5, nil).Once()
 
 	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
@@ -60,7 +56,6 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 	suite.Len(categories, 2)
 
 	suite.Equal("Electronics", categories[0].Name)
-
 	suite.Equal("Clothing", categories[1].Name)
 }
 
@@ -85,7 +80,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 		},
 	}
 
-	suite.categoryRepo.On("ListCategories", ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
 		Return(mockCategories, 2, nil).Once()
 
 	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
@@ -106,8 +101,8 @@ func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
 	}
 
 	repoErr := errors.New("database connection failed")
-	suite.categoryRepo.On("ListCategories", ctx, req).
-		Return([]*models.Category{}, 0, repoErr).Once()
+	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
+		Return(nil, 0, repoErr).Once()
 
 	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
 
@@ -123,7 +118,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_EmptyResult() {
 		Offset: 100,
 	}
 
-	suite.categoryRepo.On("ListCategories", ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
 		Return([]*models.Category{}, 0, nil).Once()
 
 	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)

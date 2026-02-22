@@ -3,7 +3,7 @@ package user
 import (
 	"errors"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/service/mocks"
+	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
@@ -21,15 +21,15 @@ import (
 func TestUserHandler_GetMe(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(serviceMock *mocks.UserServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockUserService)
 		userID       *uuid.UUID
 		expectedCode int
 		expectedBody any
 	}{
 		{
 			name: "success",
-			setupMock: func(serviceMock *mocks.UserServiceMock) {
-				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
+			setupMock: func(serviceMock *serviceMocks.MockUserService) {
+				serviceMock.EXPECT().GetUserByID(mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{
 						ID:    uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31"),
 						Email: "test@test.com",
@@ -51,8 +51,8 @@ func TestUserHandler_GetMe(t *testing.T) {
 		},
 		{
 			name: "user not found",
-			setupMock: func(serviceMock *mocks.UserServiceMock) {
-				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
+			setupMock: func(serviceMock *serviceMocks.MockUserService) {
+				serviceMock.EXPECT().GetUserByID(mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, apperrors.ErrUserNotFound).Once()
 			},
 			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
@@ -61,8 +61,8 @@ func TestUserHandler_GetMe(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.UserServiceMock) {
-				serviceMock.On("GetUserByID", mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
+			setupMock: func(serviceMock *serviceMocks.MockUserService) {
+				serviceMock.EXPECT().GetUserByID(mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, errors.New("unexpected error")).Once()
 			},
 			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
@@ -75,7 +75,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.UserServiceMock)
+			mockService := serviceMocks.NewMockUserService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}

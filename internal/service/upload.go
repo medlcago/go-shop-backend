@@ -8,17 +8,13 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/contenttype"
 	"go-shop-backend/pkg/storage"
-	"io"
 	"mime"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-type ContentTypeDetector interface {
-	Detect(r io.ReadSeeker) (string, error)
-}
 
 var allowedTypes = map[string]string{
 	"image/jpeg": "jpg",
@@ -30,7 +26,7 @@ type uploadService struct {
 	entityService EntityService
 	uploadRepo    repository.UploadRepository
 	uploadConfig  config.Upload
-	ctDetector    ContentTypeDetector
+	ctDetector    contenttype.Detector
 }
 
 func NewUploadService(
@@ -38,7 +34,7 @@ func NewUploadService(
 	entityService EntityService,
 	uploadRepo repository.UploadRepository,
 	uploadConfig config.Upload,
-	ctDetector ContentTypeDetector,
+	ctDetector contenttype.Detector,
 ) *uploadService {
 	return &uploadService{
 		storage:       storage,

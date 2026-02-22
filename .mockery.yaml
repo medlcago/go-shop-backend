@@ -1,0 +1,34 @@
+structname: "{{.Mock}}{{.InterfaceName}}"
+filename: "{{.InterfaceName | camelcase}}_mock.go"
+dir: "{{.InterfaceDir}}/mocks"
+pkgname: mocks
+template: testify
+
+packages:
+  go-shop-backend/internal/service:
+    config:
+      all: true
+
+  go-shop-backend/internal/repository:
+    config:
+      all: true
+
+  go-shop-backend/pkg/database:
+    interfaces:
+      TxManager:
+
+  go-shop-backend/pkg/token:
+    interfaces:
+      Manager:
+
+  go-shop-backend/pkg/hasher:
+    interfaces:
+      Hasher:
+
+  go-shop-backend/pkg/storage:
+    interfaces:
+      Storage:
+
+  go-shop-backend/pkg/contenttype:
+    interfaces:
+      Detector:

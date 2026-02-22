@@ -9,7 +9,9 @@ import (
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperrors"
+	contenttypeMocks "go-shop-backend/pkg/contenttype/mocks"
 	"go-shop-backend/pkg/storage"
+	storageMocks "go-shop-backend/pkg/storage/mocks"
 	"io"
 	"strings"
 	"testing"
@@ -20,34 +22,25 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type MockContentTypeDetector struct {
-	mock.Mock
-}
-
-func (m *MockContentTypeDetector) Detect(r io.ReadSeeker) (string, error) {
-	args := m.Called(r)
-	return args.String(0), args.Error(1)
-}
-
 type UploadServiceTestSuite struct {
 	suite.Suite
-	storage       *storage.MockStorage
-	entityService *serviceMocks.EntityServiceMock
-	uploadRepo    *repoMocks.UploadRepositoryMock
+	storage       *storageMocks.MockStorage
+	entityService *serviceMocks.MockEntityService
+	uploadRepo    *repoMocks.MockUploadRepository
 	uploadConfig  config.Upload
-	ctDetector    *MockContentTypeDetector
+	ctDetector    *contenttypeMocks.MockDetector
 	uploadService UploadService
 }
 
 func (suite *UploadServiceTestSuite) SetupTest() {
-	suite.storage = new(storage.MockStorage)
-	suite.entityService = new(serviceMocks.EntityServiceMock)
-	suite.uploadRepo = new(repoMocks.UploadRepositoryMock)
+	suite.storage = storageMocks.NewMockStorage(suite.T())
+	suite.entityService = serviceMocks.NewMockEntityService(suite.T())
+	suite.uploadRepo = repoMocks.NewMockUploadRepository(suite.T())
 	suite.uploadConfig = config.Upload{
 		MaxFileSize:     1024 * 1024 * 5,
 		PresignedUrlTTL: time.Minute,
 	}
-	suite.ctDetector = new(MockContentTypeDetector)
+	suite.ctDetector = contenttypeMocks.NewMockDetector(suite.T())
 	suite.uploadService = NewUploadService(
 		suite.storage,
 		suite.entityService,
@@ -83,10 +76,10 @@ func (suite *UploadServiceTestSuite) TestSignURL_Success() {
 		},
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.On("CreatePresignedPost", mock.Anything, mock.MatchedBy(func(opts storage.PresignedPostOptions) bool {
+	suite.storage.EXPECT().CreatePresignedPost(ctx, mock.MatchedBy(func(opts storage.PresignedPostOptions) bool {
 		return opts.ContentType == "image/png" &&
 			opts.Metadata["Entity-Id"] == entityID.String() &&
 			opts.Metadata["Entity-Type"] == string(dto.EntityProduct)
@@ -154,7 +147,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_EntityNotFound() {
 		Ext: "jpg",
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(apperrors.ErrEntityNotFound).Once()
 
 	resp, err := suite.uploadService.SignURL(ctx, req)
@@ -175,7 +168,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_UnknownEntityType() {
 		Ext: "jpg",
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(apperrors.ErrUnknownEntityType).Once()
 
 	resp, err := suite.uploadService.SignURL(ctx, req)
@@ -196,8 +189,8 @@ func (suite *UploadServiceTestSuite) TestSignURL_EntityServiceError() {
 	}
 
 	expectedErr := errors.New("database error")
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
-		Return(errors.New("database error"))
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+		Return(expectedErr)
 
 	resp, err := suite.uploadService.SignURL(ctx, req)
 
@@ -216,12 +209,12 @@ func (suite *UploadServiceTestSuite) TestSignURL_StorageError() {
 		},
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
 	expectedErr := errors.New("storage error")
-	suite.storage.On("CreatePresignedPost", ctx, mock.Anything).
-		Return(&storage.PresignedPost{}, expectedErr).Once()
+	suite.storage.EXPECT().CreatePresignedPost(ctx, mock.Anything).
+		Return(nil, expectedErr).Once()
 
 	resp, err := suite.uploadService.SignURL(ctx, req)
 
@@ -264,30 +257,31 @@ func (suite *UploadServiceTestSuite) TestSave_Success() {
 		io.NopCloser(reader),
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
 		Return(objectInfo, nil).Once()
 
-	suite.uploadRepo.On("Exists", ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.storage.On("Open", ctx, req.ObjectKey).
+	suite.storage.EXPECT().Open(ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
 	detectedCT := "image/jpeg"
-	suite.ctDetector.On("Detect", obj).
+	suite.ctDetector.EXPECT().Detect(obj).
 		Return(detectedCT, nil).Once()
 
-	suite.uploadRepo.On("Create", ctx, mock.MatchedBy(func(u *models.Upload) bool {
+	suite.uploadRepo.EXPECT().Create(ctx, mock.MatchedBy(func(u *models.Upload) bool {
 		return u.ObjectKey == req.ObjectKey &&
 			u.EntityID == entityID &&
 			*u.ContentType == detectedCT
 	})).Return(nil).Once()
 
 	url := "https://s3.example.com/img.jpg"
-	suite.storage.On("PublicURL", ctx, req.ObjectKey).Return(url).Once()
+	suite.storage.EXPECT().PublicURL(ctx, req.ObjectKey).
+		Return(url).Once()
 
 	resp, err := suite.uploadService.Save(ctx, req)
 
@@ -307,7 +301,7 @@ func (suite *UploadServiceTestSuite) TestSave_EntityNotFound() {
 		},
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(apperrors.ErrEntityNotFound).Once()
 
 	resp, err := suite.uploadService.Save(ctx, req)
@@ -369,16 +363,15 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
 				Size:     1024,
 				Metadata: tt.metadata,
 			}
-			suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+			suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 				Return(nil).Once()
 
-			suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
+			suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
 				Return(objInfo, nil).Once()
 
 			resp, err := suite.uploadService.Save(ctx, req)
 
 			suite.Nil(resp)
-			suite.Error(err)
 			suite.ErrorIs(err, tt.expectedErr)
 		})
 	}
@@ -407,13 +400,13 @@ func (suite *UploadServiceTestSuite) TestSave_FileAlreadyUploaded() {
 		Metadata: metadata,
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.On("Exists", ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
 		Return(true, nil).Once()
 
 	resp, err := suite.uploadService.Save(ctx, req)
@@ -454,19 +447,19 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidDetectedContentType() {
 		io.NopCloser(reader),
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.On("Exists", ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.storage.On("Open", ctx, req.ObjectKey).
+	suite.storage.EXPECT().Open(ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
-	suite.ctDetector.On("Detect", obj).
+	suite.ctDetector.EXPECT().Detect(obj).
 		Return("application/pdf", nil).Once()
 
 	resp, err := suite.uploadService.Save(ctx, req)
@@ -508,23 +501,23 @@ func (suite *UploadServiceTestSuite) TestSave_RepositoryError() {
 		io.NopCloser(reader),
 	}
 
-	suite.entityService.On("Exists", ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.On("GetObjectInfo", ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.On("Exists", ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.storage.On("Open", ctx, req.ObjectKey).
+	suite.storage.EXPECT().Open(ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
-	suite.ctDetector.On("Detect", obj).
+	suite.ctDetector.EXPECT().Detect(obj).
 		Return("image/jpeg", nil).Once()
 
 	expectedErr := errors.New("database save error")
-	suite.uploadRepo.On("Create", ctx, mock.Anything).
+	suite.uploadRepo.EXPECT().Create(ctx, mock.Anything).
 		Return(expectedErr).Once()
 
 	resp, err := suite.uploadService.Save(ctx, req)

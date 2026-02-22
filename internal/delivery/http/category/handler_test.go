@@ -3,7 +3,7 @@ package category
 import (
 	"fmt"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/service/mocks"
+	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
 	"net/http"
@@ -19,7 +19,7 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 	tests := []struct {
 		name         string
 		categoryID   string
-		setupMock    func(serviceMock *mocks.CategoryServiceMock)
+		setupMock    func(serviceMock *serviceMocks.MockCategoryService)
 		query        string
 		expectedCode int
 		expectedBody any
@@ -27,8 +27,8 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 		{
 			name:       "success",
 			categoryID: "",
-			setupMock: func(serviceMock *mocks.CategoryServiceMock) {
-				serviceMock.On("ListCategories", mock.Anything, dto.ListCategoryRequest{}).
+			setupMock: func(serviceMock *serviceMocks.MockCategoryService) {
+				serviceMock.EXPECT().ListCategories(mock.Anything, dto.ListCategoryRequest{}).
 					Return([]*dto.ProductCategoryResponse{}, 3, nil).Once()
 			},
 			expectedCode: http.StatusOK,
@@ -37,8 +37,8 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 		{
 			name:       "success get subcategory",
 			categoryID: "e267ab94-8c00-4dce-b44e-93dc546f631a",
-			setupMock: func(serviceMock *mocks.CategoryServiceMock) {
-				serviceMock.On("ListCategories", mock.Anything, dto.ListCategoryRequest{
+			setupMock: func(serviceMock *serviceMocks.MockCategoryService) {
+				serviceMock.EXPECT().ListCategories(mock.Anything, dto.ListCategoryRequest{
 					ID: uuid.MustParse("e267ab94-8c00-4dce-b44e-93dc546f631a"),
 				}).Return([]*dto.ProductCategoryResponse{}, 3, nil).Once()
 			},
@@ -55,8 +55,8 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			setupMock: func(serviceMock *mocks.CategoryServiceMock) {
-				serviceMock.On("ListCategories", mock.Anything, dto.ListCategoryRequest{}).
+			setupMock: func(serviceMock *serviceMocks.MockCategoryService) {
+				serviceMock.EXPECT().ListCategories(mock.Anything, dto.ListCategoryRequest{}).
 					Return([]*dto.ProductCategoryResponse{}, 0, fmt.Errorf("unexpected error")).Once()
 			},
 			expectedCode: http.StatusInternalServerError,
@@ -68,7 +68,7 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockService := new(mocks.CategoryServiceMock)
+			mockService := serviceMocks.NewMockCategoryService(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}
