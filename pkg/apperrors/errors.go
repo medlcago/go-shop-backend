@@ -10,6 +10,7 @@ var (
 	ErrInvalidCredentials  = New(http.StatusUnauthorized, "invalid credentials")
 	ErrUserNotFound        = New(http.StatusNotFound, "user not found")
 	ErrProductNotFound     = New(http.StatusNotFound, "product not found")
+	ErrItemNotFound        = New(http.StatusNotFound, "item not found in this order")
 	ErrForbidden           = New(http.StatusForbidden, "forbidden")
 	ErrUserProfileDeleted  = New(http.StatusForbidden, "profile deleted")
 	ErrUnknownEntityType   = New(http.StatusBadRequest, "unknown entity type")

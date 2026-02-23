@@ -214,7 +214,15 @@ func (o *orderService) DeleteItem(
 			return apperrors.ErrInvalidOrderStatus
 		}
 
-		if err = o.orderItemRepo.DeleteItem(ctx, orderID, itemID); err != nil {
+		item, err := o.orderItemRepo.GetItem(ctx, itemID, orderID)
+		if err != nil {
+			if !errors.Is(err, repository.ErrRecordNotFound) {
+				return err
+			}
+			return apperrors.ErrItemNotFound
+		}
+
+		if err = o.orderItemRepo.DeleteItem(ctx, orderID, item.ID); err != nil {
 			return err
 		}
 
