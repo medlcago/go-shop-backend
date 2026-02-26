@@ -7,6 +7,7 @@ import (
 	"go-shop-backend/pkg/database"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm/clause"
 )
 
 type orderItemRepository struct {
@@ -36,12 +37,13 @@ func (o *orderItemRepository) AddItem(ctx context.Context, orderItem *models.Ord
 	return repository.HandleSQLError(err)
 }
 
-func (o *orderItemRepository) UpdateQuantity(ctx context.Context, itemID uuid.UUID, qty int) error {
+func (o *orderItemRepository) Upsert(ctx context.Context, orderItem *models.OrderItem) error {
 	db := o.db.GetDB(ctx)
 
-	err := db.Model(&models.OrderItem{}).
-		Where("id = ?", itemID).
-		Update("quantity", qty).Error
+	err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "order_id"}, {Name: "product_id"}},
+		UpdateAll: true,
+	}).Create(orderItem).Error
 
 	return repository.HandleSQLError(err)
 }

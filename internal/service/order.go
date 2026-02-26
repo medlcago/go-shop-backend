@@ -148,30 +148,16 @@ func (o *orderService) AddItem(
 			return apperrors.ErrInsufficientStock
 		}
 
-		item, err := o.orderItemRepo.GetItem(ctx, product.ID, orderID)
+		item := &models.OrderItem{
+			OrderID:     orderID,
+			ProductID:   product.ID,
+			ProductName: product.Name,
+			Quantity:    req.Quantity,
+			UnitPrice:   product.Price,
+		}
 
-		if err != nil {
-			if !errors.Is(err, repository.ErrRecordNotFound) {
-				return err
-			}
-
-			// item not found, create new
-			item = &models.OrderItem{
-				OrderID:     orderID,
-				ProductID:   product.ID,
-				ProductName: product.Name,
-				Quantity:    req.Quantity,
-				UnitPrice:   product.Price,
-			}
-
-			if err := o.orderItemRepo.AddItem(ctx, item); err != nil {
-				return err
-			}
-		} else {
-			// item found, update quantity
-			if err = o.orderItemRepo.UpdateQuantity(ctx, item.ID, req.Quantity); err != nil {
-				return err
-			}
+		if err := o.orderItemRepo.Upsert(ctx, item); err != nil {
+			return err
 		}
 
 		order, err = o.recalculateOrder(ctx, orderID, userID, sessionID)

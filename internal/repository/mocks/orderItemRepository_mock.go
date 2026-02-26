@@ -290,65 +290,59 @@ func (_c *MockOrderItemRepository_GetItem_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
-// UpdateQuantity provides a mock function for the type MockOrderItemRepository
-func (_mock *MockOrderItemRepository) UpdateQuantity(ctx context.Context, itemID uuid.UUID, qty int) error {
-	ret := _mock.Called(ctx, itemID, qty)
+// Upsert provides a mock function for the type MockOrderItemRepository
+func (_mock *MockOrderItemRepository) Upsert(ctx context.Context, orderItem *models.OrderItem) error {
+	ret := _mock.Called(ctx, orderItem)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateQuantity")
+		panic("no return value specified for Upsert")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, int) error); ok {
-		r0 = returnFunc(ctx, itemID, qty)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *models.OrderItem) error); ok {
+		r0 = returnFunc(ctx, orderItem)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockOrderItemRepository_UpdateQuantity_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateQuantity'
-type MockOrderItemRepository_UpdateQuantity_Call struct {
+// MockOrderItemRepository_Upsert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Upsert'
+type MockOrderItemRepository_Upsert_Call struct {
 	*mock.Call
 }
 
-// UpdateQuantity is a helper method to define mock.On call
+// Upsert is a helper method to define mock.On call
 //   - ctx context.Context
-//   - itemID uuid.UUID
-//   - qty int
-func (_e *MockOrderItemRepository_Expecter) UpdateQuantity(ctx interface{}, itemID interface{}, qty interface{}) *MockOrderItemRepository_UpdateQuantity_Call {
-	return &MockOrderItemRepository_UpdateQuantity_Call{Call: _e.mock.On("UpdateQuantity", ctx, itemID, qty)}
+//   - orderItem *models.OrderItem
+func (_e *MockOrderItemRepository_Expecter) Upsert(ctx interface{}, orderItem interface{}) *MockOrderItemRepository_Upsert_Call {
+	return &MockOrderItemRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, orderItem)}
 }
 
-func (_c *MockOrderItemRepository_UpdateQuantity_Call) Run(run func(ctx context.Context, itemID uuid.UUID, qty int)) *MockOrderItemRepository_UpdateQuantity_Call {
+func (_c *MockOrderItemRepository_Upsert_Call) Run(run func(ctx context.Context, orderItem *models.OrderItem)) *MockOrderItemRepository_Upsert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 uuid.UUID
+		var arg1 *models.OrderItem
 		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
+			arg1 = args[1].(*models.OrderItem)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockOrderItemRepository_UpdateQuantity_Call) Return(err error) *MockOrderItemRepository_UpdateQuantity_Call {
+func (_c *MockOrderItemRepository_Upsert_Call) Return(err error) *MockOrderItemRepository_Upsert_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockOrderItemRepository_UpdateQuantity_Call) RunAndReturn(run func(ctx context.Context, itemID uuid.UUID, qty int) error) *MockOrderItemRepository_UpdateQuantity_Call {
+func (_c *MockOrderItemRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, orderItem *models.OrderItem) error) *MockOrderItemRepository_Upsert_Call {
 	_c.Call.Return(run)
 	return _c
 }

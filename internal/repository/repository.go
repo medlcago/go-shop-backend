@@ -44,7 +44,7 @@ type OrderRepository interface {
 type OrderItemRepository interface {
 	GetItem(ctx context.Context, productID uuid.UUID, orderID uuid.UUID) (*models.OrderItem, error)
 	AddItem(ctx context.Context, orderItem *models.OrderItem) error
-	UpdateQuantity(ctx context.Context, itemID uuid.UUID, qty int) error
+	Upsert(ctx context.Context, orderItem *models.OrderItem) error
 	DeleteItem(ctx context.Context, orderID uuid.UUID, productID uuid.UUID) error
 	Clear(ctx context.Context, orderID uuid.UUID) error
 }
