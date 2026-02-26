@@ -196,7 +196,7 @@ func (suite *OrderServiceTestSuite) TestGetOrders_RepositoryError() {
 
 // ==================== AddItem Tests ====================
 
-func (suite *OrderServiceTestSuite) TestAddItem_Success_NewItem() {
+func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 	order := &models.Order{
 		ID:        suite.orderID,
 		UserID:    suite.userID,
@@ -244,86 +244,10 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success_NewItem() {
 	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
 		Return(product, nil).Once()
 
-	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
-		Return(nil, repository.ErrRecordNotFound).Once()
-
-	suite.orderItemRepo.EXPECT().AddItem(suite.ctx, mock.AnythingOfType("*models.OrderItem")).
+	suite.orderItemRepo.EXPECT().Upsert(suite.ctx, mock.AnythingOfType("*models.OrderItem")).
 		Return(nil).Once()
 
 	// Second call - for recalculation (preload=true)
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
-		Return(orderWithItems, nil).Once()
-
-	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
-		Return(nil).Once()
-
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
-
-	suite.NoError(err)
-	suite.NotNil(response)
-	suite.Equal(suite.orderID, response.ID)
-}
-
-func (suite *OrderServiceTestSuite) TestAddItem_Success_ExistingItem() {
-	order := &models.Order{
-		ID:        suite.orderID,
-		UserID:    suite.userID,
-		SessionID: suite.sessionID,
-		Status:    models.OrderStatusDraft,
-		Items:     []models.OrderItem{},
-	}
-
-	product := &models.Product{
-		ID:       suite.productID,
-		Name:     "Test Product",
-		Price:    1000,
-		Stock:    10,
-		Reserved: 0,
-		IsActive: true,
-	}
-
-	existingItem := &models.OrderItem{
-		ID:        suite.itemID,
-		OrderID:   suite.orderID,
-		ProductID: suite.productID,
-		Quantity:  1,
-		UnitPrice: 1000,
-	}
-
-	req := dto.AddOrderItemRequest{
-		ProductID: suite.productID,
-		Quantity:  3,
-	}
-
-	orderWithItems := &models.Order{
-		ID:          suite.orderID,
-		UserID:      suite.userID,
-		SessionID:   suite.sessionID,
-		Status:      models.OrderStatusDraft,
-		TotalAmount: 3000,
-		Items: []models.OrderItem{
-			{
-				ID:        suite.itemID,
-				OrderID:   suite.orderID,
-				ProductID: suite.productID,
-				Quantity:  3,
-				UnitPrice: 1000,
-			},
-		},
-	}
-
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
-		Return(order, nil).Once()
-
-	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
-		Return(product, nil).Once()
-
-	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
-		Return(existingItem, nil).Once()
-
-	suite.orderItemRepo.EXPECT().UpdateQuantity(suite.ctx, suite.itemID, 3).
-		Return(nil).Once()
-
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
 		Return(orderWithItems, nil).Once()
 
