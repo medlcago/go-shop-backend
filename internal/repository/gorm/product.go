@@ -11,6 +11,7 @@ import (
 	"go-shop-backend/pkg/utils"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm/clause"
 )
 
 type productRepository struct {
@@ -89,6 +90,18 @@ func (p *productRepository) Update(ctx context.Context, product *models.Product)
 	err := db.Select("*").Updates(product).Error
 	return repository.HandleSQLError(err)
 }
+
+func (p *productRepository) BulkUpsert(ctx context.Context, products []*models.Product) error {
+	db := p.db.GetDB(ctx)
+
+	err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		UpdateAll: true,
+	}).Create(products).Error
+
+	return repository.HandleSQLError(err)
+}
+
 func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
 	db := p.db.GetDB(ctx)
 
@@ -98,6 +111,19 @@ func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, err
 	}
 
 	return exists, nil
+}
+
+func (p *productRepository) GetByIDsForUpdate(ctx context.Context, ids []uuid.UUID) ([]*models.Product, error) {
+	db := p.db.GetDB(ctx)
+
+	var products []*models.Product
+	if err := db.Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
+		Where("id IN (?)", ids).
+		Find(&products).Error; err != nil {
+		return nil, repository.HandleSQLError(err)
+	}
+
+	return products, nil
 }
 
 func (p *productRepository) Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error) {

@@ -28,3 +28,7 @@ packages:
   go-shop-backend/pkg/contenttype:
     interfaces:
       Detector:
+
+  go-shop-backend/pkg/paymentprovider:
+    interfaces:
+      Provider:

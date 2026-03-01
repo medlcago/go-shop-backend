@@ -40,6 +40,8 @@ func messageByTag(e validator.FieldError) string {
 
 	case "gte":
 		return "Must be ≥ " + e.Param()
+	case "gt":
+		return "Must be > " + e.Param()
 
 	case "lte":
 		return "Must be ≤ " + e.Param()

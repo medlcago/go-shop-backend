@@ -21,7 +21,9 @@ type ProductRepository interface {
 	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
 	Create(ctx context.Context, product *models.Product) error
 	Update(ctx context.Context, product *models.Product) error
+	BulkUpsert(ctx context.Context, products []*models.Product) error
 	Exists(ctx context.Context, id uuid.UUID) (bool, error)
+	GetByIDsForUpdate(ctx context.Context, ids []uuid.UUID) ([]*models.Product, error)
 	Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error)
 }
 
@@ -39,6 +41,7 @@ type OrderRepository interface {
 	Update(ctx context.Context, order *models.Order) error
 	GetByOwner(ctx context.Context, orderID uuid.UUID, userID *uuid.UUID, sessionID uuid.UUID, preload bool) (*models.Order, error)
 	GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error)
+	GetByPayment(ctx context.Context, providerName string, paymentID string, preload bool) (*models.Order, error)
 }
 
 type OrderItemRepository interface {

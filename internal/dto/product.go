@@ -13,6 +13,7 @@ type ProductResponse struct {
 	Price       int64     `json:"price"`
 	Stock       int       `json:"stock"`
 	Available   int       `json:"available"`
+	Reserved    int       `json:"reserved"`
 	Slug        string    `json:"slug"`
 	IsActive    bool      `json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`

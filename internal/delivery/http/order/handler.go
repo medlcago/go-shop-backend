@@ -215,3 +215,19 @@ func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
+
+func (h *Handler) Checkout(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
+
+	orderID := uuid.MustParse(ctx.Params("id"))
+
+	resp, err := h.orderService.Checkout(ctx, *userCtx.UserID, orderID)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}

@@ -19,6 +19,7 @@ type Config struct {
 	Database   Database   `env-prefix:"DB_"`
 	Minio      Minio      `env-prefix:"MINIO_"`
 	Upload     Upload     `env-prefix:"UPLOAD_"`
+	Yookassa   Yookassa   `env-prefix:"YOOKASSA_"`
 }
 
 func (cfg *Config) Validate() error {

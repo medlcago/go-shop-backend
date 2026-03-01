@@ -23,7 +23,9 @@ var (
 	ErrInvalidQuantity     = New(http.StatusBadRequest, "quantity must be greater than zero")
 	ErrProductNotActive    = New(http.StatusBadRequest, "product is not active")
 	ErrInsufficientStock   = New(http.StatusBadRequest, "insufficient product stock")
+	ErrInconsistentStock   = New(http.StatusConflict, "inconsistent product stock")
 	ErrInvalidOrderStatus  = New(http.StatusConflict, "order status does not allow modifications")
+	ErrEmptyOrder          = New(http.StatusBadRequest, "order is empty")
 )
 
 type AppError struct {

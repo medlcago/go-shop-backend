@@ -19,13 +19,22 @@ type OrderItemResponse struct {
 }
 
 type OrderResponse struct {
-	ID          uuid.UUID           `json:"id"`
-	Status      string              `json:"status"`
-	Items       []OrderItemResponse `json:"items"`
-	TotalAmount int64               `json:"total_amount"`
-	CreatedAt   time.Time           `json:"created_at"`
-	UpdatedAt   time.Time           `json:"updated_at"`
-	CompletedAt *time.Time          `json:"completed_at"`
+	ID           uuid.UUID           `json:"id"`
+	Status       string              `json:"status"`
+	Items        []OrderItemResponse `json:"items"`
+	TotalAmount  int64               `json:"total_amount"`
+	CreatedAt    time.Time           `json:"created_at"`
+	UpdatedAt    time.Time           `json:"updated_at"`
+	PaymentID    *string             `json:"payment_id"`
+	ProviderName *string             `json:"provider_name"`
+	PaidAt       *time.Time          `json:"paid_at"`
+	CanceledAt   *time.Time          `json:"canceled_at"`
+	CompletedAt  *time.Time          `json:"completed_at"`
+}
+
+type OrderCheckoutResponse struct {
+	OrderID         uuid.UUID `json:"order_id"`
+	ConfirmationURL string    `json:"confirmation_url"`
 }
 
 type ListOrderRequest struct {

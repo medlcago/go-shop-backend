@@ -23,9 +23,15 @@ type Order struct {
 	UserID    *uuid.UUID `gorm:"type:uuid;index"`
 	SessionID uuid.UUID  `gorm:"type:uuid;index"`
 
-	Status OrderStatus `gorm:"type:order_status;not null;index;default:'draft'"`
+	Status OrderStatus `gorm:"type:order_status;not null;index:idx_orders_status;index:idx_orders_status_expires_at;default:'draft'"`
 
 	TotalAmount int64 `gorm:"not null;check:total_amount >= 0;default:0"`
+
+	PaymentID    *string    `gorm:"type:varchar(255);index:idx_orders_provider_payment_unique"`
+	ProviderName *string    `gorm:"type:varchar(255);index:idx_orders_provider_payment_unique"`
+	ExpiresAt    *time.Time `gorm:"type:timestamptz;index:idx_orders_status_expires_at"`
+	PaidAt       *time.Time `gorm:"type:timestamptz"`
+	CanceledAt   *time.Time `gorm:"type:timestamptz"`
 
 	CreatedAt   time.Time    `gorm:"type:timestamptz;default:now();not null"`
 	UpdatedAt   time.Time    `gorm:"type:timestamptz;default:now();not null"`
@@ -34,8 +40,16 @@ type Order struct {
 	Items []OrderItem `gorm:"foreignKey:OrderID;constraint:OnDelete:RESTRICT;"`
 }
 
-func (o Order) CanEdit() bool {
+func (o *Order) CanEdit() bool {
 	return o.Status == OrderStatusDraft
+}
+
+func (o *Order) CanCheckout() bool {
+	return o.Status == OrderStatusDraft
+}
+
+func (o *Order) CanCancel() bool {
+	return o.Status == OrderStatusPending
 }
 
 type OrderItem struct {

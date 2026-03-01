@@ -10,28 +10,33 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/mapper"
+	"go-shop-backend/pkg/paymentprovider"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type orderService struct {
-	orderRepo     repository.OrderRepository
-	orderItemRepo repository.OrderItemRepository
-	productRepo   repository.ProductRepository
-	txManager     database.TxManager
+	orderRepo       repository.OrderRepository
+	orderItemRepo   repository.OrderItemRepository
+	productRepo     repository.ProductRepository
+	paymentProvider paymentprovider.Provider
+	txManager       database.TxManager
 }
 
 func NewOrderService(
 	orderRepo repository.OrderRepository,
 	orderItemRepo repository.OrderItemRepository,
 	productRepo repository.ProductRepository,
+	paymentProvider paymentprovider.Provider,
 	txManager database.TxManager,
 ) *orderService {
 	return &orderService{
-		orderRepo:     orderRepo,
-		orderItemRepo: orderItemRepo,
-		productRepo:   productRepo,
-		txManager:     txManager,
+		orderRepo:       orderRepo,
+		orderItemRepo:   orderItemRepo,
+		productRepo:     productRepo,
+		paymentProvider: paymentProvider,
+		txManager:       txManager,
 	}
 }
 
@@ -58,7 +63,6 @@ func (o *orderService) CreateOrder(
 	}
 
 	return response, nil
-
 }
 
 func (o *orderService) GetOrder(
@@ -102,7 +106,6 @@ func (o *orderService) GetOrders(
 	}
 
 	return response, total, nil
-
 }
 
 func (o *orderService) AddItem(
@@ -272,6 +275,133 @@ func (o *orderService) Clear(
 	return response, nil
 }
 
+func (o *orderService) Checkout(
+	ctx context.Context,
+	userID uuid.UUID,
+	orderID uuid.UUID,
+) (*dto.OrderCheckoutResponse, error) {
+	const op = "orderService.Checkout"
+
+	var confirmationURL string
+
+	checkout := func(ctx context.Context) error {
+		order, err := o.getOrder(ctx, orderID, &userID, uuid.Nil, true)
+		if err != nil {
+			return err
+		}
+
+		if !order.CanCheckout() {
+			return apperrors.ErrInvalidOrderStatus
+		}
+
+		if len(order.Items) == 0 {
+			return apperrors.ErrEmptyOrder
+		}
+
+		if err := o.reserveItems(ctx, order.Items); err != nil {
+			return err
+		}
+
+		order.TotalAmount = o.calculateTotal(order)
+		order.Status = models.OrderStatusPending
+
+		if err := o.orderRepo.Update(ctx, order); err != nil {
+			return err
+		}
+
+		req := &paymentprovider.CreatePaymentRequest{
+			Metadata: paymentprovider.Metadata{
+				OrderID: order.ID,
+				UserID:  userID,
+			},
+			Amount: order.TotalAmount,
+		}
+
+		payment, err := o.paymentProvider.CreatePayment(req)
+		if err != nil {
+			return err
+		}
+
+		providerName := o.paymentProvider.GetName()
+		expiresAt := time.Now().UTC().Add(10 * time.Minute)
+
+		order.PaymentID = &payment.ID
+		order.ProviderName = &providerName
+		order.ExpiresAt = &expiresAt
+		if err := o.orderRepo.Update(ctx, order); err != nil {
+			return err
+		}
+
+		confirmationURL = payment.ConfirmationURL
+		return nil
+	}
+
+	err := o.txManager.Wrap(ctx, checkout)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	response := &dto.OrderCheckoutResponse{
+		OrderID:         orderID,
+		ConfirmationURL: confirmationURL,
+	}
+
+	return response, nil
+}
+
+func (o *orderService) HandlePaymentWebhook(
+	ctx context.Context,
+	body []byte,
+) error {
+	const op = "orderService.HandlePaymentWebhook"
+
+	event, err := o.paymentProvider.ParseWebhook(body)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	handle := func(ctx context.Context) error {
+		order, err := o.orderRepo.GetByPayment(ctx, o.paymentProvider.GetName(), event.PaymentID, true)
+		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				return nil
+			}
+			return err
+		}
+
+		if order.Status != models.OrderStatusPending {
+			return nil
+		}
+
+		switch event.Status {
+		case paymentprovider.PaymentStatusSucceeded:
+			if err := o.deductItems(ctx, order.Items); err != nil {
+				return err
+			}
+			now := time.Now().UTC()
+			order.Status = models.OrderStatusPaid
+			order.PaidAt = &now
+		case paymentprovider.PaymentStatusCanceled:
+			if err := o.releaseItems(ctx, order.Items); err != nil {
+				return err
+			}
+			now := time.Now().UTC()
+			order.Status = models.OrderStatusCanceled
+			order.CanceledAt = &now
+		default:
+			return nil
+		}
+
+		return o.orderRepo.Update(ctx, order)
+	}
+
+	err = o.txManager.Wrap(ctx, handle)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
+
 func (o *orderService) calculateTotal(order *models.Order) int64 {
 	var total int64
 
@@ -318,4 +448,63 @@ func (o *orderService) recalculateOrder(
 	}
 
 	return order, nil
+}
+
+func (o *orderService) reserveItems(ctx context.Context, items []models.OrderItem) error {
+	return o.applyOnProducts(ctx, items, "reserve",
+		func(p *models.Product, qty int) error {
+			return p.Reserve(qty)
+		},
+	)
+}
+
+func (o *orderService) releaseItems(ctx context.Context, items []models.OrderItem) error {
+	return o.applyOnProducts(ctx, items, "release",
+		func(p *models.Product, qty int) error {
+			return p.Release(qty)
+		},
+	)
+}
+
+func (o *orderService) deductItems(ctx context.Context, items []models.OrderItem) error {
+	return o.applyOnProducts(ctx, items, "deduct",
+		func(p *models.Product, qty int) error {
+			return p.Deduct(qty)
+		},
+	)
+}
+
+func (o *orderService) applyOnProducts(
+	ctx context.Context,
+	items []models.OrderItem,
+	actionName string,
+	action func(p *models.Product, qty int) error,
+) error {
+	productIDs := make([]uuid.UUID, 0, len(items))
+	for _, item := range items {
+		productIDs = append(productIDs, item.ProductID)
+	}
+
+	products, err := o.productRepo.GetByIDsForUpdate(ctx, productIDs)
+	if err != nil {
+		return err
+	}
+
+	productMap := make(map[uuid.UUID]*models.Product, len(products))
+	for _, p := range products {
+		productMap[p.ID] = p
+	}
+
+	for _, item := range items {
+		product := productMap[item.ProductID]
+		if product == nil {
+			return fmt.Errorf("product not found: %s", item.ProductID)
+		}
+
+		if err := action(product, item.Quantity); err != nil {
+			return fmt.Errorf("product %s: %s: %w", actionName, product.ID, err)
+		}
+	}
+
+	return o.productRepo.BulkUpsert(ctx, products)
 }

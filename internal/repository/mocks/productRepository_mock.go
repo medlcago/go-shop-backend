@@ -40,6 +40,63 @@ func (_m *MockProductRepository) EXPECT() *MockProductRepository_Expecter {
 	return &MockProductRepository_Expecter{mock: &_m.Mock}
 }
 
+// BulkUpsert provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) BulkUpsert(ctx context.Context, products []*models.Product) error {
+	ret := _mock.Called(ctx, products)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BulkUpsert")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*models.Product) error); ok {
+		r0 = returnFunc(ctx, products)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockProductRepository_BulkUpsert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkUpsert'
+type MockProductRepository_BulkUpsert_Call struct {
+	*mock.Call
+}
+
+// BulkUpsert is a helper method to define mock.On call
+//   - ctx context.Context
+//   - products []*models.Product
+func (_e *MockProductRepository_Expecter) BulkUpsert(ctx interface{}, products interface{}) *MockProductRepository_BulkUpsert_Call {
+	return &MockProductRepository_BulkUpsert_Call{Call: _e.mock.On("BulkUpsert", ctx, products)}
+}
+
+func (_c *MockProductRepository_BulkUpsert_Call) Run(run func(ctx context.Context, products []*models.Product)) *MockProductRepository_BulkUpsert_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []*models.Product
+		if args[1] != nil {
+			arg1 = args[1].([]*models.Product)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductRepository_BulkUpsert_Call) Return(err error) *MockProductRepository_BulkUpsert_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockProductRepository_BulkUpsert_Call) RunAndReturn(run func(ctx context.Context, products []*models.Product) error) *MockProductRepository_BulkUpsert_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockProductRepository
 func (_mock *MockProductRepository) Create(ctx context.Context, product *models.Product) error {
 	ret := _mock.Called(ctx, product)
@@ -233,6 +290,74 @@ func (_c *MockProductRepository_GetByID_Call) Return(product *models.Product, er
 }
 
 func (_c *MockProductRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, preload bool) (*models.Product, error)) *MockProductRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetByIDsForUpdate provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) GetByIDsForUpdate(ctx context.Context, ids []uuid.UUID) ([]*models.Product, error) {
+	ret := _mock.Called(ctx, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDsForUpdate")
+	}
+
+	var r0 []*models.Product
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []uuid.UUID) ([]*models.Product, error)); ok {
+		return returnFunc(ctx, ids)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []uuid.UUID) []*models.Product); ok {
+		r0 = returnFunc(ctx, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*models.Product)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockProductRepository_GetByIDsForUpdate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDsForUpdate'
+type MockProductRepository_GetByIDsForUpdate_Call struct {
+	*mock.Call
+}
+
+// GetByIDsForUpdate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ids []uuid.UUID
+func (_e *MockProductRepository_Expecter) GetByIDsForUpdate(ctx interface{}, ids interface{}) *MockProductRepository_GetByIDsForUpdate_Call {
+	return &MockProductRepository_GetByIDsForUpdate_Call{Call: _e.mock.On("GetByIDsForUpdate", ctx, ids)}
+}
+
+func (_c *MockProductRepository_GetByIDsForUpdate_Call) Run(run func(ctx context.Context, ids []uuid.UUID)) *MockProductRepository_GetByIDsForUpdate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].([]uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductRepository_GetByIDsForUpdate_Call) Return(products []*models.Product, err error) *MockProductRepository_GetByIDsForUpdate_Call {
+	_c.Call.Return(products, err)
+	return _c
+}
+
+func (_c *MockProductRepository_GetByIDsForUpdate_Call) RunAndReturn(run func(ctx context.Context, ids []uuid.UUID) ([]*models.Product, error)) *MockProductRepository_GetByIDsForUpdate_Call {
 	_c.Call.Return(run)
 	return _c
 }

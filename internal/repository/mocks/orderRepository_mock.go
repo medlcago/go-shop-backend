@@ -183,6 +183,86 @@ func (_c *MockOrderRepository_GetByOwner_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// GetByPayment provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) GetByPayment(ctx context.Context, providerName string, paymentID string, preload bool) (*models.Order, error) {
+	ret := _mock.Called(ctx, providerName, paymentID, preload)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByPayment")
+	}
+
+	var r0 *models.Order
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bool) (*models.Order, error)); ok {
+		return returnFunc(ctx, providerName, paymentID, preload)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bool) *models.Order); ok {
+		r0 = returnFunc(ctx, providerName, paymentID, preload)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Order)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, bool) error); ok {
+		r1 = returnFunc(ctx, providerName, paymentID, preload)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_GetByPayment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByPayment'
+type MockOrderRepository_GetByPayment_Call struct {
+	*mock.Call
+}
+
+// GetByPayment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - providerName string
+//   - paymentID string
+//   - preload bool
+func (_e *MockOrderRepository_Expecter) GetByPayment(ctx interface{}, providerName interface{}, paymentID interface{}, preload interface{}) *MockOrderRepository_GetByPayment_Call {
+	return &MockOrderRepository_GetByPayment_Call{Call: _e.mock.On("GetByPayment", ctx, providerName, paymentID, preload)}
+}
+
+func (_c *MockOrderRepository_GetByPayment_Call) Run(run func(ctx context.Context, providerName string, paymentID string, preload bool)) *MockOrderRepository_GetByPayment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_GetByPayment_Call) Return(order *models.Order, err error) *MockOrderRepository_GetByPayment_Call {
+	_c.Call.Return(order, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_GetByPayment_Call) RunAndReturn(run func(ctx context.Context, providerName string, paymentID string, preload bool) (*models.Order, error)) *MockOrderRepository_GetByPayment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetListByOwner provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error) {
 	ret := _mock.Called(ctx, userID, sessionID, req)

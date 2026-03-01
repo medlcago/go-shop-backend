@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/pkg/apperrors"
+	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 	"go-shop-backend/pkg/utils"
 	"testing"
 
@@ -25,11 +26,12 @@ func (t txManager) Wrap(ctx context.Context, fn func(ctx context.Context) error)
 
 type OrderServiceTestSuite struct {
 	suite.Suite
-	orderRepo     *repoMocks.MockOrderRepository
-	orderItemRepo *repoMocks.MockOrderItemRepository
-	productRepo   *repoMocks.MockProductRepository
-	txManager     *txManager
-	orderService  *orderService
+	orderRepo       *repoMocks.MockOrderRepository
+	orderItemRepo   *repoMocks.MockOrderItemRepository
+	productRepo     *repoMocks.MockProductRepository
+	txManager       *txManager
+	paymentProvider *paymentproviderMocks.MockProvider
+	orderService    *orderService
 
 	ctx       context.Context
 	userID    *uuid.UUID
@@ -44,7 +46,8 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.orderItemRepo = repoMocks.NewMockOrderItemRepository(suite.T())
 	suite.productRepo = repoMocks.NewMockProductRepository(suite.T())
 	suite.txManager = new(txManager)
-	suite.orderService = NewOrderService(suite.orderRepo, suite.orderItemRepo, suite.productRepo, suite.txManager)
+	suite.paymentProvider = paymentproviderMocks.NewMockProvider(suite.T())
+	suite.orderService = NewOrderService(suite.orderRepo, suite.orderItemRepo, suite.productRepo, suite.paymentProvider, suite.txManager)
 
 	suite.ctx = context.Background()
 	suite.userID = utils.Ptr(uuid.New())

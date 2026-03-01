@@ -10,6 +10,7 @@ import (
 	productHttp "go-shop-backend/internal/delivery/http/product"
 	uploadHttp "go-shop-backend/internal/delivery/http/upload"
 	userHttp "go-shop-backend/internal/delivery/http/user"
+	webhookHttp "go-shop-backend/internal/delivery/http/webhook"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/middleware"
 	"log/slog"
@@ -131,4 +132,7 @@ func (s *Server) Init() {
 
 	orderHandler := orderHttp.NewHandler(s.deps.OrderService)
 	orderHttp.RegisterRoutes(v1, orderHandler)
+
+	webhookHandler := webhookHttp.NewHandler(s.deps.OrderService)
+	webhookHttp.RegisterRoutes(v1, webhookHandler)
 }

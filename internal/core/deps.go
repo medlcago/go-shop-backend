@@ -10,6 +10,8 @@ import (
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/hasher"
 	"go-shop-backend/pkg/logger"
+	"go-shop-backend/pkg/paymentprovider"
+	"go-shop-backend/pkg/paymentprovider/yookassa"
 	"go-shop-backend/pkg/storage"
 	"go-shop-backend/pkg/storage/minio"
 	"go-shop-backend/pkg/token"
@@ -28,6 +30,8 @@ type Dependencies struct {
 
 	Storage      storage.Storage
 	TokenManager token.Manager
+
+	PaymentProvider paymentprovider.Provider
 
 	UserRepository      repository.UserRepository
 	ProductRepository   repository.ProductRepository
@@ -76,6 +80,13 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 
 	contentTypeDetector := contenttype.NewMagicDetector()
 
+	paymentProvider, err := yookassa.New(
+		yookassa.NewConfig(cfg.Yookassa.AccountID, cfg.Yookassa.SecretKey, cfg.Yookassa.ReturnURL),
+	)
+	if err != nil {
+		logger.Fatal(l, "failed to create payment provider", err)
+	}
+
 	userRepo := gormRepo.NewUserRepository(db)
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
@@ -89,7 +100,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload, contentTypeDetector)
 	productService := service.NewProductService(productRepo, uploadService)
 	categoryService := service.NewCategoryService(categoryRepo)
-	orderService := service.NewOrderService(orderRepo, orderItemRepo, productRepo, txManager)
+	orderService := service.NewOrderService(orderRepo, orderItemRepo, productRepo, paymentProvider, txManager)
 
 	return &Dependencies{
 		Cfg:       cfg,
@@ -101,6 +112,8 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 
 		Storage:      minioStorage,
 		TokenManager: jwtManager,
+
+		PaymentProvider: paymentProvider,
 
 		UserRepository:      userRepo,
 		ProductRepository:   productRepo,

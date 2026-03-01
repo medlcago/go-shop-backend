@@ -101,3 +101,32 @@ func (o *orderRepository) GetListByOwner(
 
 	return orders, total, nil
 }
+
+func (o *orderRepository) GetByPayment(
+	ctx context.Context,
+	providerName string,
+	paymentID string,
+	preload bool,
+) (*models.Order, error) {
+	db := o.db.GetDB(ctx)
+
+	db = db.Where(
+		"provider_name = ? AND payment_id = ?",
+		providerName, paymentID,
+	)
+
+	if preload {
+		db = db.Scopes(
+			scopes.OrderWithRelations(),
+		)
+	}
+
+	var order models.Order
+	err := db.First(&order).Error
+
+	if err != nil {
+		return nil, repository.HandleSQLError(err)
+	}
+
+	return &order, nil
+}
