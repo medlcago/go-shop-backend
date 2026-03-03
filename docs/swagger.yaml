@@ -39,6 +39,8 @@ definitions:
     type: object
   go-shop-backend_internal_dto.OrderResponse:
     properties:
+      canceled_at:
+        type: string
       completed_at:
         type: string
       created_at:
@@ -49,6 +51,12 @@ definitions:
         items:
           $ref: '#/definitions/go-shop-backend_internal_dto.OrderItemResponse'
         type: array
+      paid_at:
+        type: string
+      payment_id:
+        type: string
+      provider_name:
+        type: string
       status:
         type: string
       total_amount:
@@ -111,6 +119,8 @@ definitions:
       name:
         type: string
       price:
+        type: integer
+      reserved:
         type: integer
       slug:
         type: string
@@ -734,7 +744,7 @@ paths:
       summary: Add item to order
       tags:
       - Orders
-  /orders/{id}/items/{item_id}:
+  /orders/{id}/items/{product_id}:
     delete:
       description: Delete item from order
       parameters:
@@ -744,10 +754,10 @@ paths:
         name: id
         required: true
         type: string
-      - description: Item ID
+      - description: Product ID
         format: uuid
         in: path
-        name: item_id
+        name: product_id
         required: true
         type: string
       - description: Session ID

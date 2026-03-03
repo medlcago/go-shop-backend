@@ -185,7 +185,7 @@ func (o *orderService) DeleteItem(
 	userID *uuid.UUID,
 	sessionID uuid.UUID,
 	orderID uuid.UUID,
-	itemID uuid.UUID,
+	productID uuid.UUID,
 ) (*dto.OrderResponse, error) {
 	const op = "orderService.DeleteItem"
 
@@ -203,7 +203,7 @@ func (o *orderService) DeleteItem(
 			return apperrors.ErrInvalidOrderStatus
 		}
 
-		item, err := o.orderItemRepo.GetItem(ctx, itemID, orderID)
+		item, err := o.orderItemRepo.GetItem(ctx, productID, orderID)
 		if err != nil {
 			if !errors.Is(err, repository.ErrRecordNotFound) {
 				return err
@@ -211,7 +211,7 @@ func (o *orderService) DeleteItem(
 			return apperrors.ErrItemNotFound
 		}
 
-		if err = o.orderItemRepo.DeleteItem(ctx, orderID, item.ID); err != nil {
+		if err = o.orderItemRepo.DeleteItem(ctx, orderID, item.ProductID); err != nil {
 			return err
 		}
 

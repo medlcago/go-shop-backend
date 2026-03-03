@@ -354,8 +354,8 @@ func (_c *MockOrderService_CreateOrder_Call) RunAndReturn(run func(ctx context.C
 }
 
 // DeleteItem provides a mock function for the type MockOrderService
-func (_mock *MockOrderService) DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error) {
-	ret := _mock.Called(ctx, userID, sessionID, orderID, itemID)
+func (_mock *MockOrderService) DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, productID uuid.UUID) (*dto.OrderResponse, error) {
+	ret := _mock.Called(ctx, userID, sessionID, orderID, productID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteItem")
@@ -364,17 +364,17 @@ func (_mock *MockOrderService) DeleteItem(ctx context.Context, userID *uuid.UUID
 	var r0 *dto.OrderResponse
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) (*dto.OrderResponse, error)); ok {
-		return returnFunc(ctx, userID, sessionID, orderID, itemID)
+		return returnFunc(ctx, userID, sessionID, orderID, productID)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) *dto.OrderResponse); ok {
-		r0 = returnFunc(ctx, userID, sessionID, orderID, itemID)
+		r0 = returnFunc(ctx, userID, sessionID, orderID, productID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dto.OrderResponse)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, userID, sessionID, orderID, itemID)
+		r1 = returnFunc(ctx, userID, sessionID, orderID, productID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -391,12 +391,12 @@ type MockOrderService_DeleteItem_Call struct {
 //   - userID *uuid.UUID
 //   - sessionID uuid.UUID
 //   - orderID uuid.UUID
-//   - itemID uuid.UUID
-func (_e *MockOrderService_Expecter) DeleteItem(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}, itemID interface{}) *MockOrderService_DeleteItem_Call {
-	return &MockOrderService_DeleteItem_Call{Call: _e.mock.On("DeleteItem", ctx, userID, sessionID, orderID, itemID)}
+//   - productID uuid.UUID
+func (_e *MockOrderService_Expecter) DeleteItem(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}, productID interface{}) *MockOrderService_DeleteItem_Call {
+	return &MockOrderService_DeleteItem_Call{Call: _e.mock.On("DeleteItem", ctx, userID, sessionID, orderID, productID)}
 }
 
-func (_c *MockOrderService_DeleteItem_Call) Run(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID)) *MockOrderService_DeleteItem_Call {
+func (_c *MockOrderService_DeleteItem_Call) Run(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, productID uuid.UUID)) *MockOrderService_DeleteItem_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -434,7 +434,7 @@ func (_c *MockOrderService_DeleteItem_Call) Return(orderResponse *dto.OrderRespo
 	return _c
 }
 
-func (_c *MockOrderService_DeleteItem_Call) RunAndReturn(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error)) *MockOrderService_DeleteItem_Call {
+func (_c *MockOrderService_DeleteItem_Call) RunAndReturn(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, productID uuid.UUID) (*dto.OrderResponse, error)) *MockOrderService_DeleteItem_Call {
 	_c.Call.Return(run)
 	return _c
 }

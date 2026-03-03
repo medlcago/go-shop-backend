@@ -160,14 +160,14 @@ func (h *Handler) AddItem(ctx fiber.Ctx) error {
 //	@Security		BearerAuth
 //	@Produce		json
 //	@Param			id				path		string	true	"Order ID"		Format(uuid)
-//	@Param			item_id			path		string	true	"Item ID"		Format(uuid)
+//	@Param			product_id		path		string	true	"Product ID"	Format(uuid)
 //	@Param			X-Session-ID	header		string	true	"Session ID"	Format(uuid)
 //	@Success		200				{object}	response.Response[dto.OrderResponse]
 //	@Failure		401				{object}	response.Response[any]
 //	@Failure		403				{object}	response.Response[any]
 //	@Failure		409				{object}	response.Response[any]
 //	@Failure		500				{object}	response.Response[any]
-//	@Router			/orders/{id}/items/{item_id} [delete]
+//	@Router			/orders/{id}/items/{product_id} [delete]
 func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
@@ -175,9 +175,9 @@ func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
-	itemID := uuid.MustParse(ctx.Params("item_id"))
+	productID := uuid.MustParse(ctx.Params("product_id"))
 
-	resp, err := h.orderService.DeleteItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, itemID)
+	resp, err := h.orderService.DeleteItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, productID)
 	if err != nil {
 		return err
 	}

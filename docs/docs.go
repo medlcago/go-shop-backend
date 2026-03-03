@@ -582,7 +582,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/orders/{id}/items/{item_id}": {
+        "/orders/{id}/items/{product_id}": {
             "delete": {
                 "security": [
                     {
@@ -609,8 +609,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "Item ID",
-                        "name": "item_id",
+                        "description": "Product ID",
+                        "name": "product_id",
                         "in": "path",
                         "required": true
                     },
@@ -1223,6 +1223,9 @@ const docTemplate = `{
         "go-shop-backend_internal_dto.OrderResponse": {
             "type": "object",
             "properties": {
+                "canceled_at": {
+                    "type": "string"
+                },
                 "completed_at": {
                     "type": "string"
                 },
@@ -1237,6 +1240,15 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/go-shop-backend_internal_dto.OrderItemResponse"
                     }
+                },
+                "paid_at": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "provider_name": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"
@@ -1329,6 +1341,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "price": {
+                    "type": "integer"
+                },
+                "reserved": {
                     "type": "integer"
                 },
                 "slug": {
