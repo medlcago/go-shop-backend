@@ -455,6 +455,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 		Items: []models.OrderItem{
 			{
 				ID:        suite.itemID,
+				ProductID: suite.productID,
 				UnitPrice: 1000,
 				Quantity:  2,
 			},
@@ -473,10 +474,10 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.itemID, suite.orderID).
-		Return(&models.OrderItem{ID: suite.itemID}, nil).Once()
+	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
+		Return(&models.OrderItem{ID: suite.itemID, ProductID: suite.productID}, nil).Once()
 
-	suite.orderItemRepo.EXPECT().DeleteItem(suite.ctx, suite.orderID, suite.itemID).
+	suite.orderItemRepo.EXPECT().DeleteItem(suite.ctx, suite.orderID, suite.productID).
 		Return(nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
@@ -485,7 +486,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(nil).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.itemID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.NoError(err)
 	suite.NotNil(response)
@@ -495,7 +496,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_OrderNotFound() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.itemID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperrors.ErrForbidden)
@@ -512,7 +513,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_InvalidOrderStatus() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.itemID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperrors.ErrInvalidOrderStatus)
@@ -528,6 +529,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
 		Items: []models.OrderItem{
 			{
 				ID:        uuid.New(),
+				ProductID: suite.productID,
 				UnitPrice: 1000,
 				Quantity:  2,
 			},
@@ -537,10 +539,10 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.itemID, suite.orderID).
+	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.itemID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperrors.ErrItemNotFound)
@@ -551,7 +553,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_RepositoryError() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
 		Return(nil, dbError).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.itemID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
