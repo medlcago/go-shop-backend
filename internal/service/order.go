@@ -278,6 +278,7 @@ func (o *orderService) Clear(
 func (o *orderService) Checkout(
 	ctx context.Context,
 	userID uuid.UUID,
+	sessionID uuid.UUID,
 	orderID uuid.UUID,
 ) (*dto.OrderCheckoutResponse, error) {
 	const op = "orderService.Checkout"
@@ -285,7 +286,7 @@ func (o *orderService) Checkout(
 	var confirmationURL string
 
 	checkout := func(ctx context.Context) error {
-		order, err := o.getOrder(ctx, orderID, &userID, uuid.Nil, true)
+		order, err := o.getOrder(ctx, orderID, &userID, sessionID, true)
 		if err != nil {
 			return err
 		}
@@ -300,6 +301,11 @@ func (o *orderService) Checkout(
 
 		if err := o.reserveItems(ctx, order.Items); err != nil {
 			return err
+		}
+
+		// If the order does not have a user, we link the order to the user
+		if order.UserID == nil {
+			order.UserID = &userID
 		}
 
 		order.TotalAmount = o.calculateTotal(order)

@@ -126,8 +126,8 @@ func (_c *MockOrderService_AddItem_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // Checkout provides a mock function for the type MockOrderService
-func (_mock *MockOrderService) Checkout(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error) {
-	ret := _mock.Called(ctx, userID, orderID)
+func (_mock *MockOrderService) Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error) {
+	ret := _mock.Called(ctx, userID, sessionID, orderID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Checkout")
@@ -135,18 +135,18 @@ func (_mock *MockOrderService) Checkout(ctx context.Context, userID uuid.UUID, o
 
 	var r0 *dto.OrderCheckoutResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (*dto.OrderCheckoutResponse, error)); ok {
-		return returnFunc(ctx, userID, orderID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (*dto.OrderCheckoutResponse, error)); ok {
+		return returnFunc(ctx, userID, sessionID, orderID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) *dto.OrderCheckoutResponse); ok {
-		r0 = returnFunc(ctx, userID, orderID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) *dto.OrderCheckoutResponse); ok {
+		r0 = returnFunc(ctx, userID, sessionID, orderID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dto.OrderCheckoutResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, userID, orderID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID, sessionID, orderID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -161,12 +161,13 @@ type MockOrderService_Checkout_Call struct {
 // Checkout is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
+//   - sessionID uuid.UUID
 //   - orderID uuid.UUID
-func (_e *MockOrderService_Expecter) Checkout(ctx interface{}, userID interface{}, orderID interface{}) *MockOrderService_Checkout_Call {
-	return &MockOrderService_Checkout_Call{Call: _e.mock.On("Checkout", ctx, userID, orderID)}
+func (_e *MockOrderService_Expecter) Checkout(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}) *MockOrderService_Checkout_Call {
+	return &MockOrderService_Checkout_Call{Call: _e.mock.On("Checkout", ctx, userID, sessionID, orderID)}
 }
 
-func (_c *MockOrderService_Checkout_Call) Run(run func(ctx context.Context, userID uuid.UUID, orderID uuid.UUID)) *MockOrderService_Checkout_Call {
+func (_c *MockOrderService_Checkout_Call) Run(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID)) *MockOrderService_Checkout_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -180,10 +181,15 @@ func (_c *MockOrderService_Checkout_Call) Run(run func(ctx context.Context, user
 		if args[2] != nil {
 			arg2 = args[2].(uuid.UUID)
 		}
+		var arg3 uuid.UUID
+		if args[3] != nil {
+			arg3 = args[3].(uuid.UUID)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -194,7 +200,7 @@ func (_c *MockOrderService_Checkout_Call) Return(orderCheckoutResponse *dto.Orde
 	return _c
 }
 
-func (_c *MockOrderService_Checkout_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error)) *MockOrderService_Checkout_Call {
+func (_c *MockOrderService_Checkout_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error)) *MockOrderService_Checkout_Call {
 	_c.Call.Return(run)
 	return _c
 }

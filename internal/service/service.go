@@ -49,6 +49,6 @@ type OrderService interface {
 	AddItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, req dto.AddOrderItemRequest) (*dto.OrderResponse, error)
 	DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, productID uuid.UUID) (*dto.OrderResponse, error)
 	Clear(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)
-	Checkout(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error)
+	Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error)
 	HandlePaymentWebhook(ctx context.Context, body []byte) error
 }

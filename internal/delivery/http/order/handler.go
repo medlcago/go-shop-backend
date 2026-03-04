@@ -218,13 +218,13 @@ func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 
 func (h *Handler) Checkout(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
-	if userCtx.UserID == nil {
+	if userCtx.UserID == nil || userCtx.SessionID == nil {
 		return apperrors.ErrInvalidCredentials
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
 
-	resp, err := h.orderService.Checkout(ctx, *userCtx.UserID, orderID)
+	resp, err := h.orderService.Checkout(ctx, *userCtx.UserID, *userCtx.SessionID, orderID)
 	if err != nil {
 		return err
 	}

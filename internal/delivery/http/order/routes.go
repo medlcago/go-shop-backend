@@ -13,7 +13,11 @@ func RegisterRoutes(r fiber.Router, orderHandler *Handler) {
 		orderGroup.Post("/", orderHandler.CreateOrder)
 		orderGroup.Get("/", orderHandler.GetOrders)
 		orderGroup.Get("/:id<guid>", orderHandler.GetOrder)
-		orderGroup.Post("/:id<guid>/checkout", orderHandler.Checkout)
+		orderGroup.Post(
+			"/:id<guid>/checkout",
+			middleware.RequireAuth(),
+			orderHandler.Checkout,
+		)
 
 		orderGroup.Post("/:id<guid>/items", orderHandler.AddItem)
 		orderGroup.Delete("/:id<guid>/items/:product_id<guid>", orderHandler.DeleteItem)
