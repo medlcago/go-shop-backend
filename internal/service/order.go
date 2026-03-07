@@ -311,10 +311,6 @@ func (o *orderService) Checkout(
 		order.TotalAmount = o.calculateTotal(order)
 		order.Status = models.OrderStatusPending
 
-		if err := o.orderRepo.Update(ctx, order); err != nil {
-			return err
-		}
-
 		req := &paymentprovider.CreatePaymentRequest{
 			Metadata: paymentprovider.Metadata{
 				OrderID: order.ID,
