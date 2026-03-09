@@ -8,7 +8,6 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
-	"go-shop-backend/pkg/utils"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -306,10 +305,10 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 			name: "success",
 			setupMock: func(serviceMock *serviceMocks.MockProductService) {
 				serviceMock.EXPECT().UpdateProduct(mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
-					dto.ProductUpdateRequest{Name: utils.Ptr("test product")}).
+					dto.ProductUpdateRequest{Name: new("test product")}).
 					Return(&dto.ProductResponse{Name: "test product"}, nil).Once()
 			},
-			requestBody:  dto.ProductUpdateRequest{Name: utils.Ptr("test product")},
+			requestBody:  dto.ProductUpdateRequest{Name: new("test product")},
 			expectedCode: http.StatusOK,
 			expectedBody: response.NewResponse(&dto.ProductResponse{Name: "test product"}),
 		},
@@ -326,9 +325,9 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 		},
 		{
 			name:         "validation error",
-			requestBody:  dto.ProductUpdateRequest{Name: utils.Ptr("1")},
+			requestBody:  dto.ProductUpdateRequest{Name: new("1")},
 			expectedCode: http.StatusBadRequest,
-			expectedBody: testutils.ValidationError(dto.ProductUpdateRequest{Name: utils.Ptr("1")}),
+			expectedBody: testutils.ValidationError(dto.ProductUpdateRequest{Name: new("1")}),
 		},
 		{
 			name: "internal server error",
