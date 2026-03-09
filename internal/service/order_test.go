@@ -10,7 +10,6 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/paymentprovider"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
-	"go-shop-backend/pkg/utils"
 	"testing"
 
 	"github.com/google/uuid"
@@ -53,7 +52,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.orderService = NewOrderService(suite.orderRepo, suite.orderItemRepo, suite.productRepo, suite.paymentProvider, suite.txManager)
 
 	suite.ctx = context.Background()
-	suite.userID = utils.Ptr(uuid.New())
+	suite.userID = new(uuid.New())
 	suite.sessionID = uuid.New()
 	suite.orderID = uuid.New()
 	suite.productID = uuid.New()

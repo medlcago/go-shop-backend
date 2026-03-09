@@ -7,7 +7,6 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
-	"go-shop-backend/pkg/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,7 +34,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 						Email: "test@test.com",
 					}, nil).Once()
 			},
-			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
+			userID:       new(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
 			expectedCode: http.StatusOK,
 			expectedBody: response.NewResponse(
 				&dto.UserResponse{
@@ -55,7 +54,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 				serviceMock.EXPECT().GetUserByID(mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, apperrors.ErrUserNotFound).Once()
 			},
-			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
+			userID:       new(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
 			expectedCode: http.StatusNotFound,
 			expectedBody: response.NewError(apperrors.ErrUserNotFound.Message),
 		},
@@ -65,7 +64,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 				serviceMock.EXPECT().GetUserByID(mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
 					Return(&dto.UserResponse{}, errors.New("unexpected error")).Once()
 			},
-			userID:       utils.Ptr(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
+			userID:       new(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
 			expectedCode: http.StatusInternalServerError,
 			expectedBody: response.NewError(http.StatusText(http.StatusInternalServerError)),
 		},

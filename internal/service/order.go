@@ -324,12 +324,9 @@ func (o *orderService) Checkout(
 			return err
 		}
 
-		providerName := o.paymentProvider.GetName()
-		expiresAt := time.Now().UTC().Add(10 * time.Minute)
-
 		order.PaymentID = &payment.ID
-		order.ProviderName = &providerName
-		order.ExpiresAt = &expiresAt
+		order.ProviderName = new(o.paymentProvider.GetName())
+		order.ExpiresAt = new(time.Now().UTC().Add(10 * time.Minute))
 		if err := o.orderRepo.Update(ctx, order); err != nil {
 			return err
 		}
@@ -380,16 +377,14 @@ func (o *orderService) HandlePaymentWebhook(
 			if err := o.deductItems(ctx, order.Items); err != nil {
 				return err
 			}
-			now := time.Now().UTC()
 			order.Status = models.OrderStatusPaid
-			order.PaidAt = &now
+			order.PaidAt = new(time.Now().UTC())
 		case paymentprovider.PaymentStatusCanceled:
 			if err := o.releaseItems(ctx, order.Items); err != nil {
 				return err
 			}
-			now := time.Now().UTC()
 			order.Status = models.OrderStatusCanceled
-			order.CanceledAt = &now
+			order.CanceledAt = new(time.Now().UTC())
 		default:
 			return nil
 		}
