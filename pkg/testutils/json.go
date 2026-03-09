@@ -20,6 +20,9 @@ func AssertJSONResponse(t *testing.T, expectedCode int, expectedJSON string, res
 }
 
 func StringJSON(data any) string {
-	jsonBytes, _ := json.Marshal(data)
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
 	return string(jsonBytes)
 }

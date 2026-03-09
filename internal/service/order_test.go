@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/paymentprovider"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 	"go-shop-backend/pkg/utils"
 	"testing"
@@ -33,12 +34,14 @@ type OrderServiceTestSuite struct {
 	paymentProvider *paymentproviderMocks.MockProvider
 	orderService    *orderService
 
-	ctx       context.Context
-	userID    *uuid.UUID
-	sessionID uuid.UUID
-	orderID   uuid.UUID
-	productID uuid.UUID
-	itemID    uuid.UUID
+	ctx          context.Context
+	userID       *uuid.UUID
+	sessionID    uuid.UUID
+	orderID      uuid.UUID
+	productID    uuid.UUID
+	itemID       uuid.UUID
+	paymentID    string
+	providerName string
 }
 
 func (suite *OrderServiceTestSuite) SetupTest() {
@@ -55,6 +58,8 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.orderID = uuid.New()
 	suite.productID = uuid.New()
 	suite.itemID = uuid.New()
+	suite.paymentID = uuid.NewString()
+	suite.providerName = "test provider"
 }
 
 func TestOrderServiceTestSuite(t *testing.T) {
@@ -651,6 +656,8 @@ func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
 	suite.ErrorContains(err, dbError.Error())
 }
 
+// ==================== CalculateTotal Tests ====================
+
 func (suite *OrderServiceTestSuite) TestCalculateTotal() {
 	tests := []struct {
 		name  string
@@ -693,4 +700,282 @@ func (suite *OrderServiceTestSuite) TestCalculateTotal() {
 			suite.Equal(tt.total, total)
 		})
 	}
+}
+
+// ==================== Checkout Tests ====================
+
+func (suite *OrderServiceTestSuite) TestCheckout_Success() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusDraft,
+		TotalAmount: 12_000,
+		Items: []models.OrderItem{
+			{
+				ID:        suite.itemID,
+				ProductID: suite.productID,
+				UnitPrice: 2000,
+				Quantity:  5,
+			},
+			{
+				ID:        uuid.New(),
+				ProductID: uuid.New(),
+				UnitPrice: 1000,
+				Quantity:  2,
+			},
+		},
+	}
+
+	confirmationURL := "https://test.com"
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 0, Stock: 100, IsActive: true},
+			{ID: order.Items[1].ProductID, Reserved: 0, Stock: 50, IsActive: true},
+		}, nil).Once()
+
+	suite.productRepo.EXPECT().BulkUpsert(suite.ctx, mock.Anything).
+		Return(nil).Once()
+
+	suite.paymentProvider.EXPECT().CreatePayment(mock.MatchedBy(func(req *paymentprovider.CreatePaymentRequest) bool {
+		return req.Metadata.OrderID == suite.orderID &&
+			req.Metadata.UserID == *suite.userID &&
+			req.Amount > 0 &&
+			req.Amount == order.TotalAmount
+	})).
+		Return(&paymentprovider.Payment{
+			ID:              suite.paymentID,
+			ConfirmationURL: confirmationURL,
+		}, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().
+		Return(suite.providerName).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
+		Run(func(ctx context.Context, o *models.Order) {
+			suite.Equal(*suite.userID, *o.UserID)
+			suite.Equal(order.TotalAmount, o.TotalAmount)
+			suite.Equal(models.OrderStatusPending, o.Status)
+			suite.Equal(suite.paymentID, *o.PaymentID)
+			suite.Equal(suite.providerName, *o.ProviderName)
+			suite.NotNil(o.ExpiresAt)
+		}).Return(nil).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
+
+	suite.NoError(err)
+	suite.NotNil(response)
+
+	suite.Equal(suite.orderID, response.OrderID)
+	suite.Equal(confirmationURL, response.ConfirmationURL)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      nil,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusDraft,
+		TotalAmount: 4000,
+		Items: []models.OrderItem{
+			{
+				ID:        suite.itemID,
+				ProductID: suite.productID,
+				UnitPrice: 1000,
+				Quantity:  4,
+			},
+		},
+	}
+
+	confirmationURL := "https://test.com"
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 0, Stock: 100, IsActive: true},
+		}, nil).Once()
+
+	suite.productRepo.EXPECT().BulkUpsert(suite.ctx, mock.Anything).
+		Return(nil).Once()
+
+	suite.paymentProvider.EXPECT().CreatePayment(mock.Anything).
+		Return(&paymentprovider.Payment{
+			ID:              suite.paymentID,
+			ConfirmationURL: confirmationURL,
+		}, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().
+		Return(suite.providerName).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(o *models.Order) bool {
+		return o.UserID != nil && *o.UserID == *suite.userID
+	})).Return(nil).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
+
+	suite.NoError(err)
+	suite.NotNil(response)
+
+	suite.NotNil(order.UserID)
+	suite.Equal(*suite.userID, *order.UserID)
+	suite.Equal(order.ID, response.OrderID)
+	suite.Equal(confirmationURL, response.ConfirmationURL)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusPending,
+		TotalAmount: 4000,
+		Items: []models.OrderItem{
+			{
+				ID:        suite.itemID,
+				ProductID: suite.productID,
+				UnitPrice: 1000,
+				Quantity:  4,
+			},
+		},
+	}
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperrors.ErrInvalidOrderStatus)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusDraft,
+		TotalAmount: 4000,
+	}
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperrors.ErrEmptyOrder)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusDraft,
+		TotalAmount: 4000,
+		Items: []models.OrderItem{
+			{
+				ID:        suite.itemID,
+				ProductID: suite.productID,
+				UnitPrice: 1000,
+				Quantity:  10,
+			},
+		},
+	}
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 3, Stock: 8, IsActive: true},
+		}, nil).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperrors.ErrInsufficientStock)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusDraft,
+		TotalAmount: 4000,
+		Items: []models.OrderItem{
+			{
+				ID:        suite.itemID,
+				ProductID: suite.productID,
+				UnitPrice: 1000,
+				Quantity:  10,
+			},
+		},
+	}
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil)
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 3, Stock: 8, IsActive: false},
+		}, nil).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperrors.ErrProductNotActive)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperrors.ErrForbidden)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusDraft,
+		TotalAmount: 4000,
+		Items: []models.OrderItem{
+			{
+				ID:        suite.itemID,
+				ProductID: suite.productID,
+				UnitPrice: 1000,
+				Quantity:  10,
+			},
+		},
+	}
+
+	dbError := errors.New("db error")
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 0, Stock: 1111, IsActive: true},
+		}, nil).Once()
+
+	suite.productRepo.EXPECT().BulkUpsert(suite.ctx, mock.Anything).
+		Return(dbError).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+
+	suite.Nil(response)
+	suite.ErrorContains(err, dbError.Error())
 }

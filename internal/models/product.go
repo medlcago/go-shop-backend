@@ -9,6 +9,10 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	errNegativeQty = errors.New("qty < 0")
+)
+
 type Product struct {
 	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Name        string         `gorm:"type:varchar(255);not null"`
@@ -32,7 +36,7 @@ func (p *Product) Available() int {
 
 func (p *Product) Reserve(qty int) error {
 	if qty < 0 {
-		return errors.New("qty < 0")
+		return errNegativeQty
 	}
 
 	if !p.IsActive {
@@ -49,7 +53,7 @@ func (p *Product) Reserve(qty int) error {
 
 func (p *Product) Release(qty int) error {
 	if qty < 0 {
-		return errors.New("qty < 0")
+		return errNegativeQty
 	}
 
 	if p.Reserved < qty {
@@ -62,7 +66,7 @@ func (p *Product) Release(qty int) error {
 
 func (p *Product) Deduct(qty int) error {
 	if qty < 0 {
-		return errors.New("qty < 0")
+		return errNegativeQty
 	}
 
 	if p.Stock < qty || p.Reserved < qty {
