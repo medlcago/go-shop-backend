@@ -426,6 +426,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/orders/{id}/checkout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Checkout order (changes status from draft to pending)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Checkout order",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Session ID",
+                        "name": "X-Session-ID",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderCheckoutResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/orders/{id}/items": {
             "post": {
                 "security": [
@@ -1203,6 +1276,17 @@ const docTemplate = `{
                 "EntityProduct"
             ]
         },
+        "go-shop-backend_internal_dto.OrderCheckoutResponse": {
+            "type": "object",
+            "properties": {
+                "confirmation_url": {
+                    "type": "string"
+                },
+                "order_id": {
+                    "type": "string"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.OrderItemResponse": {
             "type": "object",
             "properties": {
@@ -1582,6 +1666,18 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "result": {}
+            }
+        },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderCheckoutResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.OrderCheckoutResponse"
+                }
             }
         },
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse": {

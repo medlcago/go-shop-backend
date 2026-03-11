@@ -216,6 +216,22 @@ func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// Checkout godoc
+//
+//	@Summary		Checkout order
+//	@Description	Checkout order (changes status from draft to pending)
+//	@Tags			Orders
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id				path		string	true	"Order ID"		Format(uuid)
+//	@Param			X-Session-ID	header		string	true	"Session ID"	Format(uuid)
+//	@Success		200				{object}	response.Response[dto.OrderCheckoutResponse]
+//	@Failure		400				{object}	response.Response[any]
+//	@Failure		401				{object}	response.Response[any]
+//	@Failure		403				{object}	response.Response[any]
+//	@Failure		409				{object}	response.Response[any]
+//	@Failure		500				{object}	response.Response[any]
+//	@Router			/orders/{id}/checkout [post]
 func (h *Handler) Checkout(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil || userCtx.SessionID == nil {

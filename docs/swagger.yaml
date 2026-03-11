@@ -26,6 +26,13 @@ definitions:
     type: string
     x-enum-varnames:
     - EntityProduct
+  go-shop-backend_internal_dto.OrderCheckoutResponse:
+    properties:
+      confirmation_url:
+        type: string
+      order_id:
+        type: string
+    type: object
   go-shop-backend_internal_dto.OrderItemResponse:
     properties:
       product_id:
@@ -280,6 +287,14 @@ definitions:
       error:
         type: string
       result: {}
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderCheckoutResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.OrderCheckoutResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse:
     properties:
@@ -639,6 +654,54 @@ paths:
       security:
       - BearerAuth: []
       summary: Get order by ID
+      tags:
+      - Orders
+  /orders/{id}/checkout:
+    post:
+      description: Checkout order (changes status from draft to pending)
+      parameters:
+      - description: Order ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        format: uuid
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderCheckoutResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Checkout order
       tags:
       - Orders
   /orders/{id}/items:
