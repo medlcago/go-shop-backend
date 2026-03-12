@@ -67,7 +67,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		logger.Fatal(l, "failed to connect to database", err)
 	}
 
-	txManager := database.NewManager(db.GetDB(ctx))
+	txManager := database.NewGormManager(db.GetDB(ctx))
 
 	minioStorage, err := minio.New(cfg.Minio)
 	if err != nil {

@@ -6,17 +6,33 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	_ TxManager = (*NoopTxManager)(nil)
+	_ TxManager = (*gormTxManager)(nil)
+)
+
 type txKey struct{}
 
 type TxManager interface {
 	Wrap(ctx context.Context, fn func(context.Context) error) error
 }
 
+type NoopTxManager struct {
+}
+
+func (t *NoopTxManager) Wrap(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+func NewNoopTxManager() *NoopTxManager {
+	return &NoopTxManager{}
+}
+
 type gormTxManager struct {
 	db *gorm.DB
 }
 
-func NewManager(db *gorm.DB) TxManager {
+func NewGormManager(db *gorm.DB) *gormTxManager {
 	return &gormTxManager{db: db}
 }
 

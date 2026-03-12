@@ -18,19 +18,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type txManager struct {
-}
-
-func (t txManager) Wrap(ctx context.Context, fn func(ctx context.Context) error) error {
-	return fn(ctx)
-}
-
 type OrderServiceTestSuite struct {
 	suite.Suite
 	orderRepo       *repoMocks.MockOrderRepository
 	orderItemRepo   *repoMocks.MockOrderItemRepository
 	productRepo     *repoMocks.MockProductRepository
-	txManager       *txManager
+	txManager       *database.NoopTxManager
 	paymentProvider *paymentproviderMocks.MockProvider
 	orderService    *orderService
 
@@ -48,7 +41,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.orderRepo = repoMocks.NewMockOrderRepository(suite.T())
 	suite.orderItemRepo = repoMocks.NewMockOrderItemRepository(suite.T())
 	suite.productRepo = repoMocks.NewMockProductRepository(suite.T())
-	suite.txManager = new(txManager)
+	suite.txManager = database.NewNoopTxManager()
 	suite.paymentProvider = paymentproviderMocks.NewMockProvider(suite.T())
 	suite.orderService = NewOrderService(suite.orderRepo, suite.orderItemRepo, suite.productRepo, suite.paymentProvider, suite.txManager)
 
