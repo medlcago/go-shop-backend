@@ -32,9 +32,18 @@ type OrderResponse struct {
 	CompletedAt  *time.Time          `json:"completed_at"`
 }
 
+type UnavailableItem struct {
+	ProductID    uuid.UUID `json:"product_id"`
+	RequestedQty int       `json:"requested_qty"`
+	AvailableQty int       `json:"available_qty"`
+	Action       string    `json:"action"`
+	Reason       string    `json:"reason"`
+}
+
 type OrderCheckoutResponse struct {
-	OrderID         uuid.UUID `json:"order_id"`
-	ConfirmationURL string    `json:"confirmation_url"`
+	OrderID          uuid.UUID         `json:"order_id"`
+	ConfirmationURL  string            `json:"confirmation_url,omitempty"`
+	UnavailableItems []UnavailableItem `json:"unavailable_items,omitempty"`
 }
 
 type ListOrderRequest struct {

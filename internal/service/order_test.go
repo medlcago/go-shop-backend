@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/paymentprovider"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 	"testing"
@@ -898,8 +899,16 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
 
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
 
-	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInsufficientStock)
+	suite.Nil(err)
+	suite.NotNil(response)
+
+	suite.Equal(order.ID, response.OrderID)
+	suite.Len(response.UnavailableItems, 1)
+	suite.Equal(suite.productID, response.UnavailableItems[0].ProductID)
+	suite.Equal(10, response.UnavailableItems[0].RequestedQty)
+	suite.Equal(5, response.UnavailableItems[0].AvailableQty)
+	suite.Equal("reserve", response.UnavailableItems[0].Action)
+	suite.Equal(apperrors.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
@@ -929,8 +938,60 @@ func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
 
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
 
-	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrProductNotActive)
+	suite.Nil(err)
+	suite.NotNil(response)
+
+	suite.Equal(order.ID, response.OrderID)
+	suite.Len(response.UnavailableItems, 1)
+	suite.Equal(suite.productID, response.UnavailableItems[0].ProductID)
+	suite.Equal(10, response.UnavailableItems[0].RequestedQty)
+	suite.Equal(5, response.UnavailableItems[0].AvailableQty)
+	suite.Equal("reserve", response.UnavailableItems[0].Action)
+	suite.Equal(apperrors.ErrProductNotActive.Error(), response.UnavailableItems[0].Reason)
+}
+
+func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNotActive() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusDraft,
+		TotalAmount: 4000,
+		Items: []models.OrderItem{
+			{
+				ID:        suite.itemID,
+				ProductID: suite.productID,
+				UnitPrice: 1000,
+				Quantity:  10,
+			}, {
+				ID:        uuid.New(),
+				ProductID: uuid.New(),
+				UnitPrice: 1000,
+				Quantity:  10,
+			},
+		},
+	}
+
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+		Return(order, nil)
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 3, Stock: 8, IsActive: true},
+			{ID: order.Items[1].ProductID, Reserved: 0, Stock: 100, IsActive: false},
+		}, nil).Once()
+
+	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+
+	suite.Nil(err)
+	suite.NotNil(response)
+
+	suite.Equal(order.ID, response.OrderID)
+	suite.Len(response.UnavailableItems, 2)
+	suite.Equal(order.Items[0].ProductID, response.UnavailableItems[0].ProductID)
+	suite.Equal(order.Items[1].ProductID, response.UnavailableItems[1].ProductID)
+	suite.Equal(apperrors.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
+	suite.Equal(apperrors.ErrProductNotActive.Error(), response.UnavailableItems[1].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {

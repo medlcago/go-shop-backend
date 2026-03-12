@@ -337,6 +337,25 @@ func (o *orderService) Checkout(
 
 	err := o.txManager.Wrap(ctx, checkout)
 	if err != nil {
+		if unavailableErr, ok := errors.AsType[*ItemsUnavailableError](err); ok {
+			unavailableItems := make([]dto.UnavailableItem, len(unavailableErr.Items))
+
+			for i, item := range unavailableErr.Items {
+				unavailableItems[i] = dto.UnavailableItem{
+					ProductID:    item.ProductID,
+					RequestedQty: item.RequestedQty,
+					AvailableQty: item.AvailableQty,
+					Action:       item.Action,
+					Reason:       item.Reason,
+				}
+			}
+
+			return &dto.OrderCheckoutResponse{
+				OrderID:          orderID,
+				UnavailableItems: unavailableItems,
+			}, nil
+		}
+
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -471,6 +490,22 @@ func (o *orderService) deductItems(ctx context.Context, items []models.OrderItem
 	)
 }
 
+type UnavailableItem struct {
+	ProductID    uuid.UUID
+	RequestedQty int
+	AvailableQty int
+	Action       string
+	Reason       string
+}
+
+type ItemsUnavailableError struct {
+	Items []UnavailableItem
+}
+
+func (e *ItemsUnavailableError) Error() string {
+	return fmt.Sprintf("%d items unavailable", len(e.Items))
+}
+
 func (o *orderService) applyOnProducts(
 	ctx context.Context,
 	items []models.OrderItem,
@@ -492,14 +527,35 @@ func (o *orderService) applyOnProducts(
 		productMap[p.ID] = p
 	}
 
+	var unavailable []UnavailableItem
+
 	for _, item := range items {
 		product := productMap[item.ProductID]
 		if product == nil {
-			return fmt.Errorf("product not found: %s", item.ProductID)
+			unavailable = append(unavailable, UnavailableItem{
+				ProductID:    item.ProductID,
+				RequestedQty: item.Quantity,
+				Action:       actionName,
+				Reason:       "PRODUCT_NOT_FOUND",
+			})
+			continue
 		}
 
 		if err := action(product, item.Quantity); err != nil {
-			return fmt.Errorf("product %s: %s: %w", actionName, product.ID, err)
+			unavailable = append(unavailable, UnavailableItem{
+				ProductID:    product.ID,
+				RequestedQty: item.Quantity,
+				AvailableQty: product.Available(),
+				Action:       actionName,
+				Reason:       err.Error(),
+			})
+			continue
+		}
+	}
+
+	if len(unavailable) > 0 {
+		return &ItemsUnavailableError{
+			Items: unavailable,
 		}
 	}
 
