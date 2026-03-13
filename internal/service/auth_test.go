@@ -26,7 +26,10 @@ type AuthServiceTestSuite struct {
 	userRepo       *repoMocks.MockUserRepository
 	tokenManager   *tokenMocks.MockManager
 	passwordHasher *hasherMocks.MockHasher
-	authService    AuthService
+	authService    *authService
+
+	ctx    context.Context
+	userID uuid.UUID
 }
 
 func (suite *AuthServiceTestSuite) SetupTest() {
@@ -34,6 +37,9 @@ func (suite *AuthServiceTestSuite) SetupTest() {
 	suite.tokenManager = tokenMocks.NewMockManager(suite.T())
 	suite.passwordHasher = hasherMocks.NewMockHasher(suite.T())
 	suite.authService = NewAuthService(suite.userRepo, suite.tokenManager, suite.passwordHasher)
+
+	suite.ctx = context.Background()
+	suite.userID = uuid.New()
 }
 
 func TestAuthServiceTestSuite(t *testing.T) {
@@ -43,7 +49,6 @@ func TestAuthServiceTestSuite(t *testing.T) {
 // ==================== Login Tests ====================
 
 func (suite *AuthServiceTestSuite) TestLogin_Success() {
-	ctx := context.Background()
 	req := dto.UserLoginRequest{
 		Email:    "test@example.com",
 		Password: "test123",
@@ -56,7 +61,7 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 		Role:         models.UserRoleCustomer,
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(expectedUser, nil).Once()
 
 	suite.passwordHasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
@@ -73,7 +78,7 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
 		Return("test_refresh_token", nil).Once()
 
-	result, err := suite.authService.Login(ctx, req)
+	result, err := suite.authService.Login(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.NotNil(result)
@@ -87,42 +92,39 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
-	ctx := context.Background()
 	req := dto.UserLoginRequest{
 		Email:    "notfound@example.com",
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	tokenResp, err := suite.authService.Login(ctx, req)
+	tokenResp, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(tokenResp)
 	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
-	ctx := context.Background()
 	req := dto.UserLoginRequest{
 		Email:    "test@example.com",
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
 	suite.passwordHasher.EXPECT().Verify(req.Password, mock.Anything).
 		Return(true, nil).Once()
 
-	tokenResp, err := suite.authService.Login(ctx, req)
+	tokenResp, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(tokenResp)
 	suite.ErrorIs(err, apperrors.ErrUserProfileDeleted)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
-	ctx := context.Background()
 	req := dto.UserLoginRequest{
 		Email:    "test@example.com",
 		Password: "wrongpassword",
@@ -133,30 +135,29 @@ func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 		PasswordHash: "test123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(user, nil).Once()
 
 	suite.passwordHasher.EXPECT().Verify(req.Password, user.PasswordHash).
 		Return(false, nil).Once()
 
-	tokenResp, err := suite.authService.Login(ctx, req)
+	tokenResp, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(tokenResp)
 	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
-	ctx := context.Background()
 	req := dto.UserLoginRequest{
 		Email:    "test@test.test",
 		Password: "test123",
 	}
 
 	repoErr := errors.New("database error")
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(nil, repoErr).Once()
 
-	result, err := suite.authService.Login(ctx, req)
+	result, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(result)
 	suite.ErrorContains(err, repoErr.Error())
@@ -165,31 +166,25 @@ func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
 // ==================== Register Tests ====================
 
 func (suite *AuthServiceTestSuite) TestRegister_Success() {
-	ctx := context.Background()
 	req := dto.UserRegisterRequest{
 		Email:    "newuser@example.com",
 		Password: "password123",
 	}
 
-	userID := uuid.New()
-	userRole := models.UserRoleSeller
-	passwordHash := "test123"
-
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	suite.passwordHasher.EXPECT().Hash(req.Password).
-		Return(passwordHash, nil).Once()
+		Return("test123", nil).Once()
 
-	suite.userRepo.EXPECT().Create(ctx, mock.MatchedBy(func(user *models.User) bool {
-		user.ID = userID
-		user.Role = userRole
-		return user.Email == req.Email && user.PasswordHash == passwordHash
+	suite.userRepo.EXPECT().Create(suite.ctx, mock.MatchedBy(func(user *models.User) bool {
+		user.ID = suite.userID
+		return user.Email == req.Email && user.PasswordHash == "test123" && user.Role == models.UserRoleCustomer
 	})).Return(nil).Once()
 
 	payload := token.Payload{
-		UserID:   userID.String(),
-		UserRole: string(userRole),
+		UserID:   suite.userID.String(),
+		UserRole: string(models.UserRoleCustomer),
 	}
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
@@ -198,12 +193,12 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
 		Return("test_refresh_token", nil).Once()
 
-	result, err := suite.authService.Register(ctx, req)
+	result, err := suite.authService.Register(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.NotNil(result)
 	suite.NotNil(result.User)
-	suite.Equal(result.User.ID, userID)
+	suite.Equal(result.User.ID, suite.userID)
 	suite.Equal(result.User.Email, req.Email)
 	suite.NotNil(result.TokenResponse)
 	suite.Equal(result.AccessToken, "test_access_token")
@@ -212,7 +207,6 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 }
 
 func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
-	ctx := context.Background()
 	req := dto.UserRegisterRequest{
 		Email:    "existing@example.com",
 		Password: "password123",
@@ -222,49 +216,47 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 		Email: req.Email,
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(user, nil).Once()
 
-	result, err := suite.authService.Register(ctx, req)
+	result, err := suite.authService.Register(suite.ctx, req)
 
 	suite.Nil(result)
 	suite.ErrorIs(err, apperrors.ErrEmailTaken)
 }
 
 func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
-	ctx := context.Background()
 	req := dto.UserRegisterRequest{
 		Email:    "testuser@example.com",
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
-	result, err := suite.authService.Register(ctx, req)
+	result, err := suite.authService.Register(suite.ctx, req)
 
 	suite.Nil(result)
 	suite.ErrorIs(err, apperrors.ErrEmailTaken)
 }
 
 func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
-	ctx := context.Background()
 	req := dto.UserRegisterRequest{
 		Email:    "newuser@example.com",
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	suite.passwordHasher.EXPECT().Hash(req.Password).
 		Return("test123", nil).Once()
 
 	repoErr := errors.New("database error")
-	suite.userRepo.EXPECT().Create(ctx, mock.AnythingOfType("*models.User")).
+	suite.userRepo.EXPECT().Create(suite.ctx, mock.AnythingOfType("*models.User")).
 		Return(repoErr).Once()
 
-	result, err := suite.authService.Register(ctx, req)
+	result, err := suite.authService.Register(suite.ctx, req)
 
 	suite.Nil(result)
 	suite.ErrorContains(err, repoErr.Error())

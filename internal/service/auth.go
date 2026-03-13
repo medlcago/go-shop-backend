@@ -78,6 +78,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 	user := &models.User{
 		Email:        req.Email,
 		PasswordHash: passwordHash,
+		Role:         models.UserRoleCustomer,
 	}
 
 	if err := a.userRepo.Create(ctx, user); err != nil {

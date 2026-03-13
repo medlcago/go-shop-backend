@@ -3,10 +3,10 @@ package dto
 import "github.com/google/uuid"
 
 type ProductCategoryResponse struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Slug     string `json:"slug"`
-	ParentID string `json:"parent_id"`
+	ID       uuid.UUID  `json:"id"`
+	Name     string     `json:"name"`
+	Slug     string     `json:"slug"`
+	ParentID *uuid.UUID `json:"parent_id"`
 }
 
 type ListCategoryRequest struct {

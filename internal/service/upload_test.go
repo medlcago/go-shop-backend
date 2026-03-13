@@ -12,8 +12,7 @@ import (
 	contenttypeMocks "go-shop-backend/pkg/contenttype/mocks"
 	"go-shop-backend/pkg/storage"
 	storageMocks "go-shop-backend/pkg/storage/mocks"
-	"io"
-	"strings"
+	"go-shop-backend/pkg/testutils"
 	"testing"
 	"time"
 
@@ -29,7 +28,11 @@ type UploadServiceTestSuite struct {
 	uploadRepo    *repoMocks.MockUploadRepository
 	uploadConfig  config.Upload
 	ctDetector    *contenttypeMocks.MockDetector
-	uploadService UploadService
+	uploadService *uploadService
+
+	ctx      context.Context
+	uploadID uuid.UUID
+	entityID uuid.UUID
 }
 
 func (suite *UploadServiceTestSuite) SetupTest() {
@@ -48,6 +51,10 @@ func (suite *UploadServiceTestSuite) SetupTest() {
 		suite.uploadConfig,
 		suite.ctDetector,
 	)
+
+	suite.ctx = context.Background()
+	suite.uploadID = uuid.New()
+	suite.entityID = uuid.New()
 }
 
 func TestUploadServiceTestSuite(t *testing.T) {
@@ -57,12 +64,10 @@ func TestUploadServiceTestSuite(t *testing.T) {
 // ==================== SignURL Tests ====================
 
 func (suite *UploadServiceTestSuite) TestSignURL_Success() {
-	ctx := context.Background()
-	entityID := uuid.New()
 	req := dto.SignURLRequest{
 		ContentType: "image/png",
 		Entity: dto.Entity{
-			ID:   entityID,
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
 		Ext: "png",
@@ -76,16 +81,16 @@ func (suite *UploadServiceTestSuite) TestSignURL_Success() {
 		},
 	}
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.EXPECT().CreatePresignedPost(ctx, mock.MatchedBy(func(opts storage.PresignedPostOptions) bool {
+	suite.storage.EXPECT().CreatePresignedPost(suite.ctx, mock.MatchedBy(func(opts storage.PresignedPostOptions) bool {
 		return opts.ContentType == "image/png" &&
-			opts.Metadata["Entity-Id"] == entityID.String() &&
+			opts.Metadata["Entity-Id"] == suite.entityID.String() &&
 			opts.Metadata["Entity-Type"] == string(dto.EntityProduct)
 	})).Return(presignedPost, nil)
 
-	resp, err := suite.uploadService.SignURL(ctx, req)
+	resp, err := suite.uploadService.SignURL(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.NotNil(resp)
@@ -95,7 +100,6 @@ func (suite *UploadServiceTestSuite) TestSignURL_Success() {
 }
 
 func (suite *UploadServiceTestSuite) TestSignURL_InvalidExtOrContentType() {
-	ctx := context.Background()
 	tests := []struct {
 		name        string
 		ext         string
@@ -127,7 +131,7 @@ func (suite *UploadServiceTestSuite) TestSignURL_InvalidExtOrContentType() {
 				},
 			}
 
-			resp, err := suite.uploadService.SignURL(ctx, req)
+			resp, err := suite.uploadService.SignURL(suite.ctx, req)
 
 			suite.Nil(resp)
 			suite.ErrorIs(err, tt.expectedErr)
@@ -136,52 +140,47 @@ func (suite *UploadServiceTestSuite) TestSignURL_InvalidExtOrContentType() {
 }
 
 func (suite *UploadServiceTestSuite) TestSignURL_EntityNotFound() {
-	ctx := context.Background()
-	entityID := uuid.New()
 	req := dto.SignURLRequest{
 		ContentType: "image/jpeg",
 		Entity: dto.Entity{
-			ID:   entityID,
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
 		Ext: "jpg",
 	}
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(apperrors.ErrEntityNotFound).Once()
 
-	resp, err := suite.uploadService.SignURL(ctx, req)
+	resp, err := suite.uploadService.SignURL(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorIs(err, apperrors.ErrEntityNotFound)
 }
 
 func (suite *UploadServiceTestSuite) TestSignURL_UnknownEntityType() {
-	ctx := context.Background()
-	entityID := uuid.New()
 	req := dto.SignURLRequest{
 		ContentType: "image/jpeg",
 		Entity: dto.Entity{
-			ID:   entityID,
+			ID:   suite.entityID,
 			Type: dto.EntityType("test"),
 		},
 		Ext: "jpg",
 	}
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(apperrors.ErrUnknownEntityType).Once()
 
-	resp, err := suite.uploadService.SignURL(ctx, req)
+	resp, err := suite.uploadService.SignURL(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorIs(err, apperrors.ErrUnknownEntityType)
 }
 
 func (suite *UploadServiceTestSuite) TestSignURL_EntityServiceError() {
-	ctx := context.Background()
 	req := dto.SignURLRequest{
 		Entity: dto.Entity{
-			ID:   uuid.New(),
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
 		Ext:         "jpg",
@@ -189,34 +188,33 @@ func (suite *UploadServiceTestSuite) TestSignURL_EntityServiceError() {
 	}
 
 	expectedErr := errors.New("database error")
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(expectedErr)
 
-	resp, err := suite.uploadService.SignURL(ctx, req)
+	resp, err := suite.uploadService.SignURL(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorContains(err, expectedErr.Error())
 }
 
 func (suite *UploadServiceTestSuite) TestSignURL_StorageError() {
-	ctx := context.Background()
 	req := dto.SignURLRequest{
 		Ext:         "jpg",
 		ContentType: "image/jpeg",
 		Entity: dto.Entity{
-			ID:   uuid.New(),
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
 	}
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
 	expectedErr := errors.New("storage error")
-	suite.storage.EXPECT().CreatePresignedPost(ctx, mock.Anything).
+	suite.storage.EXPECT().CreatePresignedPost(suite.ctx, mock.Anything).
 		Return(nil, expectedErr).Once()
 
-	resp, err := suite.uploadService.SignURL(ctx, req)
+	resp, err := suite.uploadService.SignURL(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorContains(err, expectedErr.Error())
@@ -225,21 +223,18 @@ func (suite *UploadServiceTestSuite) TestSignURL_StorageError() {
 // ==================== Create Tests ====================
 
 func (suite *UploadServiceTestSuite) TestSave_Success() {
-	ctx := context.Background()
-	entityID := uuid.New()
-	uploadID := uuid.New()
 	req := dto.UploadRequest{
-		UploadID:  uploadID,
+		UploadID:  suite.uploadID,
 		ObjectKey: "products/123/img.jpg",
 		Entity: dto.Entity{
-			ID:   entityID,
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
 	}
 
 	metadata := map[string]string{
-		"Upload-Id":   uploadID.String(),
-		"Entity-Id":   entityID.String(),
+		"Upload-Id":   suite.uploadID.String(),
+		"Entity-Id":   suite.entityID.String(),
 		"Entity-Type": string(dto.EntityProduct),
 	}
 
@@ -248,42 +243,35 @@ func (suite *UploadServiceTestSuite) TestSave_Success() {
 		Metadata: metadata,
 	}
 
-	reader := strings.NewReader("test")
-	obj := struct {
-		io.ReadSeeker
-		io.Closer
-	}{
-		reader,
-		io.NopCloser(reader),
-	}
+	obj := testutils.NewReadSeekCloser()
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objectInfo, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.storage.EXPECT().Open(ctx, req.ObjectKey).
+	suite.storage.EXPECT().Open(suite.ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
 	detectedCT := "image/jpeg"
 	suite.ctDetector.EXPECT().Detect(obj).
 		Return(detectedCT, nil).Once()
 
-	suite.uploadRepo.EXPECT().Create(ctx, mock.MatchedBy(func(u *models.Upload) bool {
+	suite.uploadRepo.EXPECT().Create(suite.ctx, mock.MatchedBy(func(u *models.Upload) bool {
 		return u.ObjectKey == req.ObjectKey &&
-			u.EntityID == entityID &&
+			u.EntityID == suite.entityID &&
 			*u.ContentType == detectedCT
 	})).Return(nil).Once()
 
 	url := "https://s3.example.com/img.jpg"
-	suite.storage.EXPECT().PublicURL(ctx, req.ObjectKey).
+	suite.storage.EXPECT().PublicURL(suite.ctx, req.ObjectKey).
 		Return(url).Once()
 
-	resp, err := suite.uploadService.Save(ctx, req)
+	resp, err := suite.uploadService.Save(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.NotNil(resp)
@@ -293,33 +281,29 @@ func (suite *UploadServiceTestSuite) TestSave_Success() {
 }
 
 func (suite *UploadServiceTestSuite) TestSave_EntityNotFound() {
-	ctx := context.Background()
 	req := dto.UploadRequest{
 		Entity: dto.Entity{
-			ID:   uuid.New(),
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
 	}
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(apperrors.ErrEntityNotFound).Once()
 
-	resp, err := suite.uploadService.Save(ctx, req)
+	resp, err := suite.uploadService.Save(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorIs(err, apperrors.ErrEntityNotFound)
 }
 
 func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
-	ctx := context.Background()
-	uploadID := uuid.New()
-	entityID := uuid.New()
 	req := dto.UploadRequest{
 		ObjectKey: "key",
-		UploadID:  uploadID,
+		UploadID:  suite.uploadID,
 		Entity: dto.Entity{
 			Type: dto.EntityProduct,
-			ID:   entityID,
+			ID:   suite.entityID,
 		},
 	}
 
@@ -332,7 +316,7 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
 			name: "invalid upload id",
 			metadata: map[string]string{
 				"Upload-Id":   uuid.NewString(),
-				"Entity-Id":   entityID.String(),
+				"Entity-Id":   suite.entityID.String(),
 				"Entity-Type": string(dto.EntityProduct),
 			},
 			expectedErr: apperrors.ErrInvalidUploadID,
@@ -340,7 +324,7 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
 		{
 			name: "invalid entity id",
 			metadata: map[string]string{
-				"Upload-Id":   uploadID.String(),
+				"Upload-Id":   suite.uploadID.String(),
 				"Entity-Id":   uuid.NewString(),
 				"Entity-Type": string(dto.EntityProduct),
 			},
@@ -349,8 +333,8 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
 		{
 			name: "invalid entity type",
 			metadata: map[string]string{
-				"Upload-Id":   uploadID.String(),
-				"Entity-Id":   entityID.String(),
+				"Upload-Id":   suite.uploadID.String(),
+				"Entity-Id":   suite.entityID.String(),
 				"Entity-Type": "test",
 			},
 			expectedErr: apperrors.ErrInvalidEntityID,
@@ -363,13 +347,13 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
 				Size:     1024,
 				Metadata: tt.metadata,
 			}
-			suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+			suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 				Return(nil).Once()
 
-			suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
+			suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 				Return(objInfo, nil).Once()
 
-			resp, err := suite.uploadService.Save(ctx, req)
+			resp, err := suite.uploadService.Save(suite.ctx, req)
 
 			suite.Nil(resp)
 			suite.ErrorIs(err, tt.expectedErr)
@@ -378,21 +362,18 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidMetadata() {
 }
 
 func (suite *UploadServiceTestSuite) TestSave_FileAlreadyUploaded() {
-	ctx := context.Background()
-	uploadID := uuid.New()
-	entityID := uuid.New()
 	req := dto.UploadRequest{
 		ObjectKey: "key",
 		Entity: dto.Entity{
-			ID:   entityID,
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
-		UploadID: uploadID,
+		UploadID: suite.uploadID,
 	}
 
 	metadata := map[string]string{
-		"Upload-Id":   uploadID.String(),
-		"Entity-Id":   entityID.String(),
+		"Upload-Id":   suite.uploadID.String(),
+		"Entity-Id":   suite.entityID.String(),
 		"Entity-Type": string(dto.EntityProduct),
 	}
 
@@ -400,37 +381,34 @@ func (suite *UploadServiceTestSuite) TestSave_FileAlreadyUploaded() {
 		Metadata: metadata,
 	}
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(true, nil).Once()
 
-	resp, err := suite.uploadService.Save(ctx, req)
+	resp, err := suite.uploadService.Save(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorIs(err, apperrors.ErrFileAlreadyUploaded)
 }
 
 func (suite *UploadServiceTestSuite) TestSave_InvalidDetectedContentType() {
-	ctx := context.Background()
-	uploadID := uuid.New()
-	entityID := uuid.New()
 	req := dto.UploadRequest{
 		ObjectKey: "key",
 		Entity: dto.Entity{
-			ID:   entityID,
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
-		UploadID: uploadID,
+		UploadID: suite.uploadID,
 	}
 
 	metadata := map[string]string{
-		"Upload-Id":   uploadID.String(),
-		"Entity-Id":   entityID.String(),
+		"Upload-Id":   suite.uploadID.String(),
+		"Entity-Id":   suite.entityID.String(),
 		"Entity-Type": string(dto.EntityProduct),
 	}
 
@@ -438,53 +416,42 @@ func (suite *UploadServiceTestSuite) TestSave_InvalidDetectedContentType() {
 		Metadata: metadata,
 	}
 
-	reader := strings.NewReader("test")
-	obj := struct {
-		io.ReadSeeker
-		io.Closer
-	}{
-		reader,
-		io.NopCloser(reader),
-	}
+	obj := testutils.NewReadSeekCloser()
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.storage.EXPECT().Open(ctx, req.ObjectKey).
+	suite.storage.EXPECT().Open(suite.ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
 	suite.ctDetector.EXPECT().Detect(obj).
 		Return("application/pdf", nil).Once()
 
-	resp, err := suite.uploadService.Save(ctx, req)
+	resp, err := suite.uploadService.Save(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorIs(err, apperrors.ErrInvalidImageFormat)
 }
 
 func (suite *UploadServiceTestSuite) TestSave_RepositoryError() {
-	ctx := context.Background()
-	uploadID := uuid.New()
-	entityID := uuid.New()
-
 	req := dto.UploadRequest{
 		ObjectKey: "key",
-		UploadID:  uploadID,
+		UploadID:  suite.uploadID,
 		Entity: dto.Entity{
-			ID:   entityID,
+			ID:   suite.entityID,
 			Type: dto.EntityProduct,
 		},
 	}
 
 	metadata := map[string]string{
-		"Upload-Id":   uploadID.String(),
-		"Entity-Id":   entityID.String(),
+		"Upload-Id":   suite.uploadID.String(),
+		"Entity-Id":   suite.entityID.String(),
 		"Entity-Type": string(dto.EntityProduct),
 	}
 
@@ -492,35 +459,28 @@ func (suite *UploadServiceTestSuite) TestSave_RepositoryError() {
 		Metadata: metadata,
 	}
 
-	reader := strings.NewReader("test")
-	obj := struct {
-		io.ReadSeeker
-		io.Closer
-	}{
-		reader,
-		io.NopCloser(reader),
-	}
+	obj := testutils.NewReadSeekCloser()
 
-	suite.entityService.EXPECT().Exists(ctx, req.Entity.Type, req.Entity.ID).
+	suite.entityService.EXPECT().Exists(suite.ctx, req.Entity.Type, req.Entity.ID).
 		Return(nil).Once()
 
-	suite.storage.EXPECT().GetObjectInfo(ctx, req.ObjectKey).
+	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.storage.EXPECT().Open(ctx, req.ObjectKey).
+	suite.storage.EXPECT().Open(suite.ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
 	suite.ctDetector.EXPECT().Detect(obj).
 		Return("image/jpeg", nil).Once()
 
 	expectedErr := errors.New("database save error")
-	suite.uploadRepo.EXPECT().Create(ctx, mock.Anything).
+	suite.uploadRepo.EXPECT().Create(suite.ctx, mock.Anything).
 		Return(expectedErr).Once()
 
-	resp, err := suite.uploadService.Save(ctx, req)
+	resp, err := suite.uploadService.Save(suite.ctx, req)
 
 	suite.Nil(resp)
 	suite.ErrorContains(err, expectedErr.Error())

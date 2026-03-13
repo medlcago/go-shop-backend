@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
@@ -16,12 +15,18 @@ import (
 type CategoryServiceTestSuite struct {
 	suite.Suite
 	categoryRepo    *repoMocks.MockCategoryRepository
-	categoryService CategoryService
+	categoryService *categoryService
+
+	ctx      context.Context
+	parentID uuid.UUID
 }
 
 func (suite *CategoryServiceTestSuite) SetupTest() {
 	suite.categoryRepo = repoMocks.NewMockCategoryRepository(suite.T())
 	suite.categoryService = NewCategoryService(suite.categoryRepo)
+
+	suite.ctx = context.Background()
+	suite.parentID = uuid.New()
 }
 
 func TestCategoryServiceTestSuite(t *testing.T) {
@@ -31,7 +36,6 @@ func TestCategoryServiceTestSuite(t *testing.T) {
 // ==================== ListCategories Tests ====================
 
 func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories() {
-	ctx := context.Background()
 	req := dto.ListCategoryRequest{
 		Limit:  2,
 		Offset: 0,
@@ -46,10 +50,10 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 		},
 	}
 
-	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
 		Return(mockCategories, 5, nil).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.Equal(int64(5), totalCount)
@@ -60,51 +64,47 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories() {
-	ctx := context.Background()
-	parentID := uuid.New()
 	req := dto.ListCategoryRequest{
-		ID:     parentID,
+		ID:     suite.parentID,
 		Limit:  5,
 		Offset: 0,
 	}
 
-	parentUUID := sql.Null[uuid.UUID]{V: parentID, Valid: true}
 	mockCategories := []*models.Category{
 		{
 			Name:     "Laptops",
-			ParentID: parentUUID,
+			ParentID: new(suite.parentID),
 		},
 		{
 			Name:     "Smartphones",
-			ParentID: parentUUID,
+			ParentID: new(suite.parentID),
 		},
 	}
 
-	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
 		Return(mockCategories, 2, nil).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.Equal(int64(2), totalCount)
 	suite.Len(categories, 2)
 
-	suite.Equal(parentID.String(), categories[0].ParentID)
-	suite.Equal(parentID.String(), categories[1].ParentID)
+	suite.Equal(suite.parentID, *categories[0].ParentID)
+	suite.Equal(suite.parentID, *categories[1].ParentID)
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
-	ctx := context.Background()
 	req := dto.ListCategoryRequest{
 		Limit:  10,
 		Offset: 0,
 	}
 
 	repoErr := errors.New("database connection failed")
-	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
 		Return(nil, 0, repoErr).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
 
 	suite.Nil(categories)
 	suite.Equal(int64(0), totalCount)
@@ -112,16 +112,15 @@ func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_EmptyResult() {
-	ctx := context.Background()
 	req := dto.ListCategoryRequest{
 		Limit:  10,
 		Offset: 100,
 	}
 
-	suite.categoryRepo.EXPECT().ListCategories(ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
 		Return([]*models.Category{}, 0, nil).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(ctx, req)
+	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.Equal(int64(0), totalCount)
