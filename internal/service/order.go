@@ -143,12 +143,8 @@ func (o *orderService) AddItem(
 			return err
 		}
 
-		if !product.IsActive {
-			return apperrors.ErrProductNotActive
-		}
-
-		if product.Available() < req.Quantity {
-			return apperrors.ErrInsufficientStock
+		if err := product.CanBeAdded(req.Quantity); err != nil {
+			return err
 		}
 
 		item := &models.OrderItem{
@@ -291,42 +287,23 @@ func (o *orderService) Checkout(
 			return err
 		}
 
-		if !order.CanCheckout() {
-			return apperrors.ErrInvalidOrderStatus
-		}
-
-		if len(order.Items) == 0 {
-			return apperrors.ErrEmptyOrder
+		if err := order.Checkout(userID); err != nil {
+			return err
 		}
 
 		if err := o.reserveItems(ctx, order.Items); err != nil {
 			return err
 		}
 
-		// If the order does not have a user, we link the order to the user
-		if order.UserID == nil {
-			order.UserID = &userID
-		}
-
-		order.TotalAmount = o.calculateTotal(order)
-		order.Status = models.OrderStatusPending
-
-		req := &paymentprovider.CreatePaymentRequest{
-			Metadata: paymentprovider.Metadata{
-				OrderID: order.ID,
-				UserID:  userID,
-			},
-			Amount: order.TotalAmount,
-		}
-
+		req := paymentprovider.NewCreatePaymentRequest(userID, orderID, order.TotalAmount)
 		payment, err := o.paymentProvider.CreatePayment(req)
 		if err != nil {
 			return err
 		}
 
-		order.PaymentID = &payment.ID
-		order.ProviderName = new(o.paymentProvider.GetName())
-		order.ExpiresAt = new(time.Now().UTC().Add(10 * time.Minute))
+		expiresAt := time.Now().UTC().Add(10 * time.Minute)
+		order.SetPaymentInfo(payment.ID, o.paymentProvider.GetName(), expiresAt)
+
 		if err := o.orderRepo.Update(ctx, order); err != nil {
 			return err
 		}
@@ -396,14 +373,18 @@ func (o *orderService) HandlePaymentWebhook(
 			if err := o.deductItems(ctx, order.Items); err != nil {
 				return err
 			}
-			order.Status = models.OrderStatusPaid
-			order.PaidAt = new(time.Now().UTC())
+
+			if err := order.MarkPaid(); err != nil {
+				return err
+			}
 		case paymentprovider.PaymentStatusCanceled:
 			if err := o.releaseItems(ctx, order.Items); err != nil {
 				return err
 			}
-			order.Status = models.OrderStatusCanceled
-			order.CanceledAt = new(time.Now().UTC())
+
+			if err := order.MarkCanceled(); err != nil {
+				return err
+			}
 		default:
 			return nil
 		}
@@ -416,16 +397,6 @@ func (o *orderService) HandlePaymentWebhook(
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
-}
-
-func (o *orderService) calculateTotal(order *models.Order) int64 {
-	var total int64
-
-	for _, item := range order.Items {
-		total += int64(item.Quantity) * item.UnitPrice
-	}
-
-	return total
 }
 
 func (o *orderService) getOrder(
@@ -457,7 +428,7 @@ func (o *orderService) recalculateOrder(
 		return nil, err
 	}
 
-	order.TotalAmount = o.calculateTotal(order)
+	order.Recalculate()
 
 	if err := o.orderRepo.Update(ctx, order); err != nil {
 		return nil, err

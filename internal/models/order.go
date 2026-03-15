@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"go-shop-backend/pkg/apperrors"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,31 +41,77 @@ type Order struct {
 	Items []OrderItem `gorm:"foreignKey:OrderID;constraint:OnDelete:RESTRICT;"`
 }
 
+func (p *Product) CanBeAdded(qty int) error {
+	if !p.IsActive {
+		return apperrors.ErrProductNotActive
+	}
+
+	if p.Available() < qty {
+		return apperrors.ErrInsufficientStock
+	}
+
+	return nil
+}
+
 func (o *Order) CanEdit() bool {
 	return o.Status == OrderStatusDraft
 }
 
-func (o *Order) CanCheckout() bool {
-	return o.Status == OrderStatusDraft
+func (o *Order) HasItems() bool {
+	return len(o.Items) > 0
 }
 
-func (o *Order) CanCancel() bool {
-	return o.Status == OrderStatusPending
+func (o *Order) Checkout(userID uuid.UUID) error {
+	if !o.CanEdit() {
+		return apperrors.ErrInvalidOrderStatus
+	}
+
+	if !o.HasItems() {
+		return apperrors.ErrEmptyOrder
+	}
+
+	// If the order does not have a user, we link the order to the user
+	if o.UserID == nil {
+		o.UserID = &userID
+	}
+
+	o.Status = OrderStatusPending
+	o.Recalculate()
+	return nil
 }
 
-type OrderItem struct {
-	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+func (o *Order) MarkPaid() error {
+	if o.Status != OrderStatusPending {
+		return apperrors.ErrInvalidOrderStatus
+	}
 
-	OrderID uuid.UUID `gorm:"type:uuid;not null;index"`
-	Order   Order     `gorm:"foreignKey:OrderID;constraint:OnDelete:RESTRICT;"`
+	o.Status = OrderStatusPaid
+	o.PaidAt = new(time.Now().UTC())
+	return nil
+}
 
-	ProductID   uuid.UUID `gorm:"type:uuid;not null;index"`
-	ProductName string    `gorm:"type:varchar(255);not null"`
-	Product     *Product  `gorm:"constraint:OnUpdate:RESTRICT;"`
+func (o *Order) MarkCanceled() error {
+	if o.Status != OrderStatusPending {
+		return apperrors.ErrInvalidOrderStatus
+	}
 
-	Quantity  int   `gorm:"not null;check:quantity > 0"`
-	UnitPrice int64 `gorm:"not null;check:unit_price >= 0"`
+	o.Status = OrderStatusCanceled
+	o.CanceledAt = new(time.Now().UTC())
+	return nil
+}
 
-	CreatedAt time.Time `gorm:"type:timestamptz;default:now();not null"`
-	UpdatedAt time.Time `gorm:"type:timestamptz;default:now();not null"`
+func (o *Order) Recalculate() {
+	var total int64
+
+	for _, item := range o.Items {
+		total += int64(item.Quantity) * item.UnitPrice
+	}
+
+	o.TotalAmount = total
+}
+
+func (o *Order) SetPaymentInfo(paymentID string, providerName string, expiresAt time.Time) {
+	o.PaymentID = &paymentID
+	o.ProviderName = &providerName
+	o.ExpiresAt = &expiresAt
 }

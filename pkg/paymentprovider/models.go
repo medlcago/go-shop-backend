@@ -29,6 +29,16 @@ type CreatePaymentRequest struct {
 	Amount int64 `json:"amount"`
 }
 
+func NewCreatePaymentRequest(userID uuid.UUID, orderID uuid.UUID, amount int64) *CreatePaymentRequest {
+	return &CreatePaymentRequest{
+		Metadata: Metadata{
+			UserID:  userID,
+			OrderID: orderID,
+		},
+		Amount: amount,
+	}
+}
+
 type Payment struct {
 	ID              string        `json:"id"`
 	Metadata        Metadata      `json:"metadata"`

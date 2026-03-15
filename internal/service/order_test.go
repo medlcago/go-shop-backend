@@ -649,52 +649,6 @@ func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
 	suite.ErrorContains(err, dbError.Error())
 }
 
-// ==================== CalculateTotal Tests ====================
-
-func (suite *OrderServiceTestSuite) TestCalculateTotal() {
-	tests := []struct {
-		name  string
-		order *models.Order
-		total int64
-	}{
-		{
-			name: "single item",
-			order: &models.Order{
-				Items: []models.OrderItem{
-					{Quantity: 2, UnitPrice: 1000},
-				},
-			},
-			total: 2000,
-		},
-		{
-			name: "multiple items",
-			order: &models.Order{
-				Items: []models.OrderItem{
-					{Quantity: 2, UnitPrice: 1000},
-					{Quantity: 3, UnitPrice: 500},
-					{Quantity: 1, UnitPrice: 2500},
-				},
-			},
-			total: 6000,
-		},
-		{
-			name: "empty order",
-			order: &models.Order{
-				Items: []models.OrderItem{},
-			},
-			total: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		suite.Run(tt.name, func() {
-			total := suite.orderService.calculateTotal(tt.order)
-
-			suite.Equal(tt.total, total)
-		})
-	}
-}
-
 // ==================== Checkout Tests ====================
 
 func (suite *OrderServiceTestSuite) TestCheckout_Success() {
