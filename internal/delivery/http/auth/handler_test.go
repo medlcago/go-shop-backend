@@ -70,17 +70,17 @@ func TestAuthHandler_Login(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid email",
+			name: "invalid credentials",
 			setupMock: func(serviceMock *serviceMocks.MockAuthService) {
 				serviceMock.EXPECT().Login(mock.Anything, dto.UserLoginRequest{
-					Email:    "test",
+					Email:    "test@test.com",
 					Password: "123123",
 				}).Return(&dto.UserTokenResponse{}, apperrors.ErrInvalidCredentials).Once()
 			},
 			expectedCode: http.StatusUnauthorized,
 			expectedBody: response.NewError(apperrors.ErrInvalidCredentials.Message),
 			requestBody: dto.UserLoginRequest{
-				Email:    "test",
+				Email:    "test@test.com",
 				Password: "123123",
 			},
 		},
