@@ -84,6 +84,13 @@ func TestAuthHandler_Login(t *testing.T) {
 				Password: "123123",
 			},
 		},
+		{
+			name:         "validation error",
+			setupMock:    nil,
+			expectedCode: http.StatusBadRequest,
+			expectedBody: testutils.ValidationError(dto.UserLoginRequest{}),
+			requestBody:  dto.UserLoginRequest{},
+		},
 	}
 
 	for _, tt := range tests {
