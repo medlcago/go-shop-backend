@@ -1,8 +1,10 @@
 package paymentprovider
 
+import "context"
+
 type Provider interface {
-	CreatePayment(req *CreatePaymentRequest) (*Payment, error)
-	CancelPayment(paymentID string) error
+	CreatePayment(ctx context.Context, req *CreatePaymentRequest) (*Payment, error)
+	CancelPayment(ctx context.Context, paymentID string) error
 	ParseWebhook(body []byte) (*WebhookEvent, error)
 	GetName() string
 }

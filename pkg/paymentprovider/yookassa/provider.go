@@ -1,6 +1,7 @@
 package yookassa
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -52,12 +53,12 @@ func New(cfg *Config) (*Provider, error) {
 	}, nil
 }
 
-func (p *Provider) CreatePayment(req *paymentprovider.CreatePaymentRequest) (*paymentprovider.Payment, error) {
+func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.CreatePaymentRequest) (*paymentprovider.Payment, error) {
 	paymentHandler := p.paymentHandler.WithIdempotencyKey(uuid.NewString())
 
 	rubles := decimal.NewFromInt(req.Amount).Div(decimal.NewFromInt(100))
 
-	payment, err := paymentHandler.CreatePayment(&yoopayment.Payment{
+	payment, err := paymentHandler.CreatePayment(ctx, &yoopayment.Payment{
 		Amount: &yoocommon.Amount{
 			Value:    rubles.StringFixed(2),
 			Currency: "RUB",
@@ -94,10 +95,10 @@ func (p *Provider) CreatePayment(req *paymentprovider.CreatePaymentRequest) (*pa
 	}, nil
 }
 
-func (p *Provider) CancelPayment(paymentID string) error {
+func (p *Provider) CancelPayment(ctx context.Context, paymentID string) error {
 	paymentHandler := p.paymentHandler.WithIdempotencyKey(uuid.NewString())
 
-	_, err := paymentHandler.CancelPayment(paymentID)
+	_, err := paymentHandler.CancelPayment(ctx, paymentID)
 	if err != nil {
 		return fmt.Errorf("yookassa: failed to cancel payment: %w", err)
 	}

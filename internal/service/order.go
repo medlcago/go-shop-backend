@@ -279,6 +279,9 @@ func (o *orderService) Checkout(
 ) (*dto.OrderCheckoutResponse, error) {
 	const op = "orderService.Checkout"
 
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	var confirmationURL string
 
 	checkout := func(ctx context.Context) error {
@@ -296,7 +299,7 @@ func (o *orderService) Checkout(
 		}
 
 		req := paymentprovider.NewCreatePaymentRequest(userID, orderID, order.TotalAmount)
-		payment, err := o.paymentProvider.CreatePayment(req)
+		payment, err := o.paymentProvider.CreatePayment(ctx, req)
 		if err != nil {
 			return err
 		}
