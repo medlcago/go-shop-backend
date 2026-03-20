@@ -58,7 +58,7 @@ func RequireAuth() fiber.Handler {
 	return func(ctx fiber.Ctx) error {
 		userCtx := GetUserContext(ctx)
 
-		if !userCtx.IsAuth {
+		if !userCtx.IsAuth || userCtx.UserID == nil {
 			return apperrors.ErrInvalidCredentials
 		}
 

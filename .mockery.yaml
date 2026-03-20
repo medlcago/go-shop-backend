@@ -32,3 +32,11 @@ packages:
   go-shop-backend/pkg/paymentprovider:
     interfaces:
       Provider:
+
+  go-shop-backend/pkg/totp:
+    interfaces:
+      Manager:
+
+  go-shop-backend/pkg/crypto:
+    interfaces:
+      EncryptionManager:

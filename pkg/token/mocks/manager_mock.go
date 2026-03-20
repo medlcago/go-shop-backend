@@ -97,6 +97,66 @@ func (_c *MockManager_GenerateAccessToken_Call) RunAndReturn(run func(payload to
 	return _c
 }
 
+// GeneratePartialToken provides a mock function for the type MockManager
+func (_mock *MockManager) GeneratePartialToken(payload token.Payload) (string, error) {
+	ret := _mock.Called(payload)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GeneratePartialToken")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(token.Payload) (string, error)); ok {
+		return returnFunc(payload)
+	}
+	if returnFunc, ok := ret.Get(0).(func(token.Payload) string); ok {
+		r0 = returnFunc(payload)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(token.Payload) error); ok {
+		r1 = returnFunc(payload)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockManager_GeneratePartialToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GeneratePartialToken'
+type MockManager_GeneratePartialToken_Call struct {
+	*mock.Call
+}
+
+// GeneratePartialToken is a helper method to define mock.On call
+//   - payload token.Payload
+func (_e *MockManager_Expecter) GeneratePartialToken(payload interface{}) *MockManager_GeneratePartialToken_Call {
+	return &MockManager_GeneratePartialToken_Call{Call: _e.mock.On("GeneratePartialToken", payload)}
+}
+
+func (_c *MockManager_GeneratePartialToken_Call) Run(run func(payload token.Payload)) *MockManager_GeneratePartialToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 token.Payload
+		if args[0] != nil {
+			arg0 = args[0].(token.Payload)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockManager_GeneratePartialToken_Call) Return(s string, err error) *MockManager_GeneratePartialToken_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockManager_GeneratePartialToken_Call) RunAndReturn(run func(payload token.Payload) (string, error)) *MockManager_GeneratePartialToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GenerateRefreshToken provides a mock function for the type MockManager
 func (_mock *MockManager) GenerateRefreshToken(payload token.Payload) (string, error) {
 	ret := _mock.Called(payload)

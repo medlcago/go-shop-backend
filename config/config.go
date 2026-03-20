@@ -9,10 +9,13 @@ import (
 )
 
 type Config struct {
+	AppName                 string        `env:"APP_NAME" env-required:"true"`
 	Environment             string        `env:"ENVIRONMENT" env-required:"true" validate:"required,oneof=production development"`
 	AuthSecret              string        `env:"AUTH_SECRET" env-required:"true"`
 	AccessTokenExpiredTime  time.Duration `env:"AUTH_ACCESS_TOKEN_EXPIRED_TIME" env-required:"true"`
 	RefreshTokenExpiredTime time.Duration `env:"AUTH_REFRESH_TOKEN_EXPIRED_TIME" env-required:"true"`
+	PartialTokenExpiredTime time.Duration `env:"AUTH_PARTIAL_TOKEN_EXPIRED_TIME" env-required:"true"`
+	MasterKey               string        `env:"MASTER_KEY" env-required:"true"`
 
 	HttpServer HttpServer `env-prefix:"HTTP_"`
 	Cors       Cors       `env-prefix:"CORS_"`

@@ -14,6 +14,7 @@ type UserRepository interface {
 	GetByIDUnscoped(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 	GetByEmailUnscoped(ctx context.Context, email string) (*models.User, error)
+	Update(ctx context.Context, user *models.User) error
 }
 
 type ProductRepository interface {

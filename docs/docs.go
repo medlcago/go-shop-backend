@@ -15,6 +15,172 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/2fa/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Confirm and enable two-factor authentication with the provided code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Confirm 2FA",
+                "parameters": [
+                    {
+                        "description": "Request body with 2FA confirmation code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.Confirm2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "2FA successfully enabled",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/2fa/disable": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Disable two-factor authentication for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Disable 2FA",
+                "parameters": [
+                    {
+                        "description": "Request body with password confirmation",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.Disable2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "2FA successfully disabled",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/2fa/setup": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Initialize two-factor authentication setup for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Setup 2FA",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Login",
@@ -36,6 +202,58 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/go-shop-backend_internal_dto.UserLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login/2fa": {
+            "post": {
+                "description": "Authenticate user with two-factor authentication code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login with 2FA",
+                "parameters": [
+                    {
+                        "description": "Request body with 2FA code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.Verify2FARequest"
                         }
                     }
                 ],
@@ -1252,6 +1470,36 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.Confirm2FARequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "password"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.Disable2FARequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "password"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.Entity": {
             "type": "object",
             "required": [
@@ -1284,6 +1532,12 @@ const docTemplate = `{
                 },
                 "order_id": {
                     "type": "string"
+                },
+                "unavailable_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/go-shop-backend_internal_dto.UnavailableItem"
+                    }
                 }
             }
         },
@@ -1466,6 +1720,17 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.Setup2FAResponse": {
+            "type": "object",
+            "properties": {
+                "qr_code": {
+                    "type": "string"
+                },
+                "secret": {
+                    "type": "string"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.SignURLRequest": {
             "type": "object",
             "required": [
@@ -1515,6 +1780,26 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.UnavailableItem": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "available_qty": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "requested_qty": {
+                    "type": "integer"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.UploadRequest": {
             "type": "object",
             "required": [
@@ -1556,6 +1841,10 @@ const docTemplate = `{
         },
         "go-shop-backend_internal_dto.UserLoginRequest": {
             "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -1596,6 +1885,9 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                },
+                "two_fa_enabled": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1605,14 +1897,35 @@ const docTemplate = `{
                 "access_token": {
                     "type": "string"
                 },
+                "partial_token": {
+                    "type": "string"
+                },
                 "refresh_token": {
                     "type": "string"
+                },
+                "requires_2fa": {
+                    "type": "boolean"
                 },
                 "token_type": {
                     "type": "string"
                 },
                 "user": {
                     "$ref": "#/definitions/go-shop-backend_internal_dto.UserResponse"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.Verify2FARequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "token"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
                 }
             }
         },
@@ -1704,6 +2017,18 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.Setup2FAResponse"
+                }
+            }
+        },
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse": {
             "type": "object",
             "properties": {
@@ -1776,6 +2101,18 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_pkg_response.Response-string": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_dto.UserResponse": {
             "type": "object",
             "properties": {
@@ -1790,6 +2127,9 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                },
+                "two_fa_enabled": {
+                    "type": "boolean"
                 }
             }
         }

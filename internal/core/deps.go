@@ -7,6 +7,7 @@ import (
 	gormRepo "go-shop-backend/internal/repository/gorm"
 	"go-shop-backend/internal/service"
 	"go-shop-backend/pkg/contenttype"
+	"go-shop-backend/pkg/crypto"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/hasher"
 	"go-shop-backend/pkg/logger"
@@ -15,6 +16,7 @@ import (
 	"go-shop-backend/pkg/storage"
 	"go-shop-backend/pkg/storage/minio"
 	"go-shop-backend/pkg/token"
+	"go-shop-backend/pkg/totp"
 	"log/slog"
 
 	"github.com/go-playground/validator/v10"
@@ -74,7 +76,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		logger.Fatal(l, "failed to create minio storage", err)
 	}
 
-	jwtManager := token.NewJWT(cfg.AuthSecret, cfg.AccessTokenExpiredTime, cfg.RefreshTokenExpiredTime)
+	jwtManager := token.NewJWT(cfg.AuthSecret, cfg.AccessTokenExpiredTime, cfg.RefreshTokenExpiredTime, cfg.PartialTokenExpiredTime)
 
 	passwordHasher := hasher.NewArgon2ID()
 
@@ -87,6 +89,13 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		logger.Fatal(l, "failed to create payment provider", err)
 	}
 
+	totpManager := totp.New(cfg.AppName)
+
+	encryptionManager, err := crypto.NewAESGCMEncryptionManagerFromBase64(cfg.MasterKey)
+	if err != nil {
+		logger.Fatal(l, "failed to create encryption manager", err)
+	}
+
 	userRepo := gormRepo.NewUserRepository(db)
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
@@ -94,7 +103,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	orderRepo := gormRepo.NewOrderRepository(db)
 	orderItemRepo := gormRepo.NewOrderItemRepository(db)
 
-	authService := service.NewAuthService(userRepo, jwtManager, passwordHasher)
+	authService := service.NewAuthService(userRepo, jwtManager, passwordHasher, totpManager, encryptionManager, txManager)
 	userService := service.NewUserService(userRepo)
 	entityService := service.NewEntityService(productRepo)
 	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload, contentTypeDetector)

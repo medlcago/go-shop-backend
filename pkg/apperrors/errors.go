@@ -25,6 +25,13 @@ var (
 	ErrInconsistentStock   = New(http.StatusConflict, "inconsistent product stock")
 	ErrInvalidOrderStatus  = New(http.StatusConflict, "order status does not allow modifications")
 	ErrEmptyOrder          = New(http.StatusBadRequest, "order is empty")
+
+	ErrInvalidPassword   = New(http.StatusBadRequest, "invalid password")
+	ErrInvalidToken      = New(http.StatusUnauthorized, "invalid or expired token")
+	Err2FAAlreadyEnabled = New(http.StatusConflict, "2FA is already enabled; disable it first to reconfigure")
+	Err2FANotEnabled     = New(http.StatusBadRequest, "2FA is not enabled")
+	Err2FANotInitialized = New(http.StatusBadRequest, "2FA is not initialized")
+	ErrInvalid2FACode    = New(http.StatusBadRequest, "invalid 2FA code")
 )
 
 type AppError struct {

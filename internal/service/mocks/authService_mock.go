@@ -8,6 +8,7 @@ import (
 	"context"
 	"go-shop-backend/internal/dto"
 
+	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -36,6 +37,132 @@ type MockAuthService_Expecter struct {
 
 func (_m *MockAuthService) EXPECT() *MockAuthService_Expecter {
 	return &MockAuthService_Expecter{mock: &_m.Mock}
+}
+
+// Confirm2FA provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error {
+	ret := _mock.Called(ctx, userID, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Confirm2FA")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.Confirm2FARequest) error); ok {
+		r0 = returnFunc(ctx, userID, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockAuthService_Confirm2FA_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Confirm2FA'
+type MockAuthService_Confirm2FA_Call struct {
+	*mock.Call
+}
+
+// Confirm2FA is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - req dto.Confirm2FARequest
+func (_e *MockAuthService_Expecter) Confirm2FA(ctx interface{}, userID interface{}, req interface{}) *MockAuthService_Confirm2FA_Call {
+	return &MockAuthService_Confirm2FA_Call{Call: _e.mock.On("Confirm2FA", ctx, userID, req)}
+}
+
+func (_c *MockAuthService_Confirm2FA_Call) Run(run func(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest)) *MockAuthService_Confirm2FA_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dto.Confirm2FARequest
+		if args[2] != nil {
+			arg2 = args[2].(dto.Confirm2FARequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_Confirm2FA_Call) Return(err error) *MockAuthService_Confirm2FA_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockAuthService_Confirm2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error) *MockAuthService_Confirm2FA_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Disable2FA provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error {
+	ret := _mock.Called(ctx, userID, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Disable2FA")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.Disable2FARequest) error); ok {
+		r0 = returnFunc(ctx, userID, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockAuthService_Disable2FA_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Disable2FA'
+type MockAuthService_Disable2FA_Call struct {
+	*mock.Call
+}
+
+// Disable2FA is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - req dto.Disable2FARequest
+func (_e *MockAuthService_Expecter) Disable2FA(ctx interface{}, userID interface{}, req interface{}) *MockAuthService_Disable2FA_Call {
+	return &MockAuthService_Disable2FA_Call{Call: _e.mock.On("Disable2FA", ctx, userID, req)}
+}
+
+func (_c *MockAuthService_Disable2FA_Call) Run(run func(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest)) *MockAuthService_Disable2FA_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dto.Disable2FARequest
+		if args[2] != nil {
+			arg2 = args[2].(dto.Disable2FARequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_Disable2FA_Call) Return(err error) *MockAuthService_Disable2FA_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockAuthService_Disable2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error) *MockAuthService_Disable2FA_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Login provides a mock function for the type MockAuthService
@@ -170,6 +297,142 @@ func (_c *MockAuthService_Register_Call) Return(userTokenResponse *dto.UserToken
 }
 
 func (_c *MockAuthService_Register_Call) RunAndReturn(run func(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error)) *MockAuthService_Register_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Setup2FA provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Setup2FA")
+	}
+
+	var r0 *dto.Setup2FAResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*dto.Setup2FAResponse, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *dto.Setup2FAResponse); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.Setup2FAResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_Setup2FA_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Setup2FA'
+type MockAuthService_Setup2FA_Call struct {
+	*mock.Call
+}
+
+// Setup2FA is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *MockAuthService_Expecter) Setup2FA(ctx interface{}, userID interface{}) *MockAuthService_Setup2FA_Call {
+	return &MockAuthService_Setup2FA_Call{Call: _e.mock.On("Setup2FA", ctx, userID)}
+}
+
+func (_c *MockAuthService_Setup2FA_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *MockAuthService_Setup2FA_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_Setup2FA_Call) Return(setup2FAResponse *dto.Setup2FAResponse, err error) *MockAuthService_Setup2FA_Call {
+	_c.Call.Return(setup2FAResponse, err)
+	return _c
+}
+
+func (_c *MockAuthService_Setup2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error)) *MockAuthService_Setup2FA_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Verify2FA provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) Verify2FA(ctx context.Context, req dto.Verify2FARequest) (*dto.UserTokenResponse, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Verify2FA")
+	}
+
+	var r0 *dto.UserTokenResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.Verify2FARequest) (*dto.UserTokenResponse, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.Verify2FARequest) *dto.UserTokenResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.UserTokenResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.Verify2FARequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_Verify2FA_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Verify2FA'
+type MockAuthService_Verify2FA_Call struct {
+	*mock.Call
+}
+
+// Verify2FA is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req dto.Verify2FARequest
+func (_e *MockAuthService_Expecter) Verify2FA(ctx interface{}, req interface{}) *MockAuthService_Verify2FA_Call {
+	return &MockAuthService_Verify2FA_Call{Call: _e.mock.On("Verify2FA", ctx, req)}
+}
+
+func (_c *MockAuthService_Verify2FA_Call) Run(run func(ctx context.Context, req dto.Verify2FARequest)) *MockAuthService_Verify2FA_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dto.Verify2FARequest
+		if args[1] != nil {
+			arg1 = args[1].(dto.Verify2FARequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_Verify2FA_Call) Return(userTokenResponse *dto.UserTokenResponse, err error) *MockAuthService_Verify2FA_Call {
+	_c.Call.Return(userTokenResponse, err)
+	return _c
+}
+
+func (_c *MockAuthService_Verify2FA_Call) RunAndReturn(run func(ctx context.Context, req dto.Verify2FARequest) (*dto.UserTokenResponse, error)) *MockAuthService_Verify2FA_Call {
 	_c.Call.Return(run)
 	return _c
 }

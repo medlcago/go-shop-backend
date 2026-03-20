@@ -25,4 +25,8 @@ type User struct {
 	UpdatedAt    time.Time      `gorm:"type:timestamptz;default:now();not null"`
 	DeletedAt    gorm.DeletedAt `gorm:"type:timestamptz;index:idx_users_deleted_at"`
 	Role         UserRole       `gorm:"type:varchar(50);default:'customer';not null"`
+
+	TwoFAEnabled     bool       `gorm:"default:false;not null"`
+	TwoFASecret      *string    `gorm:"varchar(255)"`
+	TwoFaConfirmedAt *time.Time `gorm:"type:timestamptz"`
 }

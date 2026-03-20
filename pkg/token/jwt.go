@@ -10,56 +10,36 @@ type JWT struct {
 	secretKey               string
 	accessTokenExpiredTime  time.Duration
 	refreshTokenExpiredTime time.Duration
+	partialTokenExpiredTime time.Duration
 }
 
-func NewJWT(secretKey string, accessTokenExpiredTime, refreshTokenExpiredTime time.Duration) *JWT {
+func NewJWT(
+	secretKey string,
+	accessTokenExpiredTime time.Duration,
+	refreshTokenExpiredTime time.Duration,
+	partialTokenExpiredTime time.Duration,
+) *JWT {
 	return &JWT{
 		secretKey:               secretKey,
 		accessTokenExpiredTime:  accessTokenExpiredTime,
 		refreshTokenExpiredTime: refreshTokenExpiredTime,
+		partialTokenExpiredTime: partialTokenExpiredTime,
 	}
 }
 
 func (j JWT) GenerateAccessToken(payload Payload) (string, error) {
 	exp := time.Now().UTC().Add(j.accessTokenExpiredTime)
-
-	claims := UserClaims{
-		UserID:    payload.UserID,
-		UserRole:  payload.UserRole,
-		TokenType: AccessTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(exp),
-		},
-	}
-
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := jwtToken.SignedString([]byte(j.secretKey))
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
+	return j.generateToken(payload, AccessTokenType, exp)
 }
 
 func (j JWT) GenerateRefreshToken(payload Payload) (string, error) {
 	exp := time.Now().UTC().Add(j.refreshTokenExpiredTime)
+	return j.generateToken(payload, RefreshTokenType, exp)
+}
 
-	claims := UserClaims{
-		UserID:    payload.UserID,
-		UserRole:  payload.UserRole,
-		TokenType: RefreshTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(exp),
-		},
-	}
-
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := jwtToken.SignedString([]byte(j.secretKey))
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
+func (j JWT) GeneratePartialToken(payload Payload) (string, error) {
+	exp := time.Now().UTC().Add(j.partialTokenExpiredTime)
+	return j.generateToken(payload, PartialTokenType, exp)
 }
 
 func (j JWT) ValidateToken(tokenString string) (*UserClaims, error) {
@@ -81,4 +61,24 @@ func (j JWT) ValidateToken(tokenString string) (*UserClaims, error) {
 	}
 
 	return claims, nil
+}
+
+func (j JWT) generateToken(payload Payload, tokenType string, exp time.Time) (string, error) {
+	claims := UserClaims{
+		UserID:       payload.UserID,
+		UserRole:     payload.UserRole,
+		TokenType:    tokenType,
+		TwoFAEnabled: payload.TwoFAEnabled,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(exp),
+		},
+	}
+
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := jwtToken.SignedString([]byte(j.secretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
