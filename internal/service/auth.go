@@ -109,12 +109,12 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, err
 	}
 
-	tokenResponse, err := a.createTokens(user)
+	tokens, err := a.createTokens(user)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return buildUserTokenResponse(user, tokenResponse, false), nil
+	return buildUserTokenResponse(user, tokens, false), nil
 }
 
 func (a *authService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error) {
@@ -289,7 +289,6 @@ func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error
 		tokenType = "Bearer"
 	)
 
-	var errs []error
 	payload := token.Payload{
 		UserID:       user.ID.String(),
 		UserRole:     string(user.Role),
@@ -298,16 +297,12 @@ func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error
 
 	accessToken, err := a.tokenManager.GenerateAccessToken(payload)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("%s: failed to generate access token: %w", op, err))
+		return nil, fmt.Errorf("%s: failed to generate access token: %w", op, err)
 	}
 
 	refreshToken, err := a.tokenManager.GenerateRefreshToken(payload)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("%s: failed to generate refresh token: %w", op, err))
-	}
-
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
+		return nil, fmt.Errorf("%s: failed to generate refresh token: %w", op, err)
 	}
 
 	return &dto.TokenResponse{
@@ -326,7 +321,7 @@ func (a *authService) createPartialToken(user *models.User) (*dto.TokenResponse,
 		TwoFAEnabled: user.TwoFAEnabled,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: failed to generate partial token: %w", op, err)
 	}
 
 	return &dto.TokenResponse{

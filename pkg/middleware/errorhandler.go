@@ -6,7 +6,7 @@ import (
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/response"
-	"go-shop-backend/pkg/utils"
+	structValidator "go-shop-backend/pkg/validator"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -21,33 +21,28 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 		message := http.StatusText(status)
 		var details any
 
-		var fiberErr *fiber.Error
-		if errors.As(err, &fiberErr) {
+		if fiberErr, ok := errors.AsType[*fiber.Error](err); ok {
 			status = fiberErr.Code
 			message = fiberErr.Message
 		}
 
-		var appErr *apperrors.AppError
-		if errors.As(err, &appErr) {
+		if appErr, ok := errors.AsType[*apperrors.AppError](err); ok {
 			status = appErr.Code
 			message = appErr.Message
 		}
 
-		var validationErrs validator.ValidationErrors
-		if errors.As(err, &validationErrs) {
+		if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			status = http.StatusBadRequest
 			message = "Validation failed"
-			details = utils.HumanizeValidationError(err)
+			details = structValidator.HumanizeValidationError(err)
 		}
 
-		var jsonUnmarshalTypeErr *json.UnmarshalTypeError
-		if errors.As(err, &jsonUnmarshalTypeErr) {
+		if _, ok := errors.AsType[*json.UnmarshalTypeError](err); ok {
 			status = http.StatusBadRequest
 			message = http.StatusText(status)
 		}
 
-		var jsonSyntaxErr *json.SyntaxError
-		if errors.As(err, &jsonSyntaxErr) {
+		if _, ok := errors.AsType[*json.SyntaxError](err); ok {
 			status = http.StatusBadRequest
 			message = http.StatusText(status)
 		}

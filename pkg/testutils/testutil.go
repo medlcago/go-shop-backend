@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
-	"go-shop-backend/pkg/utils"
 	structValidator "go-shop-backend/pkg/validator"
 	"io"
 	"log/slog"
@@ -49,7 +48,7 @@ func validateStruct(v any) error {
 func ValidationError(v any) *response.Response[struct{}] {
 	return response.NewError(
 		"Validation failed",
-		utils.HumanizeValidationError(validateStruct(v)),
+		structValidator.HumanizeValidationError(validateStruct(v)),
 	)
 }
 

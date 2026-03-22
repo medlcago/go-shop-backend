@@ -1,22 +1,23 @@
-package utils
+package validator
 
 import (
 	"errors"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/iancoleman/strcase"
 )
 
 func HumanizeValidationError(err error) map[string]string {
 	result := make(map[string]string)
 
-	var ve validator.ValidationErrors
-	if !errors.As(err, &ve) {
+	ve, ok := errors.AsType[validator.ValidationErrors](err)
+	if !ok {
 		return result
 	}
 
 	for _, e := range ve {
-		field := ToSnakeCase(e.Field())
+		field := strcase.ToSnake(e.Field())
 		result[field] = messageByTag(e)
 	}
 
@@ -40,6 +41,7 @@ func messageByTag(e validator.FieldError) string {
 
 	case "gte":
 		return "Must be ≥ " + e.Param()
+
 	case "gt":
 		return "Must be > " + e.Param()
 

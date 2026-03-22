@@ -31,16 +31,3 @@ func BuildSearchQuery(input string) string {
 
 	return strings.Join(parts, " & ")
 }
-
-func ToSnakeCase(s string) string {
-	var res strings.Builder
-
-	for i, r := range s {
-		if i > 0 && unicode.IsUpper(r) {
-			res.WriteRune('_')
-		}
-		res.WriteRune(unicode.ToLower(r))
-	}
-
-	return res.String()
-}
