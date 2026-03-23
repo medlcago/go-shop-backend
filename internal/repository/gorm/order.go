@@ -7,6 +7,7 @@ import (
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/internal/repository/gorm/scopes"
 	"go-shop-backend/pkg/database"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -129,4 +130,40 @@ func (o *orderRepository) GetByPayment(
 	}
 
 	return &order, nil
+}
+
+func (o *orderRepository) CancelExpiredPending(
+	ctx context.Context,
+	now time.Time,
+	limit int,
+) ([]uuid.UUID, error) {
+
+	db := o.db.GetDB(ctx)
+
+	var ids []uuid.UUID
+
+	err := db.Raw(`
+		WITH expired_orders AS (
+			SELECT id
+			FROM orders
+			WHERE status = 'pending'
+			  AND expires_at < ?
+			ORDER BY expires_at ASC
+			LIMIT ?
+			FOR UPDATE SKIP LOCKED
+		)
+		UPDATE orders o
+		SET status = 'canceled',
+		    updated_at = ?,
+			canceled_at = ?
+		FROM expired_orders
+		WHERE o.id = expired_orders.id
+		RETURNING o.id;
+	`, now, limit, now, now).Scan(&ids).Error
+
+	if err != nil {
+		return nil, repository.HandleSQLError(err)
+	}
+
+	return ids, nil
 }

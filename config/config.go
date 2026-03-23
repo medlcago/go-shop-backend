@@ -18,6 +18,7 @@ type Config struct {
 	MasterKey               string        `env:"MASTER_KEY" env-required:"true"`
 
 	HttpServer HttpServer `env-prefix:"HTTP_"`
+	Worker     Worker     `env-prefix:"WORKER_"`
 	Cors       Cors       `env-prefix:"CORS_"`
 	Database   Database   `env-prefix:"DB_"`
 	Minio      Minio      `env-prefix:"MINIO_"`
