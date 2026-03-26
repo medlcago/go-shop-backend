@@ -35,6 +35,24 @@ func (o *orderRepository) Update(ctx context.Context, order *models.Order) error
 	return repository.HandleSQLError(err)
 }
 
+func (o *orderRepository) GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Order, error) {
+	db := o.db.GetDB(ctx)
+
+	if preload {
+		db = db.Scopes(
+			scopes.OrderWithRelations(),
+		)
+	}
+
+	var order models.Order
+	err := db.First(&order, id).Error
+	if err != nil {
+		return nil, repository.HandleSQLError(err)
+	}
+
+	return &order, nil
+}
+
 func (o *orderRepository) GetByOwner(
 	ctx context.Context,
 	orderID uuid.UUID,

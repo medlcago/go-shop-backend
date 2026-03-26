@@ -7,6 +7,7 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
+	"go-shop-backend/internal/tasks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/mapper"
@@ -17,11 +18,13 @@ import (
 )
 
 type orderService struct {
-	orderRepo       repository.OrderRepository
-	orderItemRepo   repository.OrderItemRepository
-	productRepo     repository.ProductRepository
-	paymentProvider paymentprovider.Provider
-	txManager       database.TxManager
+	orderRepo        repository.OrderRepository
+	orderItemRepo    repository.OrderItemRepository
+	productRepo      repository.ProductRepository
+	paymentProvider  paymentprovider.Provider
+	orderTask        tasks.OrderTask
+	txManager        database.TxManager
+	cancelOrderDelay time.Duration
 }
 
 func NewOrderService(
@@ -29,14 +32,18 @@ func NewOrderService(
 	orderItemRepo repository.OrderItemRepository,
 	productRepo repository.ProductRepository,
 	paymentProvider paymentprovider.Provider,
+	orderTask tasks.OrderTask,
 	txManager database.TxManager,
+	cancelOrderDelay time.Duration,
 ) *orderService {
 	return &orderService{
-		orderRepo:       orderRepo,
-		orderItemRepo:   orderItemRepo,
-		productRepo:     productRepo,
-		paymentProvider: paymentProvider,
-		txManager:       txManager,
+		orderRepo:        orderRepo,
+		orderItemRepo:    orderItemRepo,
+		productRepo:      productRepo,
+		paymentProvider:  paymentProvider,
+		orderTask:        orderTask,
+		txManager:        txManager,
+		cancelOrderDelay: cancelOrderDelay,
 	}
 }
 
@@ -304,10 +311,14 @@ func (o *orderService) Checkout(
 			return err
 		}
 
-		expiresAt := time.Now().UTC().Add(10 * time.Minute)
+		expiresAt := time.Now().UTC().Add(o.cancelOrderDelay)
 		order.SetPaymentInfo(payment.ID, o.paymentProvider.GetName(), expiresAt)
 
 		if err := o.orderRepo.Update(ctx, order); err != nil {
+			return err
+		}
+
+		if err := o.orderTask.EnqueueCancelOrder(ctx, userID, orderID, o.cancelOrderDelay); err != nil {
 			return err
 		}
 
@@ -399,6 +410,42 @@ func (o *orderService) HandlePaymentWebhook(
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
+	return nil
+}
+
+func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error {
+	const op = "orderService.CancelOrder"
+
+	handle := func(ctx context.Context) error {
+		order, err := o.orderRepo.GetByID(ctx, orderID, true)
+		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				return apperrors.ErrOrderNotFound
+			}
+
+			return fmt.Errorf("%s: %w", op, err)
+		}
+
+		if order.UserID == nil || *order.UserID != userID {
+			return apperrors.ErrForbidden
+		}
+
+		if err := order.MarkCanceled(); err != nil {
+			return err
+		}
+
+		if err := o.releaseItems(ctx, order.Items); err != nil {
+			return err
+		}
+
+		return o.orderRepo.Update(ctx, order)
+	}
+
+	err := o.txManager.Wrap(ctx, handle)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
 	return nil
 }
 

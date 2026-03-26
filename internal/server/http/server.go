@@ -14,9 +14,6 @@ import (
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/middleware"
 	"log/slog"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -25,12 +22,17 @@ import (
 type Server struct {
 	app  *fiber.App
 	deps *core.Dependencies
+
+	logger *slog.Logger
 }
 
 func NewServer(deps *core.Dependencies) *Server {
+	log := deps.Logger.With("server", "http")
+
 	return &Server{
-		app:  SetupApp(deps.Cfg, deps.Logger, deps.Validator),
-		deps: deps,
+		app:    SetupApp(deps.Cfg, deps.Logger, deps.Validator),
+		deps:   deps,
+		logger: log,
 	}
 }
 
@@ -42,68 +44,44 @@ func (s *Server) IsDevMode() bool {
 	return s.deps.Cfg.Environment == string(logger.EnvDevelopment)
 }
 
-func (s *Server) Run() {
+func (s *Server) Start(ctx context.Context) error {
 	s.Init()
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-
-	serverErr := make(chan error, 1)
-	go s.runServer(serverErr)
-
-	select {
-	case <-ctx.Done():
-		s.deps.Logger.Info("Shutdown signal received")
-		s.Shutdown(s.deps.Cfg.HttpServer.ShutdownTimeout)
-	case err := <-serverErr:
-		if err != nil {
-			s.deps.Logger.Error("Http Server error", logger.Err(err))
-		}
-		s.Shutdown(s.deps.Cfg.HttpServer.ShutdownTimeout)
-	}
-}
-
-func (s *Server) runServer(errChan chan<- error) {
 	addr := fmt.Sprintf(":%d", s.deps.Cfg.HttpServer.Port)
-	s.deps.Logger.Info("HTTP server starting",
+
+	s.logger.Info(
+		"HTTP server starting",
 		slog.String("addr", addr),
 		slog.String("env", s.deps.Cfg.Environment),
 	)
 
-	err := s.app.Listen(addr, fiber.ListenConfig{
+	go func() {
+		<-ctx.Done()
+		s.logger.Info("HTTP shutdown signal received")
+		err := s.Stop(context.Background())
+		if err != nil {
+			s.logger.Error("s.Stop failed", logger.Err(err))
+		}
+	}()
+
+	return s.app.Listen(addr, fiber.ListenConfig{
 		DisableStartupMessage: !s.IsDevMode(),
 	})
 
-	if err != nil {
-		errChan <- err
-	}
 }
 
-func (s *Server) Shutdown(timeout time.Duration) {
-	s.deps.Logger.Info("Starting graceful shutdown",
+func (s *Server) Stop(ctx context.Context) error {
+	timeout := s.deps.Cfg.ShutdownTimeout
+
+	s.logger.Info(
+		"Stopping HTTP server",
 		slog.String("timeout", timeout.String()),
 	)
 
-	if err := s.app.ShutdownWithTimeout(timeout); err != nil {
-		s.deps.Logger.Error("HTTP server shutdown failed", logger.Err(err))
-	} else {
-		s.deps.Logger.Info("HTTP server stopped successfully")
-	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
-	if err := s.closeResources(); err != nil {
-		s.deps.Logger.Error("Close resources failed", logger.Err(err))
-	} else {
-		s.deps.Logger.Info("Close resources successfully")
-	}
-
-	s.deps.Logger.Info("Graceful shutdown completed")
-}
-
-func (s *Server) closeResources() error {
-	if err := s.deps.DB.Close(); err != nil {
-		return err
-	}
-	return nil
+	return s.app.ShutdownWithContext(ctx)
 }
 
 func (s *Server) Init() {

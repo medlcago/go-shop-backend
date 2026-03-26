@@ -7,11 +7,13 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
+	tasksMocks "go-shop-backend/internal/tasks/mocks"
 	"go-shop-backend/pkg/apperrors"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/paymentprovider"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -25,25 +27,38 @@ type OrderServiceTestSuite struct {
 	productRepo     *repoMocks.MockProductRepository
 	txManager       *database.NoopTxManager
 	paymentProvider *paymentproviderMocks.MockProvider
+	orderTask       *tasksMocks.MockOrderTask
 	orderService    *orderService
 
-	ctx          context.Context
-	userID       *uuid.UUID
-	sessionID    uuid.UUID
-	orderID      uuid.UUID
-	productID    uuid.UUID
-	itemID       uuid.UUID
-	paymentID    string
-	providerName string
+	ctx              context.Context
+	userID           *uuid.UUID
+	sessionID        uuid.UUID
+	orderID          uuid.UUID
+	productID        uuid.UUID
+	itemID           uuid.UUID
+	paymentID        string
+	providerName     string
+	cancelOrderDelay time.Duration
 }
 
 func (suite *OrderServiceTestSuite) SetupTest() {
+	suite.cancelOrderDelay = 10 * time.Minute
+
 	suite.orderRepo = repoMocks.NewMockOrderRepository(suite.T())
 	suite.orderItemRepo = repoMocks.NewMockOrderItemRepository(suite.T())
 	suite.productRepo = repoMocks.NewMockProductRepository(suite.T())
 	suite.txManager = database.NewNoopTxManager()
 	suite.paymentProvider = paymentproviderMocks.NewMockProvider(suite.T())
-	suite.orderService = NewOrderService(suite.orderRepo, suite.orderItemRepo, suite.productRepo, suite.paymentProvider, suite.txManager)
+	suite.orderTask = tasksMocks.NewMockOrderTask(suite.T())
+	suite.orderService = NewOrderService(
+		suite.orderRepo,
+		suite.orderItemRepo,
+		suite.productRepo,
+		suite.paymentProvider,
+		suite.orderTask,
+		suite.txManager,
+		suite.cancelOrderDelay,
+	)
 
 	suite.ctx = context.Background()
 	suite.userID = new(uuid.New())
@@ -712,6 +727,9 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 			suite.NotNil(o.ExpiresAt)
 		}).Return(nil).Once()
 
+	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.cancelOrderDelay).
+		Return(nil).Once()
+
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
 
 	suite.NoError(err)
@@ -763,6 +781,9 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 	suite.orderRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(o *models.Order) bool {
 		return o.UserID != nil && *o.UserID == *suite.userID
 	})).Return(nil).Once()
+
+	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.cancelOrderDelay).
+		Return(nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
 

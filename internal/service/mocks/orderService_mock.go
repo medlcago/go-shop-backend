@@ -125,6 +125,69 @@ func (_c *MockOrderService_AddItem_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// CancelOrder provides a mock function for the type MockOrderService
+func (_mock *MockOrderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error {
+	ret := _mock.Called(ctx, userID, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CancelOrder")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, userID, orderID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockOrderService_CancelOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancelOrder'
+type MockOrderService_CancelOrder_Call struct {
+	*mock.Call
+}
+
+// CancelOrder is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - orderID uuid.UUID
+func (_e *MockOrderService_Expecter) CancelOrder(ctx interface{}, userID interface{}, orderID interface{}) *MockOrderService_CancelOrder_Call {
+	return &MockOrderService_CancelOrder_Call{Call: _e.mock.On("CancelOrder", ctx, userID, orderID)}
+}
+
+func (_c *MockOrderService_CancelOrder_Call) Run(run func(ctx context.Context, userID uuid.UUID, orderID uuid.UUID)) *MockOrderService_CancelOrder_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderService_CancelOrder_Call) Return(err error) *MockOrderService_CancelOrder_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockOrderService_CancelOrder_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error) *MockOrderService_CancelOrder_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Checkout provides a mock function for the type MockOrderService
 func (_mock *MockOrderService) Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error) {
 	ret := _mock.Called(ctx, userID, sessionID, orderID)

@@ -13,6 +13,10 @@ packages:
     config:
       all: true
 
+  go-shop-backend/internal/tasks:
+    config:
+      all: true
+
   go-shop-backend/pkg/token:
     interfaces:
       Manager:

@@ -25,6 +25,7 @@ var (
 	ErrInconsistentStock   = New(http.StatusConflict, "inconsistent product stock")
 	ErrInvalidOrderStatus  = New(http.StatusConflict, "order status does not allow modifications")
 	ErrEmptyOrder          = New(http.StatusBadRequest, "order is empty")
+	ErrOrderNotFound       = New(http.StatusNotFound, "order not found")
 
 	ErrInvalidPassword   = New(http.StatusBadRequest, "invalid password")
 	ErrInvalidToken      = New(http.StatusUnauthorized, "invalid or expired token")

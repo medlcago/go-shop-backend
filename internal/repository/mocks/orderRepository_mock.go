@@ -97,6 +97,80 @@ func (_c *MockOrderRepository_Create_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// GetByID provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Order, error) {
+	ret := _mock.Called(ctx, id, preload)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByID")
+	}
+
+	var r0 *models.Order
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, bool) (*models.Order, error)); ok {
+		return returnFunc(ctx, id, preload)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, bool) *models.Order); ok {
+		r0 = returnFunc(ctx, id, preload)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Order)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, bool) error); ok {
+		r1 = returnFunc(ctx, id, preload)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type MockOrderRepository_GetByID_Call struct {
+	*mock.Call
+}
+
+// GetByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - preload bool
+func (_e *MockOrderRepository_Expecter) GetByID(ctx interface{}, id interface{}, preload interface{}) *MockOrderRepository_GetByID_Call {
+	return &MockOrderRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, preload)}
+}
+
+func (_c *MockOrderRepository_GetByID_Call) Run(run func(ctx context.Context, id uuid.UUID, preload bool)) *MockOrderRepository_GetByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 bool
+		if args[2] != nil {
+			arg2 = args[2].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_GetByID_Call) Return(order *models.Order, err error) *MockOrderRepository_GetByID_Call {
+	_c.Call.Return(order, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, preload bool) (*models.Order, error)) *MockOrderRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByOwner provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) GetByOwner(ctx context.Context, orderID uuid.UUID, userID *uuid.UUID, sessionID uuid.UUID, preload bool) (*models.Order, error) {
 	ret := _mock.Called(ctx, orderID, userID, sessionID, preload)

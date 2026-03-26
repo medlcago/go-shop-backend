@@ -40,6 +40,7 @@ type UploadRepository interface {
 type OrderRepository interface {
 	Create(ctx context.Context, order *models.Order) error
 	Update(ctx context.Context, order *models.Order) error
+	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Order, error)
 	GetByOwner(ctx context.Context, orderID uuid.UUID, userID *uuid.UUID, sessionID uuid.UUID, preload bool) (*models.Order, error)
 	GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error)
 	GetByPayment(ctx context.Context, providerName string, paymentID string, preload bool) (*models.Order, error)

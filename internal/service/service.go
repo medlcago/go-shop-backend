@@ -55,4 +55,5 @@ type OrderService interface {
 	Clear(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)
 	Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error)
 	HandlePaymentWebhook(ctx context.Context, body []byte) error
+	CancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error
 }

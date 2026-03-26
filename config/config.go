@@ -15,6 +15,8 @@ type Config struct {
 	AccessTokenExpiredTime  time.Duration `env:"AUTH_ACCESS_TOKEN_EXPIRED_TIME" env-required:"true"`
 	RefreshTokenExpiredTime time.Duration `env:"AUTH_REFRESH_TOKEN_EXPIRED_TIME" env-required:"true"`
 	PartialTokenExpiredTime time.Duration `env:"AUTH_PARTIAL_TOKEN_EXPIRED_TIME" env-required:"true"`
+	ShutdownTimeout         time.Duration `env:"SHUTDOWN_TIMEOUT" env-default:"30s"`
+	OrderCancelDelay        time.Duration `env:"ORDER_CANCEL_DELAY" env-default:"10m"`
 	MasterKey               string        `env:"MASTER_KEY" env-required:"true"`
 
 	HttpServer HttpServer `env-prefix:"HTTP_"`
@@ -23,6 +25,7 @@ type Config struct {
 	Minio      Minio      `env-prefix:"MINIO_"`
 	Upload     Upload     `env-prefix:"UPLOAD_"`
 	Yookassa   Yookassa   `env-prefix:"YOOKASSA_"`
+	Redis      Redis      `env-prefix:"REDIS_"`
 }
 
 func (cfg *Config) Validate() error {

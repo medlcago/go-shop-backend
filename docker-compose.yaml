@@ -59,7 +59,17 @@ services:
       - minio
     restart: always
 
+  redis:
+    image: redis:8.6.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+
 volumes:
   postgres_data:
+  redis_data:
   minio_data:
   nginx_cache:

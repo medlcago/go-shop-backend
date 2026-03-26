@@ -6,6 +6,7 @@ import (
 	"go-shop-backend/internal/repository"
 	gormRepo "go-shop-backend/internal/repository/gorm"
 	"go-shop-backend/internal/service"
+	"go-shop-backend/internal/tasks"
 	"go-shop-backend/pkg/contenttype"
 	"go-shop-backend/pkg/crypto"
 	"go-shop-backend/pkg/database"
@@ -32,6 +33,7 @@ type Dependencies struct {
 
 	Storage      storage.Storage
 	TokenManager token.Manager
+	TaskFactory  tasks.TaskFactory
 
 	PaymentProvider paymentprovider.Provider
 
@@ -96,6 +98,8 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 		logger.Fatal(l, "failed to create encryption manager", err)
 	}
 
+	taskFactory := tasks.NewTaskFactory(cfg.Redis.Address, cfg.Redis.Password)
+
 	userRepo := gormRepo.NewUserRepository(db)
 	productRepo := gormRepo.NewProductRepository(db)
 	categoryRepo := gormRepo.NewCategoryRepository(db)
@@ -109,7 +113,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 	uploadService := service.NewUploadService(minioStorage, entityService, uploadRepo, cfg.Upload, contentTypeDetector)
 	productService := service.NewProductService(productRepo, uploadService)
 	categoryService := service.NewCategoryService(categoryRepo)
-	orderService := service.NewOrderService(orderRepo, orderItemRepo, productRepo, paymentProvider, txManager)
+	orderService := service.NewOrderService(orderRepo, orderItemRepo, productRepo, paymentProvider, taskFactory.Orders(), txManager, cfg.OrderCancelDelay)
 
 	return &Dependencies{
 		Cfg:       cfg,
@@ -121,6 +125,7 @@ func NewDependencies(cfg *config.Config) *Dependencies {
 
 		Storage:      minioStorage,
 		TokenManager: jwtManager,
+		TaskFactory:  taskFactory,
 
 		PaymentProvider: paymentProvider,
 
