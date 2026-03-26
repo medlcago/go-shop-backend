@@ -4,7 +4,6 @@ import (
 	"context"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -44,7 +43,6 @@ type OrderRepository interface {
 	GetByOwner(ctx context.Context, orderID uuid.UUID, userID *uuid.UUID, sessionID uuid.UUID, preload bool) (*models.Order, error)
 	GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error)
 	GetByPayment(ctx context.Context, providerName string, paymentID string, preload bool) (*models.Order, error)
-	CancelExpiredPending(ctx context.Context, now time.Time, limit int) ([]uuid.UUID, error)
 }
 
 type OrderItemRepository interface {

@@ -8,7 +8,6 @@ import (
 	"context"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
-	"time"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -39,80 +38,6 @@ type MockOrderRepository_Expecter struct {
 
 func (_m *MockOrderRepository) EXPECT() *MockOrderRepository_Expecter {
 	return &MockOrderRepository_Expecter{mock: &_m.Mock}
-}
-
-// CancelExpiredPending provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) CancelExpiredPending(ctx context.Context, now time.Time, limit int) ([]uuid.UUID, error) {
-	ret := _mock.Called(ctx, now, limit)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CancelExpiredPending")
-	}
-
-	var r0 []uuid.UUID
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, time.Time, int) ([]uuid.UUID, error)); ok {
-		return returnFunc(ctx, now, limit)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, time.Time, int) []uuid.UUID); ok {
-		r0 = returnFunc(ctx, now, limit)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]uuid.UUID)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, time.Time, int) error); ok {
-		r1 = returnFunc(ctx, now, limit)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockOrderRepository_CancelExpiredPending_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancelExpiredPending'
-type MockOrderRepository_CancelExpiredPending_Call struct {
-	*mock.Call
-}
-
-// CancelExpiredPending is a helper method to define mock.On call
-//   - ctx context.Context
-//   - now time.Time
-//   - limit int
-func (_e *MockOrderRepository_Expecter) CancelExpiredPending(ctx interface{}, now interface{}, limit interface{}) *MockOrderRepository_CancelExpiredPending_Call {
-	return &MockOrderRepository_CancelExpiredPending_Call{Call: _e.mock.On("CancelExpiredPending", ctx, now, limit)}
-}
-
-func (_c *MockOrderRepository_CancelExpiredPending_Call) Run(run func(ctx context.Context, now time.Time, limit int)) *MockOrderRepository_CancelExpiredPending_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 time.Time
-		if args[1] != nil {
-			arg1 = args[1].(time.Time)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrderRepository_CancelExpiredPending_Call) Return(uUIDs []uuid.UUID, err error) *MockOrderRepository_CancelExpiredPending_Call {
-	_c.Call.Return(uUIDs, err)
-	return _c
-}
-
-func (_c *MockOrderRepository_CancelExpiredPending_Call) RunAndReturn(run func(ctx context.Context, now time.Time, limit int) ([]uuid.UUID, error)) *MockOrderRepository_CancelExpiredPending_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // Create provides a mock function for the type MockOrderRepository
