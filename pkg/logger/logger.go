@@ -35,6 +35,10 @@ func Err(err error) slog.Attr {
 	return slog.Any("error", err)
 }
 
+func AppErr(err error) slog.Attr {
+	return slog.Any("app_error", err)
+}
+
 func Fatal(l *slog.Logger, msg string, err error) {
 	l.Error(msg, Err(err))
 	os.Exit(1)

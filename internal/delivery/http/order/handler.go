@@ -175,7 +175,7 @@ func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
-	productID := uuid.MustParse(ctx.Params("product_id"))
+	productID := uuid.MustParse(ctx.Params("productID"))
 
 	resp, err := h.orderService.DeleteItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, productID)
 	if err != nil {

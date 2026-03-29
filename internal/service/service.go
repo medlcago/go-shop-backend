@@ -26,24 +26,12 @@ type ProductService interface {
 	CreateProduct(ctx context.Context, req dto.ProductCreateRequest) (*dto.ProductResponse, error)
 	UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error)
 	Search(ctx context.Context, req dto.SearchProductRequest) ([]*dto.ProductResponse, int64, error)
+	UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageRequest) (*dto.SignURLResponse, error)
+	ConfirmUploadImage(ctx context.Context, productID uuid.UUID, req dto.ConfirmUploadProductImageRequest) (*dto.UploadResponse, error)
 }
 
 type CategoryService interface {
 	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error)
-}
-
-type UploadService interface {
-	SignURL(ctx context.Context, req dto.SignURLRequest) (*dto.SignURLResponse, error)
-	Save(ctx context.Context, req dto.UploadRequest) (*dto.UploadResponse, error)
-	PublicURL(ctx context.Context, objectKey string) string
-}
-
-type PublicURLBuilder interface {
-	PublicURL(ctx context.Context, objectKey string) string
-}
-
-type EntityService interface {
-	Exists(ctx context.Context, entityType dto.EntityType, id uuid.UUID) error
 }
 
 type OrderService interface {

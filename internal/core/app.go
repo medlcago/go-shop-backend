@@ -62,8 +62,8 @@ func (a *App) closeResources() error {
 		return fmt.Errorf("failed to close database: %w", err)
 	}
 
-	if err := a.deps.TaskFactory.Close(); err != nil {
-		return fmt.Errorf("failed to close task factory: %w", err)
+	if err := a.deps.Redis.Close(); err != nil {
+		return fmt.Errorf("failed to close redis: %w", err)
 	}
 
 	return nil

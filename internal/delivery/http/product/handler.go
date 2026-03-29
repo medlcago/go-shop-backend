@@ -3,6 +3,8 @@ package product
 import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service"
+	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 
 	"github.com/gofiber/fiber/v3"
@@ -184,4 +186,46 @@ func (h *Handler) Search(ctx fiber.Ctx) error {
 	}
 
 	return response.PaginatedJSON(ctx, fiber.StatusOK, resp, total)
+}
+
+func (h *Handler) UploadImage(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
+
+	productID := uuid.MustParse(ctx.Params("id"))
+
+	var req dto.UploadProductImageRequest
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return err
+	}
+
+	resp, err := h.productService.UploadImage(ctx, productID, req)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) ConfirmUploadImage(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperrors.ErrInvalidCredentials
+	}
+
+	productID := uuid.MustParse(ctx.Params("id"))
+
+	var req dto.ConfirmUploadProductImageRequest
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return err
+	}
+
+	resp, err := h.productService.ConfirmUploadImage(ctx, productID, req)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
 }

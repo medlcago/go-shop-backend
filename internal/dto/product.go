@@ -52,3 +52,13 @@ type SearchProductRequest struct {
 	Limit  int    `query:"limit"`
 	Offset int    `query:"offset"`
 }
+
+type UploadProductImageRequest struct {
+	ContentType string `json:"content_type" validate:"required"`
+	Ext         string `json:"ext" validate:"required,oneof=jpg png"`
+}
+
+type ConfirmUploadProductImageRequest struct {
+	UploadID  uuid.UUID `json:"upload_id" validate:"required"`
+	ObjectKey string    `json:"object_key" validate:"required"`
+}

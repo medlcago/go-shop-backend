@@ -12,10 +12,9 @@ import (
 )
 
 type Server struct {
-	srv  *asynq.Server
-	mux  *asynq.ServeMux
-	deps *core.Dependencies
-
+	srv    *asynq.Server
+	mux    *asynq.ServeMux
+	deps   *core.Dependencies
 	logger *slog.Logger
 }
 
@@ -66,6 +65,12 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	s.logger.Info("Stopping Asynq server")
 	s.srv.Shutdown()
 	return nil

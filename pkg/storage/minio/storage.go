@@ -62,7 +62,7 @@ func (s *Storage) Upload(ctx context.Context, objectKey string, r io.Reader, siz
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	return s.PublicURL(ctx, objectKey), nil
+	return s.PublicURL(objectKey), nil
 }
 
 func (s *Storage) Delete(ctx context.Context, objectKey string) error {
@@ -139,7 +139,7 @@ func (s *Storage) CreatePresignedPost(ctx context.Context, opts storage.Presigne
 	}, nil
 }
 
-func (s *Storage) PublicURL(_ context.Context, objectKey string) string {
+func (s *Storage) PublicURL(objectKey string) string {
 	return fmt.Sprintf("%s/%s/%s", s.baseURL, s.bucket, objectKey)
 }
 func (s *Storage) Exists(ctx context.Context, objectKey string) error {

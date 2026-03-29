@@ -12,16 +12,18 @@ func RegisterRoutes(r fiber.Router, productHandler *Handler) {
 	{
 		productGroup.Get("/:id<guid>", productHandler.GetProductByID)
 		productGroup.Get("/", productHandler.ListProducts)
-		productGroup.Post("/",
-			middleware.RequireAuth(),
-			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
-			productHandler.CreateProduct,
-		)
-		productGroup.Patch("/:id<guid>",
-			middleware.RequireAuth(),
-			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
-			productHandler.UpdateProduct,
-		)
 		productGroup.Get("/search", productHandler.Search)
+
+		protectedProductGroup := productGroup.Group(
+			"/",
+			middleware.RequireAuth(),
+			middleware.RequireRole(models.UserRoleSeller, models.UserRoleAdmin),
+		)
+		{
+			protectedProductGroup.Post("/", productHandler.CreateProduct)
+			protectedProductGroup.Patch("/:id<guid>", productHandler.UpdateProduct)
+			protectedProductGroup.Post("/:id<guid>/images/upload-url", productHandler.UploadImage)
+			protectedProductGroup.Post("/:id<guid>/images", productHandler.ConfirmUploadImage)
+		}
 	}
 }

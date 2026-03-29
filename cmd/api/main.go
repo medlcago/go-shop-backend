@@ -29,7 +29,7 @@ func main() {
 	deps := core.NewDependencies(cfg)
 
 	deps.Logger.Info("starting database migration...")
-	if err := deps.DB.Migrate("postgres"); err != nil {
+	if err := deps.DB.Migrate(cfg.Database.Dialect); err != nil {
 		logger.Fatal(deps.Logger, "failed to migrate database", err)
 	}
 

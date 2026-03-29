@@ -17,6 +17,10 @@ packages:
     config:
       all: true
 
+  go-shop-backend/internal/upload:
+    config:
+      all: true
+
   go-shop-backend/pkg/token:
     interfaces:
       Manager:

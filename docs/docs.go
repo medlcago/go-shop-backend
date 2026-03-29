@@ -1275,138 +1275,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/uploads/save": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Bind a previously uploaded file (via signed URL) to a specific entity after successful upload",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "uploads"
-                ],
-                "summary": "Attach uploaded file to entity",
-                "parameters": [
-                    {
-                        "description": "Upload save request parameters",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.UploadRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    }
-                }
-            }
-        },
-        "/uploads/signurl": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Create a pre-signed URL for uploading files to storage",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "uploads"
-                ],
-                "summary": "Generate signed URL for upload",
-                "parameters": [
-                    {
-                        "description": "Sign URL request parameters",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.SignURLRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    }
-                }
-            }
-        },
         "/users/me": {
             "get": {
                 "security": [
@@ -1499,30 +1367,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "go-shop-backend_internal_dto.Entity": {
-            "type": "object",
-            "required": [
-                "id",
-                "type"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.EntityType"
-                }
-            }
-        },
-        "go-shop-backend_internal_dto.EntityType": {
-            "type": "string",
-            "enum": [
-                "products"
-            ],
-            "x-enum-varnames": [
-                "EntityProduct"
-            ]
         },
         "go-shop-backend_internal_dto.OrderCheckoutResponse": {
             "type": "object",
@@ -1731,55 +1575,6 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_internal_dto.SignURLRequest": {
-            "type": "object",
-            "required": [
-                "content_type",
-                "entity",
-                "ext"
-            ],
-            "properties": {
-                "content_type": {
-                    "type": "string"
-                },
-                "entity": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.Entity"
-                },
-                "ext": {
-                    "type": "string",
-                    "enum": [
-                        "jpg",
-                        "png"
-                    ]
-                }
-            }
-        },
-        "go-shop-backend_internal_dto.SignURLResponse": {
-            "type": "object",
-            "properties": {
-                "content_type": {
-                    "type": "string"
-                },
-                "expire_date": {
-                    "type": "string"
-                },
-                "filename": {
-                    "type": "string"
-                },
-                "form_data": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "upload_id": {
-                    "type": "string"
-                },
-                "upload_url": {
-                    "type": "string"
-                }
-            }
-        },
         "go-shop-backend_internal_dto.UnavailableItem": {
             "type": "object",
             "properties": {
@@ -1797,25 +1592,6 @@ const docTemplate = `{
                 },
                 "requested_qty": {
                     "type": "integer"
-                }
-            }
-        },
-        "go-shop-backend_internal_dto.UploadRequest": {
-            "type": "object",
-            "required": [
-                "entity",
-                "object_key",
-                "upload_id"
-            ],
-            "properties": {
-                "entity": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.Entity"
-                },
-                "object_key": {
-                    "type": "string"
-                },
-                "upload_id": {
-                    "type": "string"
                 }
             }
         },
@@ -2026,30 +1802,6 @@ const docTemplate = `{
                 },
                 "result": {
                     "$ref": "#/definitions/go-shop-backend_internal_dto.Setup2FAResponse"
-                }
-            }
-        },
-        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse": {
-            "type": "object",
-            "properties": {
-                "details": {},
-                "error": {
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.SignURLResponse"
-                }
-            }
-        },
-        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse": {
-            "type": "object",
-            "properties": {
-                "details": {},
-                "error": {
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.UploadResponse"
                 }
             }
         },

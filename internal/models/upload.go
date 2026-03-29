@@ -28,4 +28,14 @@ type Upload struct {
 	CreatedAt time.Time `gorm:"index:idx_uploads_entity_created_at,priority:3,sort:desc,where:deleted_at IS NULL"`
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+
+	URL string `gorm:"-"`
+}
+
+func (u *Upload) GetObjectKey() string {
+	return u.ObjectKey
+}
+
+func (u *Upload) SetURL(url string) {
+	u.URL = url
 }

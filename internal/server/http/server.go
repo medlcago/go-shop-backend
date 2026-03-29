@@ -8,7 +8,6 @@ import (
 	categoryHttp "go-shop-backend/internal/delivery/http/category"
 	orderHttp "go-shop-backend/internal/delivery/http/order"
 	productHttp "go-shop-backend/internal/delivery/http/product"
-	uploadHttp "go-shop-backend/internal/delivery/http/upload"
 	userHttp "go-shop-backend/internal/delivery/http/user"
 	webhookHttp "go-shop-backend/internal/delivery/http/webhook"
 	"go-shop-backend/pkg/logger"
@@ -20,9 +19,8 @@ import (
 )
 
 type Server struct {
-	app  *fiber.App
-	deps *core.Dependencies
-
+	app    *fiber.App
+	deps   *core.Dependencies
 	logger *slog.Logger
 }
 
@@ -104,9 +102,6 @@ func (s *Server) Init() {
 
 	categoryHandler := categoryHttp.NewHandler(s.deps.CategoryService)
 	categoryHttp.RegisterRoutes(v1, categoryHandler)
-
-	uploadHandler := uploadHttp.NewHandler(s.deps.UploadService)
-	uploadHttp.RegisterRoutes(v1, uploadHandler)
 
 	orderHandler := orderHttp.NewHandler(s.deps.OrderService)
 	orderHttp.RegisterRoutes(v1, orderHandler)

@@ -5,8 +5,6 @@
 package mocks
 
 import (
-	"context"
-
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -38,16 +36,16 @@ func (_m *MockPublicURLBuilder) EXPECT() *MockPublicURLBuilder_Expecter {
 }
 
 // PublicURL provides a mock function for the type MockPublicURLBuilder
-func (_mock *MockPublicURLBuilder) PublicURL(ctx context.Context, objectKey string) string {
-	ret := _mock.Called(ctx, objectKey)
+func (_mock *MockPublicURLBuilder) PublicURL(objectKey string) string {
+	ret := _mock.Called(objectKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PublicURL")
 	}
 
 	var r0 string
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = returnFunc(ctx, objectKey)
+	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
+		r0 = returnFunc(objectKey)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
@@ -60,25 +58,19 @@ type MockPublicURLBuilder_PublicURL_Call struct {
 }
 
 // PublicURL is a helper method to define mock.On call
-//   - ctx context.Context
 //   - objectKey string
-func (_e *MockPublicURLBuilder_Expecter) PublicURL(ctx interface{}, objectKey interface{}) *MockPublicURLBuilder_PublicURL_Call {
-	return &MockPublicURLBuilder_PublicURL_Call{Call: _e.mock.On("PublicURL", ctx, objectKey)}
+func (_e *MockPublicURLBuilder_Expecter) PublicURL(objectKey interface{}) *MockPublicURLBuilder_PublicURL_Call {
+	return &MockPublicURLBuilder_PublicURL_Call{Call: _e.mock.On("PublicURL", objectKey)}
 }
 
-func (_c *MockPublicURLBuilder_PublicURL_Call) Run(run func(ctx context.Context, objectKey string)) *MockPublicURLBuilder_PublicURL_Call {
+func (_c *MockPublicURLBuilder_PublicURL_Call) Run(run func(objectKey string)) *MockPublicURLBuilder_PublicURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
+		var arg0 string
 		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg0 = args[0].(string)
 		}
 		run(
 			arg0,
-			arg1,
 		)
 	})
 	return _c
@@ -89,7 +81,7 @@ func (_c *MockPublicURLBuilder_PublicURL_Call) Return(s string) *MockPublicURLBu
 	return _c
 }
 
-func (_c *MockPublicURLBuilder_PublicURL_Call) RunAndReturn(run func(ctx context.Context, objectKey string) string) *MockPublicURLBuilder_PublicURL_Call {
+func (_c *MockPublicURLBuilder_PublicURL_Call) RunAndReturn(run func(objectKey string) string) *MockPublicURLBuilder_PublicURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

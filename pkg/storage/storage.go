@@ -43,7 +43,7 @@ type Storage interface {
 	Delete(ctx context.Context, objectKey string) error
 	GetPresignedURL(ctx context.Context, objectKey string, expiry time.Duration) (string, error)
 	CreatePresignedPost(ctx context.Context, opts PresignedPostOptions) (*PresignedPost, error)
-	PublicURL(ctx context.Context, objectKey string) string
+	PublicURL(objectKey string) string
 	Exists(ctx context.Context, objectKey string) error
 	Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error)
 	GetObjectInfo(ctx context.Context, objectKey string) (*ObjectInfo, error)

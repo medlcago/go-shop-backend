@@ -38,9 +38,20 @@ func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.U
 		return nil, apperrors.ErrUserProfileDeleted
 	}
 
+	response, err := u.mapUser(user)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return response, nil
+}
+
+func (u *userService) mapUser(user *models.User) (*dto.UserResponse, error) {
+	const op = "userService.mapUser"
+
 	response, err := mapper.MapOne[*models.User, dto.UserResponse](user)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to map user: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return response, nil
