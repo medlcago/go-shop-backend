@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-shop-backend/internal/server"
 	"go-shop-backend/pkg/logger"
 	"os/signal"
@@ -11,14 +10,14 @@ import (
 )
 
 type App struct {
-	servers []server.Server
-	deps    *Dependencies
+	servers   []server.Server
+	container *Container
 }
 
-func NewApp(deps *Dependencies, servers ...server.Server) *App {
+func NewApp(container *Container, servers ...server.Server) *App {
 	return &App{
-		servers: servers,
-		deps:    deps,
+		servers:   servers,
+		container: container,
 	}
 }
 func (a *App) Run(ctx context.Context) error {
@@ -39,32 +38,20 @@ func (a *App) Run(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		a.deps.Logger.Info("Shutdown signal received")
+		a.container.Logger().Info("Shutdown signal received")
 	case err := <-errCh:
-		a.deps.Logger.Error("Server error", logger.Err(err))
+		a.container.Logger().Error("Server error", logger.Err(err))
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), a.deps.Cfg.ShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), a.container.Config().ShutdownTimeout)
 	defer cancel()
 
 	for _, srv := range a.servers {
 		err := srv.Stop(shutdownCtx)
 		if err != nil {
-			a.deps.Logger.Error("srv.Stop failed", logger.Err(err))
+			a.container.Logger().Error("srv.Stop failed", logger.Err(err))
 		}
 	}
 
-	return a.closeResources()
-}
-
-func (a *App) closeResources() error {
-	if err := a.deps.DB.Close(); err != nil {
-		return fmt.Errorf("failed to close database: %w", err)
-	}
-
-	if err := a.deps.Redis.Close(); err != nil {
-		return fmt.Errorf("failed to close redis: %w", err)
-	}
-
-	return nil
+	return a.container.Close()
 }

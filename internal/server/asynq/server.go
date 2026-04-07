@@ -12,35 +12,35 @@ import (
 )
 
 type Server struct {
-	srv    *asynq.Server
-	mux    *asynq.ServeMux
-	deps   *core.Dependencies
-	logger *slog.Logger
+	srv       *asynq.Server
+	mux       *asynq.ServeMux
+	container *core.Container
+	logger    *slog.Logger
 }
 
-func NewServer(deps *core.Dependencies) *Server {
-	log := deps.Logger.With("server", "asynq")
+func NewServer(container *core.Container) *Server {
+	log := container.Logger().With("server", "asynq")
 
-	srv := asynq.NewServer(
-		asynq.RedisClientOpt{Addr: deps.Cfg.Redis.Address, Password: deps.Cfg.Redis.Password},
+	srv := asynq.NewServerFromRedisClient(
+		container.RedisClient().RDB(),
 		asynq.Config{
 			Concurrency:     10,
-			ShutdownTimeout: deps.Cfg.ShutdownTimeout,
+			ShutdownTimeout: container.Config().ShutdownTimeout,
 			Queues: map[string]int{
 				"critical": 6,
 				"default":  3,
 				"low":      1,
 			},
-		},
-	)
+			Logger: newLogger(log),
+		})
 
 	mux := asynq.NewServeMux()
 
 	return &Server{
-		srv:    srv,
-		mux:    mux,
-		deps:   deps,
-		logger: log,
+		srv:       srv,
+		mux:       mux,
+		container: container,
+		logger:    log,
 	}
 }
 
@@ -49,7 +49,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	s.logger.Info(
 		"Asynq server starting",
-		slog.String("env", s.deps.Cfg.Environment),
+		slog.String("env", s.container.Config().Environment),
 	)
 
 	go func() {
@@ -77,7 +77,7 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) Init() {
-	orderHandler := taskHandlers.NewOrderTaskHandler(s.deps.OrderService, s.logger)
+	orderHandler := taskHandlers.NewOrderTaskHandler(s.container.OrderService(), s.logger)
 
 	s.mux.HandleFunc(tasks.TypeCancelOrder, orderHandler.CancelOrder)
 }

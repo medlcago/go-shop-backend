@@ -19,18 +19,18 @@ import (
 )
 
 type Server struct {
-	app    *fiber.App
-	deps   *core.Dependencies
-	logger *slog.Logger
+	app       *fiber.App
+	container *core.Container
+	logger    *slog.Logger
 }
 
-func NewServer(deps *core.Dependencies) *Server {
-	log := deps.Logger.With("server", "http")
+func NewServer(container *core.Container) *Server {
+	log := container.Logger().With("server", "http")
 
 	return &Server{
-		app:    SetupApp(deps.Cfg, deps.Logger, deps.Validator),
-		deps:   deps,
-		logger: log,
+		app:       SetupApp(container.Config(), container.Logger(), container.Validator()),
+		container: container,
+		logger:    log,
 	}
 }
 
@@ -39,18 +39,18 @@ func (s *Server) App() *fiber.App {
 }
 
 func (s *Server) IsDevMode() bool {
-	return s.deps.Cfg.Environment == string(logger.EnvDevelopment)
+	return s.container.Config().Environment == string(logger.EnvDevelopment)
 }
 
 func (s *Server) Start(ctx context.Context) error {
 	s.Init()
 
-	addr := fmt.Sprintf(":%d", s.deps.Cfg.HttpServer.Port)
+	addr := fmt.Sprintf(":%d", s.container.Config().HttpServer.Port)
 
 	s.logger.Info(
 		"HTTP server starting",
 		slog.String("addr", addr),
-		slog.String("env", s.deps.Cfg.Environment),
+		slog.String("env", s.container.Config().Environment),
 	)
 
 	go func() {
@@ -69,7 +69,7 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	timeout := s.deps.Cfg.ShutdownTimeout
+	timeout := s.container.Config().ShutdownTimeout
 
 	s.logger.Info(
 		"Stopping HTTP server",
@@ -83,7 +83,7 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) Init() {
-	s.app.Use(middleware.OptionalAuth(s.deps.TokenManager))
+	s.app.Use(middleware.OptionalAuth(s.container.TokenManager()))
 
 	if s.IsDevMode() {
 		s.app.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
@@ -91,21 +91,21 @@ func (s *Server) Init() {
 
 	v1 := s.app.Group("/api/v1")
 
-	authHandler := authHttp.NewHandler(s.deps.AuthService)
+	authHandler := authHttp.NewHandler(s.container.AuthService())
 	authHttp.RegisterRoutes(v1, authHandler)
 
-	userHandler := userHttp.NewHandler(s.deps.UserService)
+	userHandler := userHttp.NewHandler(s.container.UserService())
 	userHttp.RegisterRoutes(v1, userHandler)
 
-	productHandler := productHttp.NewHandler(s.deps.ProductService)
+	productHandler := productHttp.NewHandler(s.container.ProductService())
 	productHttp.RegisterRoutes(v1, productHandler)
 
-	categoryHandler := categoryHttp.NewHandler(s.deps.CategoryService)
+	categoryHandler := categoryHttp.NewHandler(s.container.CategoryService())
 	categoryHttp.RegisterRoutes(v1, categoryHandler)
 
-	orderHandler := orderHttp.NewHandler(s.deps.OrderService)
+	orderHandler := orderHttp.NewHandler(s.container.OrderService())
 	orderHttp.RegisterRoutes(v1, orderHandler)
 
-	webhookHandler := webhookHttp.NewHandler(s.deps.OrderService)
+	webhookHandler := webhookHttp.NewHandler(s.container.OrderService())
 	webhookHttp.RegisterRoutes(v1, webhookHandler)
 }

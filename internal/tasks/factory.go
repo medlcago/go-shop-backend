@@ -5,22 +5,22 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type TaskFactory interface {
+type Factory interface {
 	Orders() OrderTask
 }
 
-type taskFactory struct {
+type factory struct {
 	client *asynq.Client
 }
 
-func NewTaskFactory(rdb redis.UniversalClient) TaskFactory {
+func NewFactory(rdb redis.UniversalClient) Factory {
 	client := asynq.NewClientFromRedisClient(rdb)
 
-	return &taskFactory{
+	return &factory{
 		client: client,
 	}
 }
 
-func (f *taskFactory) Orders() OrderTask {
+func (f *factory) Orders() OrderTask {
 	return &orderTask{f.client}
 }

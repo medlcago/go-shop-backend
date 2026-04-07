@@ -26,23 +26,23 @@ func main() {
 
 	cfg := config.MustLoad()
 
-	deps := core.NewDependencies(cfg)
+	container := core.NewContainer(cfg)
 
-	deps.Logger.Info("starting database migration...")
-	if err := deps.DB.Migrate(cfg.Database.Dialect); err != nil {
-		logger.Fatal(deps.Logger, "failed to migrate database", err)
+	container.Logger().Info("starting database migration...")
+	if err := container.DB().Migrate(cfg.Database.Dialect); err != nil {
+		logger.Fatal(container.Logger(), "failed to migrate database", err)
 	}
 
-	httpSrv := httpServer.NewServer(deps)
-	asynqSrv := asynqServer.NewServer(deps)
+	httpSrv := httpServer.NewServer(container)
+	asynqSrv := asynqServer.NewServer(container)
 
 	application := core.NewApp(
-		deps,
+		container,
 		httpSrv,
 		asynqSrv,
 	)
 
 	if err := application.Run(context.Background()); err != nil {
-		logger.Fatal(deps.Logger, "application.Run failed", err)
+		logger.Fatal(container.Logger(), "application.Run failed", err)
 	}
 }
