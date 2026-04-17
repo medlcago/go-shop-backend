@@ -17,7 +17,7 @@ type CancelOrderPayload struct {
 	OrderID uuid.UUID `json:"order_id"`
 }
 
-func NewCancelOrderTask(userID uuid.UUID, orderID uuid.UUID, delay time.Duration) (*asynq.Task, error) {
+func NewCancelOrderTask(userID, orderID uuid.UUID, delay time.Duration) (*asynq.Task, error) {
 	payload, err := json.Marshal(CancelOrderPayload{
 		UserID:  userID,
 		OrderID: orderID,

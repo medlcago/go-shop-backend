@@ -3,7 +3,7 @@ package order
 import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 
@@ -36,7 +36,7 @@ func NewHandler(orderService service.OrderService) *Handler {
 func (h *Handler) CreateOrder(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	resp, err := h.orderService.CreateOrder(ctx, userCtx.UserID, *userCtx.SessionID)
@@ -45,7 +45,6 @@ func (h *Handler) CreateOrder(ctx fiber.Ctx) error {
 	}
 
 	return response.JSON(ctx, fiber.StatusCreated, resp)
-
 }
 
 // GetOrder godoc
@@ -65,7 +64,7 @@ func (h *Handler) CreateOrder(ctx fiber.Ctx) error {
 func (h *Handler) GetOrder(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
@@ -96,7 +95,7 @@ func (h *Handler) GetOrder(ctx fiber.Ctx) error {
 func (h *Handler) GetOrders(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	var req dto.ListOrderRequest
@@ -134,7 +133,7 @@ func (h *Handler) GetOrders(ctx fiber.Ctx) error {
 func (h *Handler) AddItem(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	var req dto.AddOrderItemRequest
@@ -171,7 +170,7 @@ func (h *Handler) AddItem(ctx fiber.Ctx) error {
 func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
@@ -203,7 +202,7 @@ func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
 func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
@@ -235,7 +234,7 @@ func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 func (h *Handler) Checkout(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil || userCtx.SessionID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
@@ -246,4 +245,31 @@ func (h *Handler) Checkout(ctx fiber.Ctx) error {
 	}
 
 	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) CancelOrder(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	orderID := uuid.MustParse(ctx.Params("id"))
+
+	err := h.orderService.CancelOrder(ctx, *userCtx.UserID, orderID)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, "OK")
+}
+
+// YookassaWebhook handles payment callbacks from Yookassa gateway
+// Not exposed in Swagger - internal endpoint for payment provider notifications only
+func (h *Handler) YookassaWebhook(ctx fiber.Ctx) error {
+	err := h.orderService.HandlePaymentWebhook(ctx, ctx.Body())
+	if err != nil {
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return ctx.SendStatus(fiber.StatusOK)
 }

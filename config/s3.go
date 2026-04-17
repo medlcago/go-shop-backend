@@ -1,6 +1,6 @@
 package config
 
-type Minio struct {
+type S3 struct {
 	Endpoint  string `env:"ENDPOINT" env-required:"true"`
 	AccessKey string `env:"ACCESS_KEY" env-required:"true"`
 	SecretKey string `env:"SECRET_KEY" env-required:"true"`

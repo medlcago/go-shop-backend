@@ -5,7 +5,6 @@ import (
 	"go-shop-backend/internal/core"
 	"go-shop-backend/internal/tasks"
 	taskHandlers "go-shop-backend/internal/tasks/handlers"
-	"go-shop-backend/pkg/logger"
 	"log/slog"
 
 	"github.com/hibiken/asynq"
@@ -44,22 +43,13 @@ func NewServer(container *core.Container) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start(_ context.Context) error {
 	s.Init()
 
 	s.logger.Info(
 		"Asynq server starting",
 		slog.String("env", s.container.Config().Environment),
 	)
-
-	go func() {
-		<-ctx.Done()
-		s.logger.Info("Asynq shutdown signal received")
-		err := s.Stop(context.Background())
-		if err != nil {
-			s.logger.Error("s.Stop failed", logger.Err(err))
-		}
-	}()
 
 	return s.srv.Run(s.mux)
 }
@@ -74,6 +64,10 @@ func (s *Server) Stop(ctx context.Context) error {
 	s.logger.Info("Stopping Asynq server")
 	s.srv.Shutdown()
 	return nil
+}
+
+func (s *Server) Name() string {
+	return "asynq"
 }
 
 func (s *Server) Init() {

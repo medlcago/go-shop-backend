@@ -2,8 +2,6 @@ package database
 
 import (
 	"context"
-	"log"
-	"os"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -25,8 +23,10 @@ type Database struct {
 	db *gorm.DB
 }
 
-func NewDatabase(uri string, opts ...Option) (*Database, error) {
-	logger := gormLogger.New(log.New(os.Stderr, "\r\n", log.LstdFlags), gormLogger.Config{
+func New(uri string, opts ...Option) (*Database, error) {
+	opt := getOption(opts...)
+
+	logger := gormLogger.NewSlogLogger(opt.Logger, gormLogger.Config{
 		SlowThreshold:             200 * time.Millisecond,
 		LogLevel:                  gormLogger.Warn,
 		IgnoreRecordNotFoundError: true,
@@ -47,8 +47,6 @@ func NewDatabase(uri string, opts ...Option) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	opt := getOption(opts...)
 
 	sqlDB.SetMaxOpenConns(opt.MaxOpenConns)
 	sqlDB.SetMaxIdleConns(opt.MaxIdleConns)

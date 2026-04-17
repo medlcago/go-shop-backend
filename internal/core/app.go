@@ -3,10 +3,13 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-shop-backend/internal/server"
 	"go-shop-backend/pkg/logger"
 	"os/signal"
 	"syscall"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type App struct {
@@ -20,6 +23,7 @@ func NewApp(container *Container, servers ...server.Server) *App {
 		container: container,
 	}
 }
+
 func (a *App) Run(ctx context.Context) error {
 	if len(a.servers) == 0 {
 		return errors.New("no servers available to run")
@@ -28,30 +32,55 @@ func (a *App) Run(ctx context.Context) error {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	errCh := make(chan error, len(a.servers))
+	g, ctx := errgroup.WithContext(ctx)
 
 	for _, srv := range a.servers {
-		go func(s server.Server) {
-			errCh <- s.Start(ctx)
-		}(srv)
+		g.Go(func() error {
+			if err := srv.Start(ctx); err != nil {
+				return fmt.Errorf("srv.Start failed: %w", err)
+			}
+			return nil
+		})
 	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- g.Wait()
+	}()
 
 	select {
 	case <-ctx.Done():
 		a.container.Logger().Info("Shutdown signal received")
-	case err := <-errCh:
-		a.container.Logger().Error("Server error", logger.Err(err))
+	case err := <-done:
+		if err != nil {
+			a.container.Logger().Error("Server error", logger.Err(err))
+		}
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), a.container.Config().ShutdownTimeout)
 	defer cancel()
 
+	gStop, shutdownCtx := errgroup.WithContext(shutdownCtx)
+
 	for _, srv := range a.servers {
-		err := srv.Stop(shutdownCtx)
-		if err != nil {
-			a.container.Logger().Error("srv.Stop failed", logger.Err(err))
-		}
+		gStop.Go(func() error {
+			if err := srv.Stop(shutdownCtx); err != nil {
+				return fmt.Errorf("srv.Stop failed: %s: %w", srv.Name(), err)
+			}
+
+			return nil
+		})
 	}
 
-	return a.container.Close()
+	if err := gStop.Wait(); err != nil {
+		a.container.Logger().Error("Shutdown error", logger.Err(err))
+		return err
+	}
+
+	if err := a.container.Close(); err != nil {
+		a.container.Logger().Error("Close container failed", logger.Err(err))
+		return err
+	}
+
+	return nil
 }

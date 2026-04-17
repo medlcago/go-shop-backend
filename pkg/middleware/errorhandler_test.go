@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/response"
 	structValidator "go-shop-backend/pkg/validator"
 	"io"
@@ -46,7 +46,7 @@ func TestErrorHandler(t *testing.T) {
 		},
 		{
 			name:           "AppError",
-			err:            apperrors.New(http.StatusConflict, "resource already exists"),
+			err:            apperror.New(http.StatusConflict, "resource already exists"),
 			expectedStatus: http.StatusConflict,
 			expectedBody:   response.NewError("resource already exists"),
 		},

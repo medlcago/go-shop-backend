@@ -2,7 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,18 +41,6 @@ type Order struct {
 	Items []OrderItem `gorm:"foreignKey:OrderID;constraint:OnDelete:RESTRICT;"`
 }
 
-func (p *Product) CanBeAdded(qty int) error {
-	if !p.IsActive {
-		return apperrors.ErrProductNotActive
-	}
-
-	if p.Available() < qty {
-		return apperrors.ErrInsufficientStock
-	}
-
-	return nil
-}
-
 func (o *Order) CanEdit() bool {
 	return o.Status == OrderStatusDraft
 }
@@ -63,11 +51,11 @@ func (o *Order) HasItems() bool {
 
 func (o *Order) Checkout(userID uuid.UUID) error {
 	if !o.CanEdit() {
-		return apperrors.ErrInvalidOrderStatus
+		return apperror.ErrInvalidOrderStatus
 	}
 
 	if !o.HasItems() {
-		return apperrors.ErrEmptyOrder
+		return apperror.ErrEmptyOrder
 	}
 
 	// If the order does not have a user, we link the order to the user
@@ -80,9 +68,13 @@ func (o *Order) Checkout(userID uuid.UUID) error {
 	return nil
 }
 
-func (o *Order) MarkPaid() error {
+func (o *Order) Pay(userID uuid.UUID) error {
+	if o.UserID == nil || *o.UserID != userID {
+		return apperror.ErrForbidden
+	}
+
 	if o.Status != OrderStatusPending {
-		return apperrors.ErrInvalidOrderStatus
+		return apperror.ErrInvalidOrderStatus
 	}
 
 	o.Status = OrderStatusPaid
@@ -90,9 +82,13 @@ func (o *Order) MarkPaid() error {
 	return nil
 }
 
-func (o *Order) MarkCanceled() error {
+func (o *Order) Cancel(userID uuid.UUID) error {
+	if o.UserID == nil || *o.UserID != userID {
+		return apperror.ErrForbidden
+	}
+
 	if o.Status != OrderStatusPending {
-		return apperrors.ErrInvalidOrderStatus
+		return apperror.ErrInvalidOrderStatus
 	}
 
 	o.Status = OrderStatusCanceled

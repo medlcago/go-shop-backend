@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/token"
 	"strings"
 
@@ -16,7 +16,7 @@ const (
 	ctxIsAuth    = "isAuth"
 )
 
-func OptionalAuth(manager token.Manager) fiber.Handler {
+func Auth(manager token.Manager) fiber.Handler {
 	return func(ctx fiber.Ctx) error {
 		sid := getSessionID(ctx)
 		ctx.Locals(ctxSessionID, sid)
@@ -59,7 +59,7 @@ func RequireAuth() fiber.Handler {
 		userCtx := GetUserContext(ctx)
 
 		if !userCtx.IsAuth || userCtx.UserID == nil {
-			return apperrors.ErrInvalidCredentials
+			return apperror.ErrInvalidCredentials
 		}
 
 		return ctx.Next()
@@ -71,7 +71,7 @@ func RequireSessionID() fiber.Handler {
 		userCtx := GetUserContext(ctx)
 
 		if userCtx.SessionID == nil {
-			return apperrors.ErrInvalidCredentials
+			return apperror.ErrInvalidSessionID
 		}
 
 		return ctx.Next()

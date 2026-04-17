@@ -40,74 +40,6 @@ func (_m *MockStorage) EXPECT() *MockStorage_Expecter {
 	return &MockStorage_Expecter{mock: &_m.Mock}
 }
 
-// CreatePresignedPost provides a mock function for the type MockStorage
-func (_mock *MockStorage) CreatePresignedPost(ctx context.Context, opts storage.PresignedPostOptions) (*storage.PresignedPost, error) {
-	ret := _mock.Called(ctx, opts)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreatePresignedPost")
-	}
-
-	var r0 *storage.PresignedPost
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, storage.PresignedPostOptions) (*storage.PresignedPost, error)); ok {
-		return returnFunc(ctx, opts)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, storage.PresignedPostOptions) *storage.PresignedPost); ok {
-		r0 = returnFunc(ctx, opts)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*storage.PresignedPost)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, storage.PresignedPostOptions) error); ok {
-		r1 = returnFunc(ctx, opts)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockStorage_CreatePresignedPost_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePresignedPost'
-type MockStorage_CreatePresignedPost_Call struct {
-	*mock.Call
-}
-
-// CreatePresignedPost is a helper method to define mock.On call
-//   - ctx context.Context
-//   - opts storage.PresignedPostOptions
-func (_e *MockStorage_Expecter) CreatePresignedPost(ctx interface{}, opts interface{}) *MockStorage_CreatePresignedPost_Call {
-	return &MockStorage_CreatePresignedPost_Call{Call: _e.mock.On("CreatePresignedPost", ctx, opts)}
-}
-
-func (_c *MockStorage_CreatePresignedPost_Call) Run(run func(ctx context.Context, opts storage.PresignedPostOptions)) *MockStorage_CreatePresignedPost_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 storage.PresignedPostOptions
-		if args[1] != nil {
-			arg1 = args[1].(storage.PresignedPostOptions)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockStorage_CreatePresignedPost_Call) Return(presignedPost *storage.PresignedPost, err error) *MockStorage_CreatePresignedPost_Call {
-	_c.Call.Return(presignedPost, err)
-	return _c
-}
-
-func (_c *MockStorage_CreatePresignedPost_Call) RunAndReturn(run func(ctx context.Context, opts storage.PresignedPostOptions) (*storage.PresignedPost, error)) *MockStorage_CreatePresignedPost_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Delete provides a mock function for the type MockStorage
 func (_mock *MockStorage) Delete(ctx context.Context, objectKey string) error {
 	ret := _mock.Called(ctx, objectKey)
@@ -290,78 +222,6 @@ func (_c *MockStorage_GetObjectInfo_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
-// GetPresignedURL provides a mock function for the type MockStorage
-func (_mock *MockStorage) GetPresignedURL(ctx context.Context, objectKey string, expiry time.Duration) (string, error) {
-	ret := _mock.Called(ctx, objectKey, expiry)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetPresignedURL")
-	}
-
-	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) (string, error)); ok {
-		return returnFunc(ctx, objectKey, expiry)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) string); ok {
-		r0 = returnFunc(ctx, objectKey, expiry)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, time.Duration) error); ok {
-		r1 = returnFunc(ctx, objectKey, expiry)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockStorage_GetPresignedURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPresignedURL'
-type MockStorage_GetPresignedURL_Call struct {
-	*mock.Call
-}
-
-// GetPresignedURL is a helper method to define mock.On call
-//   - ctx context.Context
-//   - objectKey string
-//   - expiry time.Duration
-func (_e *MockStorage_Expecter) GetPresignedURL(ctx interface{}, objectKey interface{}, expiry interface{}) *MockStorage_GetPresignedURL_Call {
-	return &MockStorage_GetPresignedURL_Call{Call: _e.mock.On("GetPresignedURL", ctx, objectKey, expiry)}
-}
-
-func (_c *MockStorage_GetPresignedURL_Call) Run(run func(ctx context.Context, objectKey string, expiry time.Duration)) *MockStorage_GetPresignedURL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 time.Duration
-		if args[2] != nil {
-			arg2 = args[2].(time.Duration)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockStorage_GetPresignedURL_Call) Return(s string, err error) *MockStorage_GetPresignedURL_Call {
-	_c.Call.Return(s, err)
-	return _c
-}
-
-func (_c *MockStorage_GetPresignedURL_Call) RunAndReturn(run func(ctx context.Context, objectKey string, expiry time.Duration) (string, error)) *MockStorage_GetPresignedURL_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Open provides a mock function for the type MockStorage
 func (_mock *MockStorage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
 	ret := _mock.Called(ctx, objectKey)
@@ -477,6 +337,146 @@ func (_c *MockStorage_PublicURL_Call) Return(s string) *MockStorage_PublicURL_Ca
 }
 
 func (_c *MockStorage_PublicURL_Call) RunAndReturn(run func(objectKey string) string) *MockStorage_PublicURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TemporaryURL provides a mock function for the type MockStorage
+func (_mock *MockStorage) TemporaryURL(ctx context.Context, objectKey string, expires time.Duration) (string, error) {
+	ret := _mock.Called(ctx, objectKey, expires)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TemporaryURL")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) (string, error)); ok {
+		return returnFunc(ctx, objectKey, expires)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) string); ok {
+		r0 = returnFunc(ctx, objectKey, expires)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, time.Duration) error); ok {
+		r1 = returnFunc(ctx, objectKey, expires)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStorage_TemporaryURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TemporaryURL'
+type MockStorage_TemporaryURL_Call struct {
+	*mock.Call
+}
+
+// TemporaryURL is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectKey string
+//   - expires time.Duration
+func (_e *MockStorage_Expecter) TemporaryURL(ctx interface{}, objectKey interface{}, expires interface{}) *MockStorage_TemporaryURL_Call {
+	return &MockStorage_TemporaryURL_Call{Call: _e.mock.On("TemporaryURL", ctx, objectKey, expires)}
+}
+
+func (_c *MockStorage_TemporaryURL_Call) Run(run func(ctx context.Context, objectKey string, expires time.Duration)) *MockStorage_TemporaryURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 time.Duration
+		if args[2] != nil {
+			arg2 = args[2].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorage_TemporaryURL_Call) Return(s string, err error) *MockStorage_TemporaryURL_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockStorage_TemporaryURL_Call) RunAndReturn(run func(ctx context.Context, objectKey string, expires time.Duration) (string, error)) *MockStorage_TemporaryURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TemporaryUploadURL provides a mock function for the type MockStorage
+func (_mock *MockStorage) TemporaryUploadURL(ctx context.Context, opts storage.TemporaryUploadURLOptions) (*storage.TemporaryUploadURL, error) {
+	ret := _mock.Called(ctx, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TemporaryUploadURL")
+	}
+
+	var r0 *storage.TemporaryUploadURL
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, storage.TemporaryUploadURLOptions) (*storage.TemporaryUploadURL, error)); ok {
+		return returnFunc(ctx, opts)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, storage.TemporaryUploadURLOptions) *storage.TemporaryUploadURL); ok {
+		r0 = returnFunc(ctx, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*storage.TemporaryUploadURL)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, storage.TemporaryUploadURLOptions) error); ok {
+		r1 = returnFunc(ctx, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStorage_TemporaryUploadURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TemporaryUploadURL'
+type MockStorage_TemporaryUploadURL_Call struct {
+	*mock.Call
+}
+
+// TemporaryUploadURL is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts storage.TemporaryUploadURLOptions
+func (_e *MockStorage_Expecter) TemporaryUploadURL(ctx interface{}, opts interface{}) *MockStorage_TemporaryUploadURL_Call {
+	return &MockStorage_TemporaryUploadURL_Call{Call: _e.mock.On("TemporaryUploadURL", ctx, opts)}
+}
+
+func (_c *MockStorage_TemporaryUploadURL_Call) Run(run func(ctx context.Context, opts storage.TemporaryUploadURLOptions)) *MockStorage_TemporaryUploadURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 storage.TemporaryUploadURLOptions
+		if args[1] != nil {
+			arg1 = args[1].(storage.TemporaryUploadURLOptions)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorage_TemporaryUploadURL_Call) Return(temporaryUploadURL *storage.TemporaryUploadURL, err error) *MockStorage_TemporaryUploadURL_Call {
+	_c.Call.Return(temporaryUploadURL, err)
+	return _c
+}
+
+func (_c *MockStorage_TemporaryUploadURL_Call) RunAndReturn(run func(ctx context.Context, opts storage.TemporaryUploadURLOptions) (*storage.TemporaryUploadURL, error)) *MockStorage_TemporaryUploadURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

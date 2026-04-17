@@ -1,6 +1,9 @@
 package database
 
-import "time"
+import (
+	"log/slog"
+	"time"
+)
 
 type Option interface {
 	apply(*option)
@@ -11,6 +14,7 @@ type option struct {
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
 	ConnMaxIdleTime time.Duration
+	Logger          *slog.Logger
 }
 
 type optionFn func(*option)
@@ -41,12 +45,19 @@ func WithConnMaxIdleTime(connMaxIdleTime time.Duration) Option {
 	})
 }
 
+func WithLogger(logger *slog.Logger) Option {
+	return optionFn(func(o *option) {
+		o.Logger = logger
+	})
+}
+
 func getOption(opts ...Option) option {
 	opt := option{
 		MaxOpenConns:    100,
 		MaxIdleConns:    50,
 		ConnMaxLifetime: time.Hour,
 		ConnMaxIdleTime: 10 * time.Minute,
+		Logger:          slog.Default(),
 	}
 
 	for _, o := range opts {

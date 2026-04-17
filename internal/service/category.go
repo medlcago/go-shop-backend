@@ -22,15 +22,26 @@ func NewCategoryService(categoryRepo repository.CategoryRepository) *categorySer
 func (c *categoryService) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error) {
 	const op = "categoryService.ListCategories"
 
-	categories, totalCategories, err := c.categoryRepo.ListCategories(ctx, req)
+	categories, total, err := c.categoryRepo.ListCategories(ctx, req)
 	if err != nil {
 		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	response, err := mapper.MapList[*models.Category, *dto.ProductCategoryResponse](categories)
+	response, err := c.mapCategories(categories)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: failed to map categories: %w", op, err)
+		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return response, totalCategories, nil
+	return response, total, nil
+}
+
+func (c *categoryService) mapCategories(categories []*models.Category) ([]*dto.ProductCategoryResponse, error) {
+	const op = "categoryService.mapCategories"
+
+	response, err := mapper.MapList[*models.Category, *dto.ProductCategoryResponse](categories)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return response, nil
 }

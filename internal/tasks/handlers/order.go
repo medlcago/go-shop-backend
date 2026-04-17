@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"go-shop-backend/internal/service"
 	"go-shop-backend/internal/tasks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/logger"
 	"log/slog"
 	"slices"
@@ -28,9 +28,9 @@ func NewOrderTaskHandler(orderService service.OrderService, logger *slog.Logger)
 	)
 
 	nonRetryableErrors := []error{
-		apperrors.ErrForbidden,
-		apperrors.ErrOrderNotFound,
-		apperrors.ErrInvalidOrderStatus,
+		apperror.ErrForbidden,
+		apperror.ErrOrderNotFound,
+		apperror.ErrInvalidOrderStatus,
 	}
 
 	return &OrderTaskHandler{

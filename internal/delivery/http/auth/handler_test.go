@@ -4,7 +4,7 @@ import (
 	"errors"
 	"go-shop-backend/internal/dto"
 	serviceMocks "go-shop-backend/internal/service/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
 	"net/http"
@@ -45,10 +45,10 @@ func TestAuthHandler_Login(t *testing.T) {
 				serviceMock.EXPECT().Login(mock.Anything, dto.UserLoginRequest{
 					Email:    "superuser@test.com",
 					Password: "123123",
-				}).Return(&dto.UserTokenResponse{}, apperrors.ErrInvalidCredentials).Once()
+				}).Return(&dto.UserTokenResponse{}, apperror.ErrInvalidCredentials).Once()
 			},
 			expectedCode: http.StatusUnauthorized,
-			expectedBody: response.NewError(apperrors.ErrInvalidCredentials.Message),
+			expectedBody: response.NewError(apperror.ErrInvalidCredentials.Message),
 			requestBody: dto.UserLoginRequest{
 				Email:    "superuser@test.com",
 				Password: "123123",
@@ -75,10 +75,10 @@ func TestAuthHandler_Login(t *testing.T) {
 				serviceMock.EXPECT().Login(mock.Anything, dto.UserLoginRequest{
 					Email:    "test@test.com",
 					Password: "123123",
-				}).Return(&dto.UserTokenResponse{}, apperrors.ErrInvalidCredentials).Once()
+				}).Return(&dto.UserTokenResponse{}, apperror.ErrInvalidCredentials).Once()
 			},
 			expectedCode: http.StatusUnauthorized,
-			expectedBody: response.NewError(apperrors.ErrInvalidCredentials.Message),
+			expectedBody: response.NewError(apperror.ErrInvalidCredentials.Message),
 			requestBody: dto.UserLoginRequest{
 				Email:    "test@test.com",
 				Password: "123123",
@@ -153,10 +153,10 @@ func TestAuthHandler_Register(t *testing.T) {
 				serviceMock.EXPECT().Register(mock.Anything, dto.UserRegisterRequest{
 					Email:    "test@test.com",
 					Password: "123123",
-				}).Return(&dto.UserTokenResponse{}, apperrors.ErrEmailTaken).Once()
+				}).Return(&dto.UserTokenResponse{}, apperror.ErrEmailTaken).Once()
 			},
 			expectedCode: http.StatusConflict,
-			expectedBody: response.NewError(apperrors.ErrEmailTaken.Message),
+			expectedBody: response.NewError(apperror.ErrEmailTaken.Message),
 			requestBody: dto.UserRegisterRequest{
 				Email:    "test@test.com",
 				Password: "123123",

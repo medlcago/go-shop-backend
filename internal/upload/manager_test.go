@@ -8,7 +8,7 @@ import (
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/internal/upload"
 	uploadMocks "go-shop-backend/internal/upload/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	contenttypeMocks "go-shop-backend/pkg/contenttype/mocks"
 	"go-shop-backend/pkg/storage"
 	storageMocks "go-shop-backend/pkg/storage/mocks"
@@ -58,7 +58,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 	suite.entityID = uuid.New()
 }
 
-func TestUploadServiceTestSuite(t *testing.T) {
+func TestManagerTestSuite(t *testing.T) {
 	suite.Run(t, new(ManagerTestSuite))
 }
 
@@ -71,7 +71,7 @@ func (suite *ManagerTestSuite) TestSignURL_Success() {
 		Ext:         "png",
 	}
 
-	presignedPost := &storage.PresignedPost{
+	presignedPost := &storage.TemporaryUploadURL{
 		URL: "https://s3.example.com/media",
 		Fields: map[string]string{
 			"Entity-Type": string(req.Entity.Type),
@@ -91,11 +91,12 @@ func (suite *ManagerTestSuite) TestSignURL_Success() {
 	suite.policyProvider.EXPECT().Get(upload.ProductImagePolicy).
 		Return(constrains, nil).Once()
 
-	suite.storage.EXPECT().CreatePresignedPost(suite.ctx, mock.MatchedBy(func(opts storage.PresignedPostOptions) bool {
+	suite.storage.EXPECT().TemporaryUploadURL(suite.ctx, mock.MatchedBy(func(opts storage.TemporaryUploadURLOptions) bool {
 		return opts.ContentType == "image/png" &&
 			opts.Metadata["Entity-Id"] == suite.entityID.String() &&
 			opts.Metadata["Entity-Type"] == string(upload.EntityTypeProduct) &&
-			opts.MaxSize == 1<<20
+			opts.MaxSize == 1<<20 &&
+			!opts.Expires.IsZero()
 	})).Return(presignedPost, nil).Once()
 
 	response, err := suite.uploadManager.SignURL(suite.ctx, req, upload.ProductImagePolicy)
@@ -124,7 +125,7 @@ func (suite *ManagerTestSuite) TestSignURL_ContentTypeMismatch() {
 	}, upload.ProductImagePolicy)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrContentTypeMismatch)
+	suite.ErrorIs(err, apperror.ErrContentTypeMismatch)
 
 }
 
@@ -156,7 +157,7 @@ func (suite *ManagerTestSuite) TestSignURL_StorageError() {
 		Return(constrains, nil).Once()
 
 	expectedErr := errors.New("storage error")
-	suite.storage.EXPECT().CreatePresignedPost(suite.ctx, mock.Anything).
+	suite.storage.EXPECT().TemporaryUploadURL(suite.ctx, mock.Anything).
 		Return(nil, expectedErr).Once()
 
 	response, err := suite.uploadManager.SignURL(suite.ctx, req, upload.ProductImagePolicy)
@@ -243,7 +244,7 @@ func (suite *ManagerTestSuite) TestSave_NotFound() {
 	response, err := suite.uploadManager.Save(suite.ctx, req, upload.ProductImagePolicy)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrNotFound)
+	suite.ErrorIs(err, apperror.ErrNotFound)
 }
 
 func (suite *ManagerTestSuite) TestSave_FileAlreadyUploaded() {
@@ -272,7 +273,7 @@ func (suite *ManagerTestSuite) TestSave_FileAlreadyUploaded() {
 	response, err := suite.uploadManager.Save(suite.ctx, req, upload.ProductImagePolicy)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrFileAlreadyUploaded)
+	suite.ErrorIs(err, apperror.ErrFileAlreadyUploaded)
 }
 
 func (suite *ManagerTestSuite) TestSave_InvalidDetectedContentType() {
@@ -322,7 +323,7 @@ func (suite *ManagerTestSuite) TestSave_InvalidDetectedContentType() {
 	response, err := suite.uploadManager.Save(suite.ctx, req, upload.ProductImagePolicy)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalidFileType)
+	suite.ErrorIs(err, apperror.ErrInvalidFileType)
 }
 
 func (suite *ManagerTestSuite) TestSave_RepositoryError() {

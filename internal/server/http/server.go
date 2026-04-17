@@ -9,7 +9,6 @@ import (
 	orderHttp "go-shop-backend/internal/delivery/http/order"
 	productHttp "go-shop-backend/internal/delivery/http/product"
 	userHttp "go-shop-backend/internal/delivery/http/user"
-	webhookHttp "go-shop-backend/internal/delivery/http/webhook"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/middleware"
 	"log/slog"
@@ -42,7 +41,7 @@ func (s *Server) IsDevMode() bool {
 	return s.container.Config().Environment == string(logger.EnvDevelopment)
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start(_ context.Context) error {
 	s.Init()
 
 	addr := fmt.Sprintf(":%d", s.container.Config().HttpServer.Port)
@@ -53,15 +52,6 @@ func (s *Server) Start(ctx context.Context) error {
 		slog.String("env", s.container.Config().Environment),
 	)
 
-	go func() {
-		<-ctx.Done()
-		s.logger.Info("HTTP shutdown signal received")
-		err := s.Stop(context.Background())
-		if err != nil {
-			s.logger.Error("s.Stop failed", logger.Err(err))
-		}
-	}()
-
 	return s.app.Listen(addr, fiber.ListenConfig{
 		DisableStartupMessage: !s.IsDevMode(),
 	})
@@ -69,21 +59,16 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	timeout := s.container.Config().ShutdownTimeout
-
-	s.logger.Info(
-		"Stopping HTTP server",
-		slog.String("timeout", timeout.String()),
-	)
-
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
+	s.logger.Info("Stopping HTTP server")
 	return s.app.ShutdownWithContext(ctx)
 }
 
+func (s *Server) Name() string {
+	return "http"
+}
+
 func (s *Server) Init() {
-	s.app.Use(middleware.OptionalAuth(s.container.TokenManager()))
+	s.app.Use(middleware.Auth(s.container.TokenManager()))
 
 	if s.IsDevMode() {
 		s.app.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
@@ -105,7 +90,4 @@ func (s *Server) Init() {
 
 	orderHandler := orderHttp.NewHandler(s.container.OrderService())
 	orderHttp.RegisterRoutes(v1, orderHandler)
-
-	webhookHandler := webhookHttp.NewHandler(s.container.OrderService())
-	webhookHttp.RegisterRoutes(v1, webhookHandler)
 }

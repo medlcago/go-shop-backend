@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"go-shop-backend/internal/dto"
 	serviceMocks "go-shop-backend/internal/service/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
 	"net/http"
@@ -38,10 +38,10 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 			name: "not found",
 			setupMock: func(serviceMock *serviceMocks.MockProductService) {
 				serviceMock.EXPECT().GetProductByID(mock.Anything, uuid.MustParse("757c7dff-6d2f-44dc-9a22-ce16dabcaa2d")).
-					Return(&dto.ProductResponse{}, apperrors.ErrProductNotFound).Once()
+					Return(&dto.ProductResponse{}, apperror.ErrProductNotFound).Once()
 			},
 			expectedCode: http.StatusNotFound,
-			expectedBody: response.NewError(apperrors.ErrProductNotFound.Message),
+			expectedBody: response.NewError(apperror.ErrProductNotFound.Message),
 		},
 		{
 			name: "internal server error",
@@ -317,11 +317,11 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 			setupMock: func(serviceMock *serviceMocks.MockProductService) {
 				serviceMock.EXPECT().UpdateProduct(mock.Anything, uuid.MustParse("3df7d7c5-707e-4ef2-97d3-dfd09e18dc1d"),
 					dto.ProductUpdateRequest{}).
-					Return(&dto.ProductResponse{}, apperrors.ErrProductNotFound).Once()
+					Return(&dto.ProductResponse{}, apperror.ErrProductNotFound).Once()
 			},
 			requestBody:  dto.ProductUpdateRequest{},
 			expectedCode: http.StatusNotFound,
-			expectedBody: response.NewError(apperrors.ErrProductNotFound.Message),
+			expectedBody: response.NewError(apperror.ErrProductNotFound.Message),
 		},
 		{
 			name:         "validation error",

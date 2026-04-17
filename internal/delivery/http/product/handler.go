@@ -3,7 +3,7 @@ package product
 import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 
@@ -191,7 +191,7 @@ func (h *Handler) Search(ctx fiber.Ctx) error {
 func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	productID := uuid.MustParse(ctx.Params("id"))
@@ -212,7 +212,7 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 func (h *Handler) ConfirmUploadImage(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	productID := uuid.MustParse(ctx.Params("id"))

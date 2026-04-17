@@ -1,7 +1,10 @@
-package apperrors
+package apperror
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -10,8 +13,10 @@ var (
 	ErrEmailTaken         = New(http.StatusConflict, "email already in use")
 
 	ErrInvalidCredentials = New(http.StatusUnauthorized, "invalid credentials")
+	ErrInvalidSessionID   = New(http.StatusUnauthorized, "invalid or missing session id")
 	ErrNotFound           = New(http.StatusNotFound, "not found")
 	ErrForbidden          = New(http.StatusForbidden, "forbidden")
+	ErrGatewayTimeout     = New(http.StatusGatewayTimeout, "gateway timeout")
 
 	ErrInvalidFileType     = New(http.StatusBadRequest, "invalid file type")
 	ErrContentTypeMismatch = New(http.StatusBadRequest, "ext is not allowed for that content type")
@@ -32,7 +37,6 @@ var (
 	ErrEmptyOrder         = New(http.StatusBadRequest, "order is empty")
 	ErrOrderNotFound      = New(http.StatusNotFound, "order not found")
 
-	ErrInvalidPassword   = New(http.StatusBadRequest, "invalid password")
 	ErrInvalidToken      = New(http.StatusUnauthorized, "invalid or expired token")
 	Err2FAAlreadyEnabled = New(http.StatusConflict, "2FA is already enabled; disable it first to reconfigure")
 	Err2FANotEnabled     = New(http.StatusBadRequest, "2FA is not enabled")
@@ -54,4 +58,20 @@ func New(code int, message string) *AppError {
 		Code:    code,
 		Message: message,
 	}
+}
+
+type UnavailableItem struct {
+	ProductID    uuid.UUID
+	RequestedQty int
+	AvailableQty int
+	Action       string
+	Reason       string
+}
+
+type ItemsUnavailableError struct {
+	Items []UnavailableItem
+}
+
+func (e *ItemsUnavailableError) Error() string {
+	return fmt.Sprintf("%d items unavailable", len(e.Items))
 }

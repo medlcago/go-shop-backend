@@ -4,7 +4,7 @@ import (
 	"errors"
 	"go-shop-backend/internal/dto"
 	serviceMocks "go-shop-backend/internal/service/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
 	"net/http"
@@ -46,17 +46,17 @@ func TestUserHandler_GetMe(t *testing.T) {
 			setupMock:    nil,
 			userID:       nil,
 			expectedCode: http.StatusUnauthorized,
-			expectedBody: response.NewError(apperrors.ErrInvalidCredentials.Message),
+			expectedBody: response.NewError(apperror.ErrInvalidCredentials.Message),
 		},
 		{
 			name: "user not found",
 			setupMock: func(serviceMock *serviceMocks.MockUserService) {
 				serviceMock.EXPECT().GetUserByID(mock.Anything, uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")).
-					Return(&dto.UserResponse{}, apperrors.ErrUserNotFound).Once()
+					Return(&dto.UserResponse{}, apperror.ErrUserNotFound).Once()
 			},
 			userID:       new(uuid.MustParse("c2f72e02-98b6-4cef-9a80-616f820fed31")),
 			expectedCode: http.StatusNotFound,
-			expectedBody: response.NewError(apperrors.ErrUserNotFound.Message),
+			expectedBody: response.NewError(apperror.ErrUserNotFound.Message),
 		},
 		{
 			name: "internal server error",

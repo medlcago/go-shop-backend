@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/response"
 	structValidator "go-shop-backend/pkg/validator"
@@ -26,7 +26,7 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 			message = fiberErr.Message
 		}
 
-		if appErr, ok := errors.AsType[*apperrors.AppError](err); ok {
+		if appErr, ok := errors.AsType[*apperror.AppError](err); ok {
 			status = appErr.Code
 			message = appErr.Message
 		}

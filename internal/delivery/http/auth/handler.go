@@ -3,7 +3,7 @@ package auth
 import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 
@@ -118,7 +118,7 @@ func (h *Handler) Register(ctx fiber.Ctx) error {
 func (h *Handler) Setup2FA(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	resp, err := h.authService.Setup2FA(ctx, *userCtx.UserID)
@@ -146,7 +146,7 @@ func (h *Handler) Setup2FA(ctx fiber.Ctx) error {
 func (h *Handler) Confirm2FA(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	var req dto.Confirm2FARequest
@@ -179,7 +179,7 @@ func (h *Handler) Confirm2FA(ctx fiber.Ctx) error {
 func (h *Handler) Disable2FA(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	var req dto.Disable2FARequest

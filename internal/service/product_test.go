@@ -9,7 +9,7 @@ import (
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/internal/upload"
 	uploadMocks "go-shop-backend/internal/upload/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/utils"
 	"testing"
 
@@ -95,7 +95,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
 	product, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
 
 	suite.Nil(product)
-	suite.ErrorIs(err, apperrors.ErrProductNotFound)
+	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }
 
 func (suite *ProductServiceTestSuite) TestGetProductByID_RepositoryError() {
@@ -404,7 +404,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_ProductNotFound() {
 	product, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
 
 	suite.Nil(product)
-	suite.ErrorIs(apperrors.ErrProductNotFound, err)
+	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }
 
 func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() {
@@ -471,7 +471,7 @@ func (suite *ProductServiceTestSuite) TestUploadImage_ProductNotFound() {
 	response, err := suite.productService.UploadImage(suite.ctx, suite.productID, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrProductNotFound)
+	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }
 
 // ==================== ConfirmUploadImage Tests ====================
@@ -517,5 +517,5 @@ func (suite *ProductServiceTestSuite) TestConfirmUploadImage_ProductNotFound() {
 	response, err := suite.productService.ConfirmUploadImage(suite.ctx, suite.productID, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrProductNotFound)
+	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }

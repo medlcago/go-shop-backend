@@ -7,7 +7,7 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/crypto"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/hasher"
@@ -51,22 +51,17 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 	user, err := a.userRepo.GetByEmailUnscoped(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, apperrors.ErrInvalidCredentials
+			return nil, fmt.Errorf("%s: %w", op, apperror.ErrInvalidCredentials)
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	match, err := a.hasher.Verify(req.Password, user.PasswordHash)
-	if err != nil {
+	if err := a.verifyPassword(req.Password, user.PasswordHash); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if !match {
-		return nil, apperrors.ErrInvalidCredentials
-	}
-
 	if user.DeletedAt.Valid {
-		return nil, apperrors.ErrUserProfileDeleted
+		return nil, fmt.Errorf("%s: %w", op, apperror.ErrUserProfileDeleted)
 	}
 
 	if user.TwoFAEnabled {
@@ -91,7 +86,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 
 	_, err := a.userRepo.GetByEmailUnscoped(ctx, req.Email)
 	if err == nil {
-		return nil, apperrors.ErrEmailTaken
+		return nil, fmt.Errorf("%s: %w", op, apperror.ErrEmailTaken)
 	}
 
 	passwordHash, err := a.hasher.Hash(req.Password)
@@ -106,7 +101,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 	}
 
 	if err := a.userRepo.Create(ctx, user); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	tokens, err := a.createTokens(user)
@@ -125,8 +120,8 @@ func (a *authService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setu
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if user.TwoFASecret != nil && user.TwoFAEnabled {
-		return nil, apperrors.Err2FAAlreadyEnabled
+	if user.IsTwoFAEnabled() {
+		return nil, fmt.Errorf("%s: %w", op, apperror.Err2FAAlreadyEnabled)
 	}
 
 	key, err := a.totpManager.GenerateSecret(user.Email)
@@ -159,21 +154,16 @@ func (a *authService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	match, err := a.hasher.Verify(req.Password, user.PasswordHash)
-	if err != nil {
+	if err := a.verifyPassword(req.Password, user.PasswordHash); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	if !match {
-		return apperrors.ErrInvalidPassword
-	}
-
 	if user.TwoFASecret == nil {
-		return apperrors.Err2FANotInitialized
+		return fmt.Errorf("%s: %w", op, apperror.Err2FANotInitialized)
 	}
 
-	if user.TwoFAEnabled {
-		return apperrors.Err2FAAlreadyEnabled
+	if user.IsTwoFAEnabled() {
+		return fmt.Errorf("%s: %w", op, apperror.Err2FAAlreadyEnabled)
 	}
 
 	decryptionKey, err := a.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
@@ -182,7 +172,7 @@ func (a *authService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.
 	}
 
 	if !a.totpManager.ValidateCode(decryptionKey, req.Code) {
-		return apperrors.ErrInvalid2FACode
+		return fmt.Errorf("%s: %w", op, apperror.ErrInvalid2FACode)
 	}
 
 	user.TwoFAEnabled = true
@@ -203,17 +193,12 @@ func (a *authService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	match, err := a.hasher.Verify(req.Password, user.PasswordHash)
-	if err != nil {
+	if err := a.verifyPassword(req.Password, user.PasswordHash); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	if !match {
-		return apperrors.ErrInvalidPassword
-	}
-
-	if !user.TwoFAEnabled || user.TwoFASecret == nil {
-		return apperrors.Err2FANotEnabled
+	if !user.IsTwoFAEnabled() {
+		return fmt.Errorf("%s: %w", op, apperror.Err2FANotEnabled)
 	}
 
 	decryptionKey, err := a.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
@@ -222,7 +207,7 @@ func (a *authService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.
 	}
 
 	if !a.totpManager.ValidateCode(decryptionKey, req.Code) {
-		return apperrors.ErrInvalid2FACode
+		return fmt.Errorf("%s: %w", op, apperror.ErrInvalid2FACode)
 	}
 
 	user.TwoFAEnabled = false
@@ -241,11 +226,11 @@ func (a *authService) Verify2FA(ctx context.Context, req dto.Verify2FARequest) (
 
 	claims, err := a.tokenManager.ValidateToken(req.Token)
 	if err != nil {
-		return nil, apperrors.ErrInvalidToken
+		return nil, fmt.Errorf("%s: %w", op, apperror.ErrInvalidToken)
 	}
 
 	if claims.TokenType != token.PartialTokenType {
-		return nil, apperrors.ErrInvalidToken
+		return nil, fmt.Errorf("%s: %w", op, apperror.ErrInvalidToken)
 	}
 
 	uid, err := uuid.Parse(claims.UserID)
@@ -256,14 +241,14 @@ func (a *authService) Verify2FA(ctx context.Context, req dto.Verify2FARequest) (
 	user, err := a.userRepo.GetByID(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, apperrors.ErrInvalidCredentials
+			return nil, fmt.Errorf("%s: %w", op, apperror.ErrInvalidCredentials)
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if !user.TwoFAEnabled || user.TwoFASecret == nil {
-		return nil, apperrors.Err2FANotEnabled
+	if !user.IsTwoFAEnabled() {
+		return nil, fmt.Errorf("%s: %w", op, apperror.Err2FANotEnabled)
 	}
 
 	decryptionKey, err := a.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
@@ -272,7 +257,7 @@ func (a *authService) Verify2FA(ctx context.Context, req dto.Verify2FARequest) (
 	}
 
 	if !a.totpManager.ValidateCode(decryptionKey, req.Code) {
-		return nil, apperrors.ErrInvalid2FACode
+		return nil, fmt.Errorf("%s: %w", op, apperror.ErrInvalid2FACode)
 	}
 
 	tokens, err := a.createTokens(user)
@@ -327,6 +312,21 @@ func (a *authService) createPartialToken(user *models.User) (*dto.TokenResponse,
 	return &dto.TokenResponse{
 		PartialToken: partialToken,
 	}, nil
+}
+
+func (a *authService) verifyPassword(password, passwordHash string) error {
+	const op = "authService.verifyPassword"
+
+	match, err := a.hasher.Verify(password, passwordHash)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if !match {
+		return fmt.Errorf("%s: %w", op, apperror.ErrInvalidCredentials)
+	}
+
+	return nil
 }
 
 func buildUserTokenResponse(user *models.User, token *dto.TokenResponse, requires2FA bool) *dto.UserTokenResponse {

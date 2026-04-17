@@ -2,7 +2,7 @@ package user
 
 import (
 	"go-shop-backend/internal/service"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 
@@ -35,7 +35,7 @@ func NewHandler(userService service.UserService) *Handler {
 func (h *Handler) GetMe(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
-		return apperrors.ErrInvalidCredentials
+		return apperror.ErrInvalidCredentials
 	}
 
 	resp, err := h.userService.GetUserByID(ctx, *userCtx.UserID)

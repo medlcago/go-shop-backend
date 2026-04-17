@@ -7,7 +7,7 @@ import (
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/mapper"
 
 	"github.com/google/uuid"
@@ -29,13 +29,14 @@ func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.U
 	user, err := u.userRepo.GetByIDUnscoped(ctx, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, apperrors.ErrUserNotFound
+			return nil, fmt.Errorf("%s: %w", op, apperror.ErrUserNotFound)
 		}
+
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	if user.DeletedAt.Valid {
-		return nil, apperrors.ErrUserProfileDeleted
+		return nil, fmt.Errorf("%s: %w", op, apperror.ErrUserProfileDeleted)
 	}
 
 	response, err := u.mapUser(user)

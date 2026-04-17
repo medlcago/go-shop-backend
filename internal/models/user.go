@@ -30,3 +30,7 @@ type User struct {
 	TwoFASecret      *string    `gorm:"varchar(255)"`
 	TwoFaConfirmedAt *time.Time `gorm:"type:timestamptz"`
 }
+
+func (u *User) IsTwoFAEnabled() bool {
+	return u.TwoFAEnabled && u.TwoFASecret != nil
+}

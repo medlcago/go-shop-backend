@@ -11,7 +11,6 @@ const (
 )
 
 type PolicyProvider interface {
-	Register(policy Policy, fc FileConstraints) error
 	Get(policy Policy) (FileConstraints, error)
 }
 
@@ -19,25 +18,27 @@ type policyProvider struct {
 	policies map[Policy]FileConstraints
 }
 
-func (p *policyProvider) Register(policy Policy, fc FileConstraints) error {
-	if _, exists := p.policies[policy]; exists {
-		return fmt.Errorf("policy already registered: %s", policy)
-	}
-
-	p.policies[policy] = fc
-	return nil
-}
-
 func (p *policyProvider) Get(policy Policy) (FileConstraints, error) {
 	c, ok := p.policies[policy]
 	if !ok {
-		return FileConstraints{}, fmt.Errorf("invalid policy: %s", policy)
+		return FileConstraints{}, fmt.Errorf("unknown policy: %s", policy)
 	}
 	return c, nil
 }
 
-func NewPolicyProvider() PolicyProvider {
-	return &policyProvider{
-		policies: make(map[Policy]FileConstraints),
+type PolicyEntry struct {
+	Policy      Policy
+	Constraints FileConstraints
+}
+
+func NewPolicyProvider(entries ...PolicyEntry) (PolicyProvider, error) {
+	p := &policyProvider{policies: make(map[Policy]FileConstraints, len(entries))}
+	for _, e := range entries {
+		if _, exists := p.policies[e.Policy]; exists {
+			return nil, fmt.Errorf("duplicate policy: %s", e.Policy)
+		}
+		p.policies[e.Policy] = e.Constraints
 	}
+
+	return p, nil
 }

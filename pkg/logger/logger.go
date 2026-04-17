@@ -25,7 +25,8 @@ func NewSlog(env Env) *slog.Logger {
 	}
 
 	l := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-		Level: level,
+		Level:     level,
+		AddSource: env == EnvDevelopment,
 	}))
 
 	return l
@@ -33,10 +34,6 @@ func NewSlog(env Env) *slog.Logger {
 
 func Err(err error) slog.Attr {
 	return slog.Any("error", err)
-}
-
-func AppErr(err error) slog.Attr {
-	return slog.Any("app_error", err)
 }
 
 func Fatal(l *slog.Logger, msg string, err error) {

@@ -92,12 +92,13 @@ func (c *Container) DB() database.DB {
 		return c.db
 	}
 
-	db, err := database.NewDatabase(
+	db, err := database.New(
 		c.Config().Database.URI,
 		database.WithMaxOpenConns(c.Config().Database.MaxOpenConns),
 		database.WithMaxIdleConns(c.Config().Database.MaxIdleConns),
 		database.WithConnMaxLifetime(c.Config().Database.ConnMaxLifetime),
 		database.WithConnMaxIdleTime(c.Config().Database.ConnMaxIdleTime),
+		database.WithLogger(c.Logger()),
 	)
 	if err != nil {
 		logger.Fatal(c.Logger(), "failed to connect to database", err)
@@ -143,7 +144,15 @@ func (c *Container) Storage() storage.Storage {
 		return c.storage
 	}
 
-	minioStorage, err := minio.New(c.Config().Minio)
+	minioStorage, err := minio.New(&minio.Config{
+		Endpoint:  c.Config().S3.Endpoint,
+		AccessKey: c.Config().S3.AccessKey,
+		SecretKey: c.Config().S3.SecretKey,
+		Secure:    c.Config().S3.UseSSL,
+		Bucket:    c.Config().S3.Bucket,
+		Region:    c.Config().S3.Region,
+		BaseURL:   c.Config().S3.BaseURL,
+	})
 	if err != nil {
 		logger.Fatal(c.Logger(), "failed to create minio storage", err)
 	}
@@ -353,6 +362,7 @@ func (c *Container) OrderService() service.OrderService {
 			c.TaskFactory().Orders(),
 			c.TxManager(),
 			c.Config().OrderCancelDelay,
+			c.Config().OrderCheckoutTimeout,
 		)
 	}
 

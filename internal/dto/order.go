@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"go-shop-backend/pkg/apperror"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +29,7 @@ type OrderResponse struct {
 	PaymentID    *string             `json:"payment_id"`
 	ProviderName *string             `json:"provider_name"`
 	PaidAt       *time.Time          `json:"paid_at"`
+	ExpiresAt    *time.Time          `json:"expires_at"`
 	CanceledAt   *time.Time          `json:"canceled_at"`
 	CompletedAt  *time.Time          `json:"completed_at"`
 }
@@ -38,6 +40,24 @@ type UnavailableItem struct {
 	AvailableQty int       `json:"available_qty"`
 	Action       string    `json:"action"`
 	Reason       string    `json:"reason"`
+}
+
+type UnavailableItems []UnavailableItem
+
+func (u *UnavailableItems) FromErr(unavailableErr *apperror.ItemsUnavailableError) UnavailableItems {
+	items := make([]UnavailableItem, len(unavailableErr.Items))
+
+	for i, item := range unavailableErr.Items {
+		items[i] = UnavailableItem{
+			ProductID:    item.ProductID,
+			RequestedQty: item.RequestedQty,
+			AvailableQty: item.AvailableQty,
+			Action:       item.Action,
+			Reason:       item.Reason,
+		}
+	}
+
+	return items
 }
 
 type OrderCheckoutResponse struct {

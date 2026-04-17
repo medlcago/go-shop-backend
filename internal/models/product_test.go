@@ -1,7 +1,7 @@
 package models
 
 import (
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -99,7 +99,7 @@ func TestProduct_Reserve(t *testing.T) {
 				}
 			},
 			reserveQty:    3,
-			wantErr:       apperrors.ErrProductNotActive,
+			wantErr:       apperror.ErrProductNotActive,
 			wantReserved:  0,
 			wantAvailable: 10,
 		},
@@ -113,7 +113,7 @@ func TestProduct_Reserve(t *testing.T) {
 				}
 			},
 			reserveQty:    4,
-			wantErr:       apperrors.ErrInsufficientStock,
+			wantErr:       apperror.ErrInsufficientStock,
 			wantReserved:  2,
 			wantAvailable: 3,
 		},
@@ -209,7 +209,7 @@ func TestProduct_Release(t *testing.T) {
 				}
 			},
 			releaseQty:    4,
-			wantErr:       apperrors.ErrInconsistentStock,
+			wantErr:       apperror.ErrInconsistentStock,
 			wantReserved:  3,
 			wantAvailable: 7,
 		},
@@ -306,7 +306,7 @@ func TestProduct_Deduct(t *testing.T) {
 				}
 			},
 			deductQty:     11,
-			wantErr:       apperrors.ErrInconsistentStock,
+			wantErr:       apperror.ErrInconsistentStock,
 			wantStock:     10,
 			wantReserved:  5,
 			wantAvailable: 5,
@@ -320,7 +320,7 @@ func TestProduct_Deduct(t *testing.T) {
 				}
 			},
 			deductQty:     4,
-			wantErr:       apperrors.ErrInconsistentStock,
+			wantErr:       apperror.ErrInconsistentStock,
 			wantStock:     10,
 			wantReserved:  3,
 			wantAvailable: 7,

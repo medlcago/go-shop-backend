@@ -2,7 +2,7 @@ package models
 
 import (
 	"errors"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,6 +30,18 @@ type Product struct {
 	Images     []*Upload   `gorm:"polymorphic:Entity"`
 }
 
+func (p *Product) CanBeAdded(qty int) error {
+	if !p.IsActive {
+		return apperror.ErrProductNotActive
+	}
+
+	if p.Available() < qty {
+		return apperror.ErrInsufficientStock
+	}
+
+	return nil
+}
+
 func (p *Product) Available() int {
 	return p.Stock - p.Reserved
 }
@@ -40,11 +52,11 @@ func (p *Product) Reserve(qty int) error {
 	}
 
 	if !p.IsActive {
-		return apperrors.ErrProductNotActive
+		return apperror.ErrProductNotActive
 	}
 
 	if p.Available() < qty {
-		return apperrors.ErrInsufficientStock
+		return apperror.ErrInsufficientStock
 	}
 
 	p.Reserved += qty
@@ -57,7 +69,7 @@ func (p *Product) Release(qty int) error {
 	}
 
 	if p.Reserved < qty {
-		return apperrors.ErrInconsistentStock
+		return apperror.ErrInconsistentStock
 	}
 
 	p.Reserved -= qty
@@ -70,7 +82,7 @@ func (p *Product) Deduct(qty int) error {
 	}
 
 	if p.Stock < qty || p.Reserved < qty {
-		return apperrors.ErrInconsistentStock
+		return apperror.ErrInconsistentStock
 	}
 
 	p.Stock -= qty

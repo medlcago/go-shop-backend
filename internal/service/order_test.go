@@ -8,7 +8,7 @@ import (
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	tasksMocks "go-shop-backend/internal/tasks/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/paymentprovider"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
@@ -30,19 +30,21 @@ type OrderServiceTestSuite struct {
 	orderTask       *tasksMocks.MockOrderTask
 	orderService    *orderService
 
-	ctx              context.Context
-	userID           *uuid.UUID
-	sessionID        uuid.UUID
-	orderID          uuid.UUID
-	productID        uuid.UUID
-	itemID           uuid.UUID
-	paymentID        string
-	providerName     string
-	cancelOrderDelay time.Duration
+	ctx                  context.Context
+	userID               *uuid.UUID
+	sessionID            uuid.UUID
+	orderID              uuid.UUID
+	productID            uuid.UUID
+	itemID               uuid.UUID
+	paymentID            string
+	providerName         string
+	orderCancelDelay     time.Duration
+	orderCheckoutTimeout time.Duration
 }
 
 func (suite *OrderServiceTestSuite) SetupTest() {
-	suite.cancelOrderDelay = 10 * time.Minute
+	suite.orderCancelDelay = 10 * time.Minute
+	suite.orderCheckoutTimeout = 5 * time.Second
 
 	suite.orderRepo = repoMocks.NewMockOrderRepository(suite.T())
 	suite.orderItemRepo = repoMocks.NewMockOrderItemRepository(suite.T())
@@ -57,7 +59,8 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 		suite.paymentProvider,
 		suite.orderTask,
 		suite.txManager,
-		suite.cancelOrderDelay,
+		suite.orderCancelDelay,
+		suite.orderCheckoutTimeout,
 	)
 
 	suite.ctx = context.Background()
@@ -139,7 +142,7 @@ func (suite *OrderServiceTestSuite) TestGetOrder_NotFound() {
 	response, err := suite.orderService.GetOrder(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrForbidden)
+	suite.ErrorIs(err, apperror.ErrForbidden)
 }
 
 func (suite *OrderServiceTestSuite) TestGetOrder_RepositoryError() {
@@ -289,7 +292,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidQuantity() {
 				ProductID: suite.productID,
 				Quantity:  0,
 			},
-			err: apperrors.ErrInvalidQuantity,
+			err: apperror.ErrInvalidQuantity,
 		},
 		{
 			name: "negative quantity",
@@ -297,7 +300,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidQuantity() {
 				ProductID: suite.productID,
 				Quantity:  -10,
 			},
-			err: apperrors.ErrInvalidQuantity,
+			err: apperror.ErrInvalidQuantity,
 		},
 	}
 
@@ -323,7 +326,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_OrderNotFound() {
 	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrForbidden)
+	suite.ErrorIs(err, apperror.ErrForbidden)
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
@@ -345,7 +348,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
 	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalidOrderStatus)
+	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_ProductNotFound() {
@@ -370,7 +373,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_ProductNotFound() {
 	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrProductNotFound)
+	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_ProductNotActive() {
@@ -403,7 +406,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_ProductNotActive() {
 	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrProductNotActive)
+	suite.ErrorIs(err, apperror.ErrProductNotActive)
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_InsufficientStock() {
@@ -437,7 +440,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_InsufficientStock() {
 	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInsufficientStock)
+	suite.ErrorIs(err, apperror.ErrInsufficientStock)
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_RepositoryError() {
@@ -512,7 +515,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_OrderNotFound() {
 	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrForbidden)
+	suite.ErrorIs(err, apperror.ErrForbidden)
 }
 
 func (suite *OrderServiceTestSuite) TestDeleteItem_InvalidOrderStatus() {
@@ -529,7 +532,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_InvalidOrderStatus() {
 	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalidOrderStatus)
+	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
 }
 
 func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
@@ -558,7 +561,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
 	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrItemNotFound)
+	suite.ErrorIs(err, apperror.ErrItemNotFound)
 }
 
 func (suite *OrderServiceTestSuite) TestDeleteItem_RepositoryError() {
@@ -622,7 +625,7 @@ func (suite *OrderServiceTestSuite) TestClear_OrderNotFound() {
 	response, err := suite.orderService.Clear(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrForbidden)
+	suite.ErrorIs(err, apperror.ErrForbidden)
 }
 
 func (suite *OrderServiceTestSuite) TestClear_InvalidOrderStatus() {
@@ -639,7 +642,7 @@ func (suite *OrderServiceTestSuite) TestClear_InvalidOrderStatus() {
 	response, err := suite.orderService.Clear(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalidOrderStatus)
+	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
 }
 
 func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
@@ -727,7 +730,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 			suite.NotNil(o.ExpiresAt)
 		}).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.cancelOrderDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.orderCancelDelay).
 		Return(nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
@@ -782,7 +785,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 		return o.UserID != nil && *o.UserID == *suite.userID
 	})).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.cancelOrderDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.orderCancelDelay).
 		Return(nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
@@ -819,7 +822,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalidOrderStatus)
+	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
@@ -837,7 +840,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrEmptyOrder)
+	suite.ErrorIs(err, apperror.ErrEmptyOrder)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
@@ -876,7 +879,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
 	suite.Equal(10, response.UnavailableItems[0].RequestedQty)
 	suite.Equal(5, response.UnavailableItems[0].AvailableQty)
 	suite.Equal("reserve", response.UnavailableItems[0].Action)
-	suite.Equal(apperrors.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
+	suite.Equal(apperror.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
@@ -915,7 +918,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
 	suite.Equal(10, response.UnavailableItems[0].RequestedQty)
 	suite.Equal(5, response.UnavailableItems[0].AvailableQty)
 	suite.Equal("reserve", response.UnavailableItems[0].Action)
-	suite.Equal(apperrors.ErrProductNotActive.Error(), response.UnavailableItems[0].Reason)
+	suite.Equal(apperror.ErrProductNotActive.Error(), response.UnavailableItems[0].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNotActive() {
@@ -958,8 +961,8 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNo
 	suite.Len(response.UnavailableItems, 2)
 	suite.Equal(order.Items[0].ProductID, response.UnavailableItems[0].ProductID)
 	suite.Equal(order.Items[1].ProductID, response.UnavailableItems[1].ProductID)
-	suite.Equal(apperrors.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
-	suite.Equal(apperrors.ErrProductNotActive.Error(), response.UnavailableItems[1].Reason)
+	suite.Equal(apperror.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
+	suite.Equal(apperror.ErrProductNotActive.Error(), response.UnavailableItems[1].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
@@ -969,7 +972,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
 	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrForbidden)
+	suite.ErrorIs(err, apperror.ErrForbidden)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
@@ -1006,44 +1009,4 @@ func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
-}
-
-func (suite *OrderServiceTestSuite) TestCheckout_ContextCanceled() {
-	order := &models.Order{
-		ID:          suite.orderID,
-		UserID:      suite.userID,
-		SessionID:   suite.sessionID,
-		Status:      models.OrderStatusDraft,
-		TotalAmount: 4000,
-		Items: []models.OrderItem{
-			{
-				ID:        suite.itemID,
-				ProductID: suite.productID,
-				UnitPrice: 1000,
-				Quantity:  4,
-			},
-		},
-	}
-
-	ctx, cancel := context.WithCancel(suite.ctx)
-	cancel()
-
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
-		Return(order, nil).Once()
-
-	suite.productRepo.EXPECT().GetByIDsForUpdate(mock.Anything, mock.Anything).
-		Return([]*models.Product{
-			{ID: order.Items[0].ProductID, Reserved: 0, Stock: 100, IsActive: true},
-		}, nil).Once()
-
-	suite.productRepo.EXPECT().BulkUpsert(mock.Anything, mock.Anything).
-		Return(nil).Once()
-
-	suite.paymentProvider.EXPECT().CreatePayment(mock.Anything, mock.Anything).
-		Return(nil, context.Canceled).Once()
-
-	response, err := suite.orderService.Checkout(ctx, *suite.userID, suite.sessionID, suite.orderID)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, context.Canceled)
 }

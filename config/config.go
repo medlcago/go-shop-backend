@@ -17,12 +17,13 @@ type Config struct {
 	PartialTokenExpiredTime time.Duration `env:"AUTH_PARTIAL_TOKEN_EXPIRED_TIME" env-required:"true"`
 	ShutdownTimeout         time.Duration `env:"SHUTDOWN_TIMEOUT" env-default:"30s"`
 	OrderCancelDelay        time.Duration `env:"ORDER_CANCEL_DELAY" env-default:"10m"`
+	OrderCheckoutTimeout    time.Duration `env:"ORDER_CHECKOUT_TIMEOUT" env-default:"10s"`
 	MasterKey               string        `env:"MASTER_KEY" env-required:"true"`
 
 	HttpServer HttpServer `env-prefix:"HTTP_"`
 	Cors       Cors       `env-prefix:"CORS_"`
 	Database   Database   `env-prefix:"DB_"`
-	Minio      Minio      `env-prefix:"MINIO_"`
+	S3         S3         `env-prefix:"S3_"`
 	Upload     Upload     `env-prefix:"UPLOAD_"`
 	Yookassa   Yookassa   `env-prefix:"YOOKASSA_"`
 	Redis      Redis      `env-prefix:"REDIS_"`

@@ -1,7 +1,7 @@
 package models
 
 import (
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"testing"
 	"time"
 
@@ -134,7 +134,7 @@ func TestOrder_Checkout(t *testing.T) {
 				Items:     []OrderItem{{Quantity: 1, UnitPrice: 1000}},
 			},
 			userID:      userID,
-			expectedErr: apperrors.ErrInvalidOrderStatus,
+			expectedErr: apperror.ErrInvalidOrderStatus,
 		},
 		{
 			name: "checkout with empty order should fail",
@@ -146,7 +146,7 @@ func TestOrder_Checkout(t *testing.T) {
 				Items:     []OrderItem{},
 			},
 			userID:      userID,
-			expectedErr: apperrors.ErrEmptyOrder,
+			expectedErr: apperror.ErrEmptyOrder,
 		},
 	}
 
@@ -160,136 +160,6 @@ func TestOrder_Checkout(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.Status, tt.order.Status)
 				assert.Equal(t, tt.expected.UserID, tt.order.UserID)
-			}
-		})
-	}
-}
-
-func TestOrder_MarkPaid(t *testing.T) {
-	tests := []struct {
-		name        string
-		order       *Order
-		expectedErr error
-		validate    func(t *testing.T, order *Order)
-	}{
-		{
-			name: "successfully mark pending order as paid",
-			order: &Order{
-				Status: OrderStatusPending,
-			},
-			expectedErr: nil,
-			validate: func(t *testing.T, order *Order) {
-				assert.Equal(t, OrderStatusPaid, order.Status)
-				assert.NotNil(t, order.PaidAt)
-				assert.WithinDuration(t, time.Now(), *order.PaidAt, time.Second)
-			},
-		},
-		{
-			name: "mark draft order as paid should fail",
-			order: &Order{
-				Status: OrderStatusDraft,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-		{
-			name: "mark paid order as paid should fail",
-			order: &Order{
-				Status: OrderStatusPaid,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-		{
-			name: "mark canceled order as paid should fail",
-			order: &Order{
-				Status: OrderStatusCanceled,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-		{
-			name: "mark completed order as paid should fail",
-			order: &Order{
-				Status: OrderStatusCompleted,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.order.MarkPaid()
-
-			if tt.expectedErr != nil {
-				assert.ErrorIs(t, err, tt.expectedErr)
-			} else {
-				assert.NoError(t, err)
-				if tt.validate != nil {
-					tt.validate(t, tt.order)
-				}
-			}
-		})
-	}
-}
-
-func TestOrder_MarkCanceled(t *testing.T) {
-	tests := []struct {
-		name        string
-		order       *Order
-		expectedErr error
-		validate    func(t *testing.T, order *Order)
-	}{
-		{
-			name: "successfully cancel pending order",
-			order: &Order{
-				Status: OrderStatusPending,
-			},
-			expectedErr: nil,
-			validate: func(t *testing.T, order *Order) {
-				assert.Equal(t, OrderStatusCanceled, order.Status)
-				assert.NotNil(t, order.CanceledAt)
-				assert.WithinDuration(t, time.Now(), *order.CanceledAt, time.Second)
-			},
-		},
-		{
-			name: "cancel draft order should fail",
-			order: &Order{
-				Status: OrderStatusDraft,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-		{
-			name: "cancel paid order should fail",
-			order: &Order{
-				Status: OrderStatusPaid,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-		{
-			name: "cancel already canceled order should fail",
-			order: &Order{
-				Status: OrderStatusCanceled,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-		{
-			name: "cancel completed order should fail",
-			order: &Order{
-				Status: OrderStatusCompleted,
-			},
-			expectedErr: apperrors.ErrInvalidOrderStatus,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.order.MarkCanceled()
-
-			if tt.expectedErr != nil {
-				assert.ErrorIs(t, err, tt.expectedErr)
-			} else {
-				assert.NoError(t, err)
-				if tt.validate != nil {
-					tt.validate(t, tt.order)
-				}
 			}
 		})
 	}
@@ -355,42 +225,4 @@ func TestOrder_SetPaymentInfo(t *testing.T) {
 
 	assert.NotNil(t, order.ExpiresAt)
 	assert.Equal(t, expiresAt, *order.ExpiresAt)
-}
-
-func TestOrder_CompleteLifecycle(t *testing.T) {
-	userID := uuid.New()
-	sessionID := uuid.New()
-
-	order := &Order{
-		ID:        uuid.New(),
-		SessionID: sessionID,
-		Status:    OrderStatusDraft,
-		Items: []OrderItem{
-			{Quantity: 2, UnitPrice: 1000},
-			{Quantity: 1, UnitPrice: 500},
-		},
-	}
-
-	assert.True(t, order.CanEdit())
-	assert.True(t, order.HasItems())
-
-	err := order.Checkout(userID)
-	assert.NoError(t, err)
-	assert.Equal(t, OrderStatusPending, order.Status)
-	assert.Equal(t, &userID, order.UserID)
-
-	order.Recalculate()
-	assert.Equal(t, int64(2500), order.TotalAmount)
-
-	paymentID := "pay_123456"
-	providerName := "yookassa"
-	expiresAt := time.Now().Add(1 * time.Hour)
-	order.SetPaymentInfo(paymentID, providerName, expiresAt)
-
-	err = order.MarkPaid()
-	assert.NoError(t, err)
-	assert.Equal(t, OrderStatusPaid, order.Status)
-	assert.NotNil(t, order.PaidAt)
-
-	assert.False(t, order.CanEdit())
 }

@@ -19,11 +19,21 @@ var (
 	}
 )
 
-func NewUploadPolicyProvider() (upload.PolicyProvider, error) {
-	policyProvider := upload.NewPolicyProvider()
+var (
+	productImagePolicyEntry = upload.PolicyEntry{
+		Policy:      upload.ProductImagePolicy,
+		Constraints: productImageConstraints,
+	}
+)
 
-	if err := policyProvider.Register(upload.ProductImagePolicy, productImageConstraints); err != nil {
-		return nil, fmt.Errorf("failed to register policy: %w", err)
+func NewUploadPolicyProvider() (upload.PolicyProvider, error) {
+	policyEntries := []upload.PolicyEntry{
+		productImagePolicyEntry,
+	}
+
+	policyProvider, err := upload.NewPolicyProvider(policyEntries...)
+	if err != nil {
+		return nil, fmt.Errorf("core: upload.NewPolicyProvider failed: %w", err)
 	}
 
 	return policyProvider, nil

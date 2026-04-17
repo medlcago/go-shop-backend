@@ -7,7 +7,7 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	"testing"
 	"time"
 
@@ -65,7 +65,7 @@ func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
 	user, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
 
 	suite.Nil(user)
-	suite.ErrorIs(err, apperrors.ErrUserNotFound)
+	suite.ErrorIs(err, apperror.ErrUserNotFound)
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID_ProfileDeleted() {
@@ -75,7 +75,7 @@ func (suite *UserServiceTestSuite) TestGetUserByID_ProfileDeleted() {
 	user, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
 
 	suite.Nil(user)
-	suite.ErrorIs(err, apperrors.ErrUserProfileDeleted)
+	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID_RepositoryError() {

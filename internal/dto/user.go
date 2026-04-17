@@ -21,7 +21,7 @@ type UserResponse struct {
 	Email        string    `json:"email"`
 	CreatedAt    time.Time `json:"created_at"`
 	Role         string    `json:"role"`
-	TwoFaEnabled bool      `json:"two_fa_enabled"`
+	TwoFaEnabled bool      `json:"two_fa_enabled" copier:"IsTwoFAEnabled"`
 }
 
 type UserTokenResponse struct {

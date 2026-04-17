@@ -8,7 +8,7 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
-	"go-shop-backend/pkg/apperrors"
+	"go-shop-backend/pkg/apperror"
 	cryptoMocks "go-shop-backend/pkg/crypto/mocks"
 	"go-shop-backend/pkg/database"
 	hasherMocks "go-shop-backend/pkg/hasher/mocks"
@@ -112,7 +112,7 @@ func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
 	tokenResp, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(tokenResp)
-	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
@@ -130,7 +130,7 @@ func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
 	tokenResp, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(tokenResp)
-	suite.ErrorIs(err, apperrors.ErrUserProfileDeleted)
+	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
@@ -153,7 +153,7 @@ func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 	tokenResp, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(tokenResp)
-	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
@@ -312,7 +312,7 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 	result, err := suite.authService.Register(suite.ctx, req)
 
 	suite.Nil(result)
-	suite.ErrorIs(err, apperrors.ErrEmailTaken)
+	suite.ErrorIs(err, apperror.ErrEmailTaken)
 }
 
 func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
@@ -327,7 +327,7 @@ func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
 	result, err := suite.authService.Register(suite.ctx, req)
 
 	suite.Nil(result)
-	suite.ErrorIs(err, apperrors.ErrEmailTaken)
+	suite.ErrorIs(err, apperror.ErrEmailTaken)
 }
 
 func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
@@ -404,7 +404,7 @@ func (suite *AuthServiceTestSuite) TestSetup2FA_2FAAlreadyEnabled() {
 	response, err := suite.authService.Setup2FA(suite.ctx, suite.userID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.Err2FAAlreadyEnabled)
+	suite.ErrorIs(err, apperror.Err2FAAlreadyEnabled)
 }
 
 func (suite *AuthServiceTestSuite) TestSetup2FA_EncryptionError() {
@@ -495,7 +495,7 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_2FANotInitialized() {
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
 
-	suite.ErrorIs(err, apperrors.Err2FANotInitialized)
+	suite.ErrorIs(err, apperror.Err2FANotInitialized)
 }
 
 func (suite *AuthServiceTestSuite) TestConfirm2FA_2FAAlreadyEnabled() {
@@ -518,7 +518,7 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_2FAAlreadyEnabled() {
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
 
-	suite.ErrorIs(err, apperrors.Err2FAAlreadyEnabled)
+	suite.ErrorIs(err, apperror.Err2FAAlreadyEnabled)
 }
 
 func (suite *AuthServiceTestSuite) TestConfirm2FA_InvalidPassword() {
@@ -538,7 +538,7 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_InvalidPassword() {
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
 
-	suite.ErrorIs(err, apperrors.ErrInvalidPassword)
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
 func (suite *AuthServiceTestSuite) TestConfirm2FA_InvalidCode() {
@@ -572,7 +572,7 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_InvalidCode() {
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
 
-	suite.ErrorIs(err, apperrors.ErrInvalid2FACode)
+	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
 }
 
 // ==================== Disable2FA Tests ====================
@@ -636,7 +636,7 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_2FANotEnabled() {
 
 	err := suite.authService.Disable2FA(suite.ctx, suite.userID, req)
 
-	suite.ErrorIs(err, apperrors.Err2FANotEnabled)
+	suite.ErrorIs(err, apperror.Err2FANotEnabled)
 }
 
 func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidPassword() {
@@ -656,7 +656,7 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidPassword() {
 
 	err := suite.authService.Disable2FA(suite.ctx, suite.userID, req)
 
-	suite.ErrorIs(err, apperrors.ErrInvalidPassword)
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
 func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidCode() {
@@ -694,7 +694,7 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidCode() {
 
 	err := suite.authService.Disable2FA(suite.ctx, suite.userID, req)
 
-	suite.ErrorIs(err, apperrors.ErrInvalid2FACode)
+	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
 }
 
 // ==================== Verify2FA Tests ====================
@@ -771,7 +771,7 @@ func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidTokenType() {
 	response, err := suite.authService.Verify2FA(suite.ctx, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalidToken)
+	suite.ErrorIs(err, apperror.ErrInvalidToken)
 }
 
 func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidCode() {
@@ -813,7 +813,7 @@ func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidCode() {
 	response, err := suite.authService.Verify2FA(suite.ctx, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalid2FACode)
+	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
 }
 
 func (suite *AuthServiceTestSuite) TestVerify2FA_2FANotEnabled() {
@@ -842,7 +842,7 @@ func (suite *AuthServiceTestSuite) TestVerify2FA_2FANotEnabled() {
 	response, err := suite.authService.Verify2FA(suite.ctx, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.Err2FANotEnabled)
+	suite.ErrorIs(err, apperror.Err2FANotEnabled)
 }
 
 func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidCredentials() {
@@ -866,5 +866,5 @@ func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidCredentials() {
 	response, err := suite.authService.Verify2FA(suite.ctx, req)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, apperrors.ErrInvalidCredentials)
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
