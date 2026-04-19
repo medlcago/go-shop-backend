@@ -389,7 +389,7 @@ func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderI
 				return apperror.ErrOrderNotFound
 			}
 
-			return fmt.Errorf("%s: %w", op, err)
+			return err
 		}
 
 		if err := o.cancelOrder(ctx, order, userID); err != nil {

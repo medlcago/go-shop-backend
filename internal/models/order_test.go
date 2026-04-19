@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"go-shop-backend/pkg/apperror"
 	"testing"
 	"time"
@@ -205,6 +206,222 @@ func TestOrder_Recalculate(t *testing.T) {
 			tt.order.Recalculate()
 
 			assert.Equal(t, tt.total, tt.order.TotalAmount)
+		})
+	}
+}
+
+func TestOrder_Pay(t *testing.T) {
+	userID := uuid.New()
+	otherUserID := uuid.New()
+	now := time.Now().UTC()
+
+	tests := []struct {
+		name        string
+		order       *Order
+		userID      uuid.UUID
+		expectedErr error
+		expected    *Order
+	}{
+		{
+			name: "successful payment of pending order",
+			order: &Order{
+				ID:          uuid.New(),
+				UserID:      &userID,
+				Status:      OrderStatusPending,
+				TotalAmount: 1000,
+			},
+			userID:      userID,
+			expectedErr: nil,
+			expected: &Order{
+				Status: OrderStatusPaid,
+				PaidAt: &now,
+			},
+		},
+		{
+			name: "payment with wrong user should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: &userID,
+				Status: OrderStatusPending,
+			},
+			userID:      otherUserID,
+			expectedErr: apperror.ErrForbidden,
+		},
+		{
+			name: "payment of draft order should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: &userID,
+				Status: OrderStatusDraft,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "payment of already paid order should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: &userID,
+				Status: OrderStatusPaid,
+				PaidAt: &now,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "payment of canceled order should fail",
+			order: &Order{
+				ID:         uuid.New(),
+				UserID:     &userID,
+				Status:     OrderStatusCanceled,
+				CanceledAt: &now,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "payment of completed order should fail",
+			order: &Order{
+				ID:          uuid.New(),
+				UserID:      &userID,
+				Status:      OrderStatusCompleted,
+				CompletedAt: sql.NullTime{Time: now, Valid: true},
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "payment with nil UserID should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: nil,
+				Status: OrderStatusPending,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.order.Pay(tt.userID)
+
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.Status, tt.order.Status)
+				assert.NotNil(t, tt.expected.PaidAt)
+				assert.Equal(t, now, *tt.expected.PaidAt)
+			}
+		})
+	}
+}
+
+func TestOrder_Cancel(t *testing.T) {
+	userID := uuid.New()
+	otherUserID := uuid.New()
+	now := time.Now().UTC()
+
+	tests := []struct {
+		name        string
+		order       *Order
+		userID      uuid.UUID
+		expectedErr error
+		expected    *Order
+	}{
+		{
+			name: "successful cancellation of pending order",
+			order: &Order{
+				ID:          uuid.New(),
+				UserID:      &userID,
+				Status:      OrderStatusPending,
+				TotalAmount: 1000,
+			},
+			userID:      userID,
+			expectedErr: nil,
+			expected: &Order{
+				Status:     OrderStatusCanceled,
+				CanceledAt: &now,
+			},
+		},
+		{
+			name: "cancellation with wrong user should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: &userID,
+				Status: OrderStatusPending,
+			},
+			userID:      otherUserID,
+			expectedErr: apperror.ErrForbidden,
+		},
+		{
+			name: "cancellation of draft order should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: &userID,
+				Status: OrderStatusDraft,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "cancellation of paid order should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: &userID,
+				Status: OrderStatusPaid,
+				PaidAt: &now,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "cancellation of already canceled order should fail",
+			order: &Order{
+				ID:         uuid.New(),
+				UserID:     &userID,
+				Status:     OrderStatusCanceled,
+				CanceledAt: &now,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "cancellation of completed order should fail",
+			order: &Order{
+				ID:          uuid.New(),
+				UserID:      &userID,
+				Status:      OrderStatusCompleted,
+				CompletedAt: sql.NullTime{Time: now, Valid: true},
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrInvalidOrderStatus,
+		},
+		{
+			name: "cancellation with nil UserID should fail",
+			order: &Order{
+				ID:     uuid.New(),
+				UserID: nil,
+				Status: OrderStatusPending,
+			},
+			userID:      userID,
+			expectedErr: apperror.ErrForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.order.Cancel(tt.userID)
+
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.Status, tt.order.Status)
+				assert.NotNil(t, tt.expected.CanceledAt)
+				assert.Equal(t, now, *tt.expected.CanceledAt)
+			}
 		})
 	}
 }

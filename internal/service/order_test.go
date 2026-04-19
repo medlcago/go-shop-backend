@@ -31,7 +31,7 @@ type OrderServiceTestSuite struct {
 	orderService    *orderService
 
 	ctx                  context.Context
-	userID               *uuid.UUID
+	userID               uuid.UUID
 	sessionID            uuid.UUID
 	orderID              uuid.UUID
 	productID            uuid.UUID
@@ -64,7 +64,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	)
 
 	suite.ctx = context.Background()
-	suite.userID = new(uuid.New())
+	suite.userID = uuid.New()
 	suite.sessionID = uuid.New()
 	suite.orderID = uuid.New()
 	suite.productID = uuid.New()
@@ -81,7 +81,7 @@ func TestOrderServiceTestSuite(t *testing.T) {
 
 func (suite *OrderServiceTestSuite) TestCreateOrder_Success() {
 	order := &models.Order{
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusDraft,
 	}
@@ -89,7 +89,7 @@ func (suite *OrderServiceTestSuite) TestCreateOrder_Success() {
 	suite.orderRepo.EXPECT().Create(suite.ctx, order).
 		Return(nil).Once()
 
-	response, err := suite.orderService.CreateOrder(suite.ctx, suite.userID, suite.sessionID)
+	response, err := suite.orderService.CreateOrder(suite.ctx, &suite.userID, suite.sessionID)
 
 	suite.NotNil(response)
 	suite.NoError(err)
@@ -114,7 +114,7 @@ func (suite *OrderServiceTestSuite) TestCreateOrder_RepositoryError() {
 	suite.orderRepo.EXPECT().Create(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(dbError).Once()
 
-	response, err := suite.orderService.CreateOrder(suite.ctx, suite.userID, suite.sessionID)
+	response, err := suite.orderService.CreateOrder(suite.ctx, &suite.userID, suite.sessionID)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
@@ -125,10 +125,10 @@ func (suite *OrderServiceTestSuite) TestCreateOrder_RepositoryError() {
 func (suite *OrderServiceTestSuite) TestGetOrder_Success() {
 	order := &models.Order{ID: suite.orderID}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.GetOrder(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.GetOrder(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
 
 	suite.NotNil(response)
 	suite.NoError(err)
@@ -136,10 +136,10 @@ func (suite *OrderServiceTestSuite) TestGetOrder_Success() {
 }
 
 func (suite *OrderServiceTestSuite) TestGetOrder_NotFound() {
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.GetOrder(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.GetOrder(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
@@ -147,10 +147,10 @@ func (suite *OrderServiceTestSuite) TestGetOrder_NotFound() {
 
 func (suite *OrderServiceTestSuite) TestGetOrder_RepositoryError() {
 	dbError := errors.New("db error")
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(nil, dbError).Once()
 
-	response, err := suite.orderService.GetOrder(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.GetOrder(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
@@ -162,23 +162,23 @@ func (suite *OrderServiceTestSuite) TestGetOrders_Success() {
 	orders := []*models.Order{
 		{
 			ID:        suite.orderID,
-			UserID:    suite.userID,
+			UserID:    &suite.userID,
 			SessionID: suite.sessionID,
 			Status:    models.OrderStatusCanceled,
 		},
 		{
 			ID:        uuid.New(),
-			UserID:    suite.userID,
+			UserID:    &suite.userID,
 			SessionID: suite.sessionID,
 			Status:    models.OrderStatusCanceled,
 		},
 	}
 	req := dto.ListOrderRequest{Limit: 10, Offset: 0, Status: string(models.OrderStatusCanceled)}
 
-	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, suite.userID, suite.sessionID, req).
+	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, req).
 		Return(orders, int64(5), nil).Once()
 
-	response, total, err := suite.orderService.GetOrders(suite.ctx, suite.userID, suite.sessionID, req)
+	response, total, err := suite.orderService.GetOrders(suite.ctx, &suite.userID, suite.sessionID, req)
 
 	suite.NotNil(response)
 	suite.NoError(err)
@@ -189,10 +189,10 @@ func (suite *OrderServiceTestSuite) TestGetOrders_Success() {
 func (suite *OrderServiceTestSuite) TestGetOrders_Empty() {
 	req := dto.ListOrderRequest{Limit: 10, Offset: 0}
 
-	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, suite.userID, suite.sessionID, req).
+	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, req).
 		Return([]*models.Order{}, int64(0), nil).Once()
 
-	response, total, err := suite.orderService.GetOrders(suite.ctx, suite.userID, suite.sessionID, req)
+	response, total, err := suite.orderService.GetOrders(suite.ctx, &suite.userID, suite.sessionID, req)
 
 	suite.NoError(err)
 	suite.Empty(response)
@@ -203,10 +203,10 @@ func (suite *OrderServiceTestSuite) TestGetOrders_RepositoryError() {
 	req := dto.ListOrderRequest{}
 
 	dbError := errors.New("db error")
-	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, suite.userID, suite.sessionID, req).
+	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, req).
 		Return(nil, int64(0), dbError).Once()
 
-	response, total, err := suite.orderService.GetOrders(suite.ctx, suite.userID, suite.sessionID, req)
+	response, total, err := suite.orderService.GetOrders(suite.ctx, &suite.userID, suite.sessionID, req)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
@@ -218,7 +218,7 @@ func (suite *OrderServiceTestSuite) TestGetOrders_RepositoryError() {
 func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusDraft,
 		Items:     []models.OrderItem{},
@@ -240,7 +240,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 
 	orderWithItems := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 2000,
@@ -257,7 +257,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 	}
 
 	// First call - for checking order status (preload=false)
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
@@ -267,13 +267,13 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 		Return(nil).Once()
 
 	// Second call - for recalculation (preload=true)
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(orderWithItems, nil).Once()
 
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(nil).Once()
 
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.NoError(err)
 	suite.NotNil(response)
@@ -306,7 +306,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidQuantity() {
 
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
-			response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, tt.req)
+			response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, tt.req)
 
 			suite.Nil(response)
 			suite.ErrorIs(err, tt.err)
@@ -320,10 +320,10 @@ func (suite *OrderServiceTestSuite) TestAddItem_OrderNotFound() {
 		Quantity:  2,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
@@ -332,7 +332,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_OrderNotFound() {
 func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusCompleted,
 	}
@@ -342,10 +342,10 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
 		Quantity:  2,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
@@ -354,7 +354,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
 func (suite *OrderServiceTestSuite) TestAddItem_ProductNotFound() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusDraft,
 	}
@@ -364,13 +364,13 @@ func (suite *OrderServiceTestSuite) TestAddItem_ProductNotFound() {
 		Quantity:  2,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrProductNotFound)
@@ -379,7 +379,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_ProductNotFound() {
 func (suite *OrderServiceTestSuite) TestAddItem_ProductNotActive() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusDraft,
 	}
@@ -397,13 +397,13 @@ func (suite *OrderServiceTestSuite) TestAddItem_ProductNotActive() {
 		Quantity:  2,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
 		Return(product, nil).Once()
 
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrProductNotActive)
@@ -412,7 +412,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_ProductNotActive() {
 func (suite *OrderServiceTestSuite) TestAddItem_InsufficientStock() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusDraft,
 	}
@@ -431,13 +431,13 @@ func (suite *OrderServiceTestSuite) TestAddItem_InsufficientStock() {
 		Quantity:  10,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
 		Return(product, nil).Once()
 
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInsufficientStock)
@@ -450,10 +450,10 @@ func (suite *OrderServiceTestSuite) TestAddItem_RepositoryError() {
 		Quantity:  2,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, dbError).Once()
 
-	response, err := suite.orderService.AddItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
@@ -464,7 +464,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_RepositoryError() {
 func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 2000,
@@ -480,14 +480,14 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 
 	orderAfterDelete := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 0,
 		Items:       []models.OrderItem{},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
@@ -496,23 +496,23 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 	suite.orderItemRepo.EXPECT().DeleteItem(suite.ctx, suite.orderID, suite.productID).
 		Return(nil).Once()
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(orderAfterDelete, nil).Once()
 
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(nil).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.NoError(err)
 	suite.NotNil(response)
 }
 
 func (suite *OrderServiceTestSuite) TestDeleteItem_OrderNotFound() {
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
@@ -521,15 +521,15 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_OrderNotFound() {
 func (suite *OrderServiceTestSuite) TestDeleteItem_InvalidOrderStatus() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusCompleted,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
@@ -538,7 +538,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_InvalidOrderStatus() {
 func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 2000,
@@ -552,13 +552,13 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
 		},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrItemNotFound)
@@ -566,10 +566,10 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
 
 func (suite *OrderServiceTestSuite) TestDeleteItem_RepositoryError() {
 	dbError := errors.New("db error")
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, dbError).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
@@ -580,7 +580,7 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_RepositoryError() {
 func (suite *OrderServiceTestSuite) TestClear_Success() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 2000,
@@ -591,26 +591,26 @@ func (suite *OrderServiceTestSuite) TestClear_Success() {
 
 	clearedOrder := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 0,
 		Items:       []models.OrderItem{},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.orderItemRepo.EXPECT().Clear(suite.ctx, suite.orderID).
 		Return(nil).Once()
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(clearedOrder, nil).Once()
 
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(nil).Once()
 
-	response, err := suite.orderService.Clear(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.Clear(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
 
 	suite.NoError(err)
 	suite.NotNil(response)
@@ -619,10 +619,10 @@ func (suite *OrderServiceTestSuite) TestClear_Success() {
 }
 
 func (suite *OrderServiceTestSuite) TestClear_OrderNotFound() {
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.Clear(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.Clear(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
@@ -631,15 +631,15 @@ func (suite *OrderServiceTestSuite) TestClear_OrderNotFound() {
 func (suite *OrderServiceTestSuite) TestClear_InvalidOrderStatus() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusPending,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.Clear(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.Clear(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
@@ -648,22 +648,22 @@ func (suite *OrderServiceTestSuite) TestClear_InvalidOrderStatus() {
 func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
 	order := &models.Order{
 		ID:        suite.orderID,
-		UserID:    suite.userID,
+		UserID:    &suite.userID,
 		SessionID: suite.sessionID,
 		Status:    models.OrderStatusDraft,
 	}
 
 	dbError := errors.New("database error")
 
-	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, suite.userID, suite.sessionID, false).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
 	suite.orderItemRepo.EXPECT().Clear(suite.ctx, suite.orderID).
 		Return(dbError).Once()
 
-	result, err := suite.orderService.Clear(suite.ctx, suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.Clear(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
 
-	suite.Nil(result)
+	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
 }
 
@@ -672,7 +672,7 @@ func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
 func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 12_000,
@@ -694,7 +694,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 
 	confirmationURL := "https://test.com"
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(mock.Anything, mock.Anything).
@@ -708,7 +708,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 
 	suite.paymentProvider.EXPECT().CreatePayment(mock.Anything, mock.MatchedBy(func(req *paymentprovider.CreatePaymentRequest) bool {
 		return req.Metadata.OrderID == suite.orderID &&
-			req.Metadata.UserID == *suite.userID &&
+			req.Metadata.UserID == *&suite.userID &&
 			req.Amount > 0 &&
 			req.Amount == order.TotalAmount
 	})).
@@ -722,7 +722,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 
 	suite.orderRepo.EXPECT().Update(mock.Anything, mock.AnythingOfType("*models.Order")).
 		Run(func(ctx context.Context, o *models.Order) {
-			suite.Equal(*suite.userID, *o.UserID)
+			suite.Equal(*&suite.userID, *o.UserID)
 			suite.Equal(order.TotalAmount, o.TotalAmount)
 			suite.Equal(models.OrderStatusPending, o.Status)
 			suite.Equal(suite.paymentID, *o.PaymentID)
@@ -730,10 +730,10 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 			suite.NotNil(o.ExpiresAt)
 		}).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.orderCancelDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *&suite.userID, suite.orderID, suite.orderCancelDelay).
 		Return(nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID)
 
 	suite.NoError(err)
 	suite.NotNil(response)
@@ -761,7 +761,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 
 	confirmationURL := "https://test.com"
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(mock.Anything, mock.Anything).
@@ -782,19 +782,19 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 		Return(suite.providerName).Once()
 
 	suite.orderRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(o *models.Order) bool {
-		return o.UserID != nil && *o.UserID == *suite.userID
+		return o.UserID != nil && *o.UserID == *&suite.userID
 	})).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *suite.userID, suite.orderID, suite.orderCancelDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *&suite.userID, suite.orderID, suite.orderCancelDelay).
 		Return(nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID)
 
 	suite.NoError(err)
 	suite.NotNil(response)
 
 	suite.NotNil(order.UserID)
-	suite.Equal(*suite.userID, *order.UserID)
+	suite.Equal(*&suite.userID, *order.UserID)
 	suite.Equal(order.ID, response.OrderID)
 	suite.Equal(confirmationURL, response.ConfirmationURL)
 }
@@ -802,7 +802,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusPending,
 		TotalAmount: 4000,
@@ -816,10 +816,10 @@ func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 		},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
@@ -828,16 +828,16 @@ func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 4000,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrEmptyOrder)
@@ -846,7 +846,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
 func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 4000,
@@ -860,7 +860,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
 		},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(mock.Anything, mock.Anything).
@@ -868,7 +868,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
 			{ID: order.Items[0].ProductID, Reserved: 3, Stock: 8, IsActive: true},
 		}, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(err)
 	suite.NotNil(response)
@@ -885,7 +885,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
 func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 4000,
@@ -899,7 +899,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
 		},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil)
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(mock.Anything, mock.Anything).
@@ -907,7 +907,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
 			{ID: order.Items[0].ProductID, Reserved: 3, Stock: 8, IsActive: false},
 		}, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(err)
 	suite.NotNil(response)
@@ -924,7 +924,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
 func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNotActive() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 4000,
@@ -943,7 +943,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNo
 		},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil)
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(mock.Anything, mock.Anything).
@@ -952,7 +952,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNo
 			{ID: order.Items[1].ProductID, Reserved: 0, Stock: 100, IsActive: false},
 		}, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(err)
 	suite.NotNil(response)
@@ -966,10 +966,10 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNo
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, suite.orderID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
@@ -978,7 +978,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
 func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 	order := &models.Order{
 		ID:          suite.orderID,
-		UserID:      suite.userID,
+		UserID:      &suite.userID,
 		SessionID:   suite.sessionID,
 		Status:      models.OrderStatusDraft,
 		TotalAmount: 4000,
@@ -994,7 +994,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 
 	dbError := errors.New("db error")
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(mock.Anything, mock.Anything).
@@ -1005,8 +1005,342 @@ func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 	suite.productRepo.EXPECT().BulkUpsert(mock.Anything, mock.Anything).
 		Return(dbError).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *suite.userID, suite.sessionID, order.ID)
+	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())
+}
+
+// ==================== HandlePaymentWebhook Tests ====================
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_Success_PayOrder() {
+	webhookEvent := &paymentprovider.WebhookEvent{
+		PaymentID: suite.paymentID,
+		Status:    paymentprovider.PaymentStatusSucceeded,
+		Metadata: paymentprovider.Metadata{
+			UserID:  suite.userID,
+			OrderID: suite.orderID,
+		},
+	}
+
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      &suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusPending,
+		TotalAmount: 2500,
+		Items: []models.OrderItem{
+			{ProductID: uuid.New(), Quantity: 2, UnitPrice: 1000},
+			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
+		},
+	}
+
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(webhookEvent, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
+
+	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 3, Stock: 8},
+			{ID: order.Items[1].ProductID, Reserved: 5, Stock: 100},
+		}, nil).Once()
+
+	suite.productRepo.EXPECT().BulkUpsert(suite.ctx, mock.Anything).
+		Return(nil).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, order).Return(nil).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+
+	suite.NoError(err)
+	suite.Equal(models.OrderStatusPaid, order.Status)
+}
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_Success_CancelOrder() {
+	webhookEvent := &paymentprovider.WebhookEvent{
+		PaymentID: suite.paymentID,
+		Status:    paymentprovider.PaymentStatusCanceled,
+		Metadata: paymentprovider.Metadata{
+			UserID:  suite.userID,
+			OrderID: suite.orderID,
+		},
+	}
+
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      &suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusPending,
+		TotalAmount: 2500,
+		Items: []models.OrderItem{
+			{ProductID: uuid.New(), Quantity: 2, UnitPrice: 1000},
+			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
+		},
+	}
+
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(webhookEvent, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
+
+	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 3, Stock: 8},
+			{ID: order.Items[1].ProductID, Reserved: 5, Stock: 100},
+		}, nil).Once()
+
+	suite.productRepo.EXPECT().BulkUpsert(suite.ctx, mock.Anything).
+		Return(nil).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, order).Return(nil).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+
+	suite.NoError(err)
+	suite.Equal(models.OrderStatusCanceled, order.Status)
+}
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_OrderNotFound_ReturnsNil() {
+	webhookEvent := &paymentprovider.WebhookEvent{
+		PaymentID: suite.paymentID,
+		Status:    paymentprovider.PaymentStatusSucceeded,
+	}
+
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(webhookEvent, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
+
+	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+	suite.NoError(err)
+}
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_OrderAlreadyProcessed_ShouldSkip() {
+	webhookEvent := &paymentprovider.WebhookEvent{
+		PaymentID: suite.paymentID,
+		Status:    paymentprovider.PaymentStatusSucceeded,
+	}
+
+	order := &models.Order{
+		Status: models.OrderStatusCanceled,
+	}
+
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(webhookEvent, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
+
+	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
+		Return(order, nil).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+	suite.NoError(err)
+}
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_UnknownEventStatus_ShouldSkip() {
+	webhookEvent := &paymentprovider.WebhookEvent{
+		PaymentID: suite.paymentID,
+		Status:    "unknown_status",
+	}
+
+	order := &models.Order{
+		Status: models.OrderStatusPending,
+	}
+
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(webhookEvent, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
+
+	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
+		Return(order, nil).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, order).Return(nil).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+	suite.NoError(err)
+}
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_ParseError_ReturnsError() {
+	parseErr := errors.New("parse error")
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(nil, parseErr).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+
+	suite.ErrorContains(err, "orderService.HandlePaymentWebhook")
+	suite.ErrorContains(err, parseErr.Error())
+}
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_GetOrderError_ReturnsError() {
+	webhookEvent := &paymentprovider.WebhookEvent{
+		PaymentID: suite.paymentID,
+		Status:    paymentprovider.PaymentStatusSucceeded,
+	}
+
+	dbErr := errors.New("database error")
+
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(webhookEvent, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
+
+	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
+		Return(nil, dbErr).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+
+	suite.ErrorContains(err, "orderService.HandlePaymentWebhook")
+	suite.ErrorContains(err, dbErr.Error())
+}
+
+func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_PayOrderFails_ReturnsItemsUnavailableError() {
+	webhookEvent := &paymentprovider.WebhookEvent{
+		PaymentID: suite.paymentID,
+		Status:    paymentprovider.PaymentStatusSucceeded,
+		Metadata: paymentprovider.Metadata{
+			UserID:  suite.userID,
+			OrderID: suite.orderID,
+		},
+	}
+
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      &suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusPending,
+		TotalAmount: 2500,
+		Items: []models.OrderItem{
+			{ProductID: uuid.New(), Quantity: 10, UnitPrice: 1000},
+			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
+		},
+	}
+
+	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
+		Return(webhookEvent, nil).Once()
+
+	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
+
+	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 0, Stock: 8},
+			{ID: order.Items[1].ProductID, Reserved: 5, Stock: 100},
+		}, nil).Once()
+
+	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
+	suite.Error(err)
+
+	var target *apperror.ItemsUnavailableError
+	if suite.ErrorAs(err, &target) {
+		suite.Len(target.Items, 1)
+		suite.Equal(target.Items[0].ProductID, order.Items[0].ProductID)
+		suite.Equal(target.Items[0].Action, "deduct")
+	}
+}
+
+// ==================== CancelOrder Tests ====================
+
+func (suite *OrderServiceTestSuite) TestCancelOrder_Success() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      &suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusPending,
+		TotalAmount: 2500,
+		Items: []models.OrderItem{
+			{ProductID: uuid.New(), Quantity: 5, UnitPrice: 1000},
+			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
+		},
+	}
+
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(order, nil).Once()
+
+	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, mock.Anything).
+		Return([]*models.Product{
+			{ID: order.Items[0].ProductID, Reserved: 6, Stock: 10},
+			{ID: order.Items[1].ProductID, Reserved: 5, Stock: 100},
+		}, nil).Once()
+
+	suite.productRepo.EXPECT().BulkUpsert(suite.ctx, mock.Anything).
+		Return(nil).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, order).
+		Return(nil).Once()
+
+	err := suite.orderService.CancelOrder(suite.ctx, suite.userID, suite.orderID)
+
+	suite.NoError(err)
+	suite.Equal(models.OrderStatusCanceled, order.Status)
+}
+
+func (suite *OrderServiceTestSuite) TestCancelOrder_OrderNotFound_ReturnsErrOrderNotFound() {
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	err := suite.orderService.CancelOrder(suite.ctx, suite.userID, suite.orderID)
+
+	suite.ErrorContains(err, "orderService.CancelOrder")
+	suite.ErrorIs(err, apperror.ErrOrderNotFound)
+}
+
+func (suite *OrderServiceTestSuite) TestCancelOrder_GetByIDDatabaseError_ReturnsError() {
+	dbErr := errors.New("database error")
+
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(nil, dbErr).Once()
+
+	err := suite.orderService.CancelOrder(suite.ctx, suite.userID, suite.orderID)
+
+	suite.ErrorContains(err, "orderService.CancelOrder")
+	suite.ErrorContains(err, dbErr.Error())
+}
+
+func (suite *OrderServiceTestSuite) TestCancelOrder_InvalidOrderStatus_ReturnsErrInvalidOrderStatus() {
+	order := &models.Order{
+		ID:          suite.orderID,
+		UserID:      &suite.userID,
+		SessionID:   suite.sessionID,
+		Status:      models.OrderStatusCanceled,
+		TotalAmount: 2500,
+		Items: []models.OrderItem{
+			{ProductID: uuid.New(), Quantity: 5, UnitPrice: 1000},
+			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
+		},
+	}
+
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(order, nil).Once()
+
+	err := suite.orderService.CancelOrder(suite.ctx, suite.userID, suite.orderID)
+
+	suite.ErrorContains(err, "orderService.CancelOrder")
+	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
+}
+
+func (suite *OrderServiceTestSuite) TestCancelOrder_DifferentUserCancelsOrder_ReturnsErrForbidden() {
+	order := &models.Order{
+		ID:     suite.orderID,
+		UserID: new(uuid.New()),
+	}
+
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(order, nil).Once()
+
+	err := suite.orderService.CancelOrder(suite.ctx, suite.userID, suite.orderID)
+	suite.ErrorContains(err, "orderService.CancelOrder")
+	suite.ErrorIs(err, apperror.ErrForbidden)
 }

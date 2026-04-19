@@ -89,6 +89,10 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, fmt.Errorf("%s: %w", op, apperror.ErrEmailTaken)
 	}
 
+	if !errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
 	passwordHash, err := a.hasher.Hash(req.Password)
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to hash password: %w", op, err)
@@ -176,7 +180,7 @@ func (a *authService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.
 	}
 
 	user.TwoFAEnabled = true
-	user.TwoFaConfirmedAt = new(time.Now().UTC())
+	user.TwoFAConfirmedAt = new(time.Now().UTC())
 
 	if err := a.userRepo.Update(ctx, user); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -212,7 +216,7 @@ func (a *authService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.
 
 	user.TwoFAEnabled = false
 	user.TwoFASecret = nil
-	user.TwoFaConfirmedAt = nil
+	user.TwoFAConfirmedAt = nil
 
 	if err := a.userRepo.Update(ctx, user); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -226,7 +230,7 @@ func (a *authService) Verify2FA(ctx context.Context, req dto.Verify2FARequest) (
 
 	claims, err := a.tokenManager.ValidateToken(req.Token)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrInvalidToken)
+		return nil, fmt.Errorf("%s: %v: %w", op, err, apperror.ErrInvalidToken)
 	}
 
 	if claims.TokenType != token.PartialTokenType {

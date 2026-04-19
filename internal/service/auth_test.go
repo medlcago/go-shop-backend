@@ -87,17 +87,17 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
 		Return("test_refresh_token", nil).Once()
 
-	result, err := suite.authService.Login(suite.ctx, req)
+	response, err := suite.authService.Login(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.NotNil(result)
-	suite.NotNil(result.User)
-	suite.Equal(result.User.ID, expectedUser.ID)
-	suite.Equal(result.User.Email, expectedUser.Email)
-	suite.NotNil(result.TokenResponse)
-	suite.Equal(result.AccessToken, "test_access_token")
-	suite.Equal(result.RefreshToken, "test_refresh_token")
-	suite.Equal("Bearer", result.TokenResponse.TokenType)
+	suite.NotNil(response)
+	suite.NotNil(response.User)
+	suite.Equal(response.User.ID, expectedUser.ID)
+	suite.Equal(response.User.Email, expectedUser.Email)
+	suite.NotNil(response.TokenResponse)
+	suite.Equal(response.AccessToken, "test_access_token")
+	suite.Equal(response.RefreshToken, "test_refresh_token")
+	suite.Equal("Bearer", response.TokenResponse.TokenType)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
@@ -109,9 +109,9 @@ func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
 	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	tokenResp, err := suite.authService.Login(suite.ctx, req)
+	response, err := suite.authService.Login(suite.ctx, req)
 
-	suite.Nil(tokenResp)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
@@ -127,9 +127,9 @@ func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
 	suite.hasher.EXPECT().Verify(req.Password, mock.Anything).
 		Return(true, nil).Once()
 
-	tokenResp, err := suite.authService.Login(suite.ctx, req)
+	response, err := suite.authService.Login(suite.ctx, req)
 
-	suite.Nil(tokenResp)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
 }
 
@@ -150,9 +150,9 @@ func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
 		Return(false, nil).Once()
 
-	tokenResp, err := suite.authService.Login(suite.ctx, req)
+	response, err := suite.authService.Login(suite.ctx, req)
 
-	suite.Nil(tokenResp)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
@@ -166,9 +166,9 @@ func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
 	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(nil, repoErr).Once()
 
-	result, err := suite.authService.Login(suite.ctx, req)
+	response, err := suite.authService.Login(suite.ctx, req)
 
-	suite.Nil(result)
+	suite.Nil(response)
 	suite.ErrorContains(err, repoErr.Error())
 }
 
@@ -185,7 +185,7 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Success() {
 		Role:             models.UserRoleCustomer,
 		TwoFAEnabled:     true,
 		TwoFASecret:      new("encrypted_secret"),
-		TwoFaConfirmedAt: new(time.Now().UTC()),
+		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
 	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
@@ -228,7 +228,7 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_PartialTokenError() {
 		Role:             models.UserRoleCustomer,
 		TwoFAEnabled:     true,
 		TwoFASecret:      new("encrypted_secret"),
-		TwoFaConfirmedAt: new(time.Now().UTC()),
+		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
 	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
@@ -247,9 +247,9 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_PartialTokenError() {
 	suite.tokenManager.EXPECT().GeneratePartialToken(payload).
 		Return("", tokenErr).Once()
 
-	result, err := suite.authService.Login(suite.ctx, req)
+	response, err := suite.authService.Login(suite.ctx, req)
 
-	suite.Nil(result)
+	suite.Nil(response)
 	suite.ErrorContains(err, tokenErr.Error())
 }
 
@@ -283,17 +283,17 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
 		Return("test_refresh_token", nil).Once()
 
-	result, err := suite.authService.Register(suite.ctx, req)
+	response, err := suite.authService.Register(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.NotNil(result)
-	suite.NotNil(result.User)
-	suite.Equal(result.User.ID, suite.userID)
-	suite.Equal(result.User.Email, req.Email)
-	suite.NotNil(result.TokenResponse)
-	suite.Equal(result.AccessToken, "test_access_token")
-	suite.Equal(result.RefreshToken, "test_refresh_token")
-	suite.Equal("Bearer", result.TokenResponse.TokenType)
+	suite.NotNil(response)
+	suite.NotNil(response.User)
+	suite.Equal(response.User.ID, suite.userID)
+	suite.Equal(response.User.Email, req.Email)
+	suite.NotNil(response.TokenResponse)
+	suite.Equal(response.AccessToken, "test_access_token")
+	suite.Equal(response.RefreshToken, "test_refresh_token")
+	suite.Equal("Bearer", response.TokenResponse.TokenType)
 }
 
 func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
@@ -309,9 +309,9 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(user, nil).Once()
 
-	result, err := suite.authService.Register(suite.ctx, req)
+	response, err := suite.authService.Register(suite.ctx, req)
 
-	suite.Nil(result)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrEmailTaken)
 }
 
@@ -324,9 +324,9 @@ func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
 	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
-	result, err := suite.authService.Register(suite.ctx, req)
+	response, err := suite.authService.Register(suite.ctx, req)
 
-	suite.Nil(result)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrEmailTaken)
 }
 
@@ -336,19 +336,13 @@ func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
-		Return(nil, repository.ErrRecordNotFound).Once()
-
-	suite.hasher.EXPECT().Hash(req.Password).
-		Return("test123", nil).Once()
-
 	repoErr := errors.New("database error")
-	suite.userRepo.EXPECT().Create(suite.ctx, mock.AnythingOfType("*models.User")).
-		Return(repoErr).Once()
+	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+		Return(nil, repoErr).Once()
 
-	result, err := suite.authService.Register(suite.ctx, req)
+	response, err := suite.authService.Register(suite.ctx, req)
 
-	suite.Nil(result)
+	suite.Nil(response)
 	suite.ErrorContains(err, repoErr.Error())
 }
 
@@ -394,7 +388,7 @@ func (suite *AuthServiceTestSuite) TestSetup2FA_2FAAlreadyEnabled() {
 		ID:               suite.userID,
 		TwoFAEnabled:     true,
 		TwoFASecret:      new("secret"),
-		TwoFaConfirmedAt: new(time.Now().UTC()),
+		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
 	suite.userRepo.EXPECT().
@@ -467,7 +461,7 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_Success() {
 
 	suite.userRepo.EXPECT().
 		Update(suite.ctx, mock.MatchedBy(func(user *models.User) bool {
-			return user.TwoFAEnabled && user.TwoFaConfirmedAt != nil
+			return user.TwoFAEnabled && user.TwoFAConfirmedAt != nil
 		})).
 		Return(nil).Once()
 
@@ -475,7 +469,7 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_Success() {
 
 	suite.NoError(err)
 	suite.True(user.TwoFAEnabled)
-	suite.NotNil(user.TwoFaConfirmedAt)
+	suite.NotNil(user.TwoFAConfirmedAt)
 }
 
 func (suite *AuthServiceTestSuite) TestConfirm2FA_2FANotInitialized() {
@@ -503,7 +497,7 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_2FAAlreadyEnabled() {
 		PasswordHash:     "password_hash",
 		TwoFASecret:      new("secret"),
 		TwoFAEnabled:     true,
-		TwoFaConfirmedAt: new(time.Now().UTC()),
+		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
 	req := dto.Confirm2FARequest{Password: "123123"}
@@ -609,7 +603,7 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_Success() {
 
 	suite.userRepo.EXPECT().
 		Update(suite.ctx, mock.MatchedBy(func(user *models.User) bool {
-			return !user.TwoFAEnabled && user.TwoFASecret == nil && user.TwoFaConfirmedAt == nil
+			return !user.TwoFAEnabled && user.TwoFASecret == nil && user.TwoFAConfirmedAt == nil
 		})).
 		Return(nil).Once()
 
@@ -618,7 +612,7 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_Success() {
 	suite.NoError(err)
 	suite.False(user.TwoFAEnabled)
 	suite.Nil(user.TwoFASecret)
-	suite.Nil(user.TwoFaConfirmedAt)
+	suite.Nil(user.TwoFAConfirmedAt)
 }
 
 func (suite *AuthServiceTestSuite) TestDisable2FA_2FANotEnabled() {
@@ -668,7 +662,7 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidCode() {
 		PasswordHash:     "password_hash",
 		TwoFAEnabled:     true,
 		TwoFASecret:      new(secret),
-		TwoFaConfirmedAt: new(time.Now().UTC()),
+		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
 	req := dto.Disable2FARequest{
@@ -704,7 +698,7 @@ func (suite *AuthServiceTestSuite) TestVerify2FA_Success() {
 		ID:               suite.userID,
 		TwoFAEnabled:     true,
 		TwoFASecret:      new("secret"),
-		TwoFaConfirmedAt: new(time.Now().UTC()),
+		TwoFAConfirmedAt: new(time.Now().UTC()),
 		Role:             models.UserRoleCustomer,
 	}
 
@@ -779,7 +773,7 @@ func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidCode() {
 		ID:               suite.userID,
 		TwoFAEnabled:     true,
 		TwoFASecret:      new("secret"),
-		TwoFaConfirmedAt: new(time.Now().UTC()),
+		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
 	req := dto.Verify2FARequest{

@@ -76,25 +76,25 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
 		Return(uuid.NewString()).Times(len(mockProduct.Images))
 
-	product, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
+	response, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
 
 	suite.NoError(err)
-	suite.NotNil(product)
-	suite.Equal(suite.productID, product.ID)
-	suite.Equal("Test Product", product.Name)
-	suite.Equal(int64(10_000), product.Price)
-	suite.Len(product.Categories, 2)
-	suite.Equal(mockProduct.Categories[0].ID, product.Categories[0].ID)
-	suite.Equal(mockProduct.Categories[1].ID, product.Categories[1].ID)
+	suite.NotNil(response)
+	suite.Equal(suite.productID, response.ID)
+	suite.Equal("Test Product", response.Name)
+	suite.Equal(int64(10_000), response.Price)
+	suite.Len(response.Categories, 2)
+	suite.Equal(mockProduct.Categories[0].ID, response.Categories[0].ID)
+	suite.Equal(mockProduct.Categories[1].ID, response.Categories[1].ID)
 }
 
 func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
 	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, true).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	product, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
+	response, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
 
-	suite.Nil(product)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }
 
@@ -103,9 +103,9 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_RepositoryError() {
 	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, true).
 		Return(nil, repoErr).Once()
 
-	product, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
+	response, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
 
-	suite.Nil(product)
+	suite.Nil(response)
 	suite.ErrorContains(err, repoErr.Error())
 }
 
@@ -165,19 +165,19 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
 		Return(uuid.NewString()).Times(len(mockProducts[0].Images) + len(mockProducts[1].Images))
 
-	products, totalCount, err := suite.productService.ListProducts(suite.ctx, req)
+	response, total, err := suite.productService.ListProducts(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.Equal(int64(2), totalCount)
-	suite.Len(products, 2)
+	suite.Equal(int64(2), total)
+	suite.Len(response, 2)
 
-	suite.Equal("Product 1", products[0].Name)
-	suite.Equal(int64(499_900), products[0].Price)
-	suite.Len(products[0].Categories, 1)
+	suite.Equal("Product 1", response[0].Name)
+	suite.Equal(int64(499_900), response[0].Price)
+	suite.Len(response[0].Categories, 1)
 
-	suite.Equal("Product 2", products[1].Name)
-	suite.Equal(int64(999_900), products[1].Price)
-	suite.Len(products[1].Categories, 2)
+	suite.Equal("Product 2", response[1].Name)
+	suite.Equal(int64(999_900), response[1].Price)
+	suite.Len(response[1].Categories, 2)
 }
 
 func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
@@ -214,13 +214,13 @@ func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
 		Return(uuid.NewString()).Times(len(mockProducts[0].Images))
 
-	products, totalCount, err := suite.productService.ListProducts(suite.ctx, req)
+	response, total, err := suite.productService.ListProducts(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.Equal(int64(1), totalCount)
-	suite.Len(products, 1)
-	suite.Equal("Category Product", products[0].Name)
-	suite.Len(products[0].Categories, 1)
+	suite.Equal(int64(1), total)
+	suite.Len(response, 1)
+	suite.Equal("Category Product", response[0].Name)
+	suite.Len(response[0].Categories, 1)
 }
 
 func (suite *ProductServiceTestSuite) TestListProducts_EmptyResult() {
@@ -234,12 +234,12 @@ func (suite *ProductServiceTestSuite) TestListProducts_EmptyResult() {
 
 	suite.uploadManager.AssertNotCalled(suite.T(), "PublicURL")
 
-	products, totalCount, err := suite.productService.ListProducts(suite.ctx, req)
+	response, total, err := suite.productService.ListProducts(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.Equal(int64(0), totalCount)
-	suite.Empty(products)
-	suite.Len(products, 0)
+	suite.Equal(int64(0), total)
+	suite.Empty(response)
+	suite.Len(response, 0)
 }
 
 func (suite *ProductServiceTestSuite) TestListProducts_RepositoryError() {
@@ -252,10 +252,10 @@ func (suite *ProductServiceTestSuite) TestListProducts_RepositoryError() {
 	suite.productRepo.EXPECT().ListProducts(suite.ctx, req).
 		Return(nil, 0, repoErr).Once()
 
-	products, totalCount, err := suite.productService.ListProducts(suite.ctx, req)
+	response, total, err := suite.productService.ListProducts(suite.ctx, req)
 
-	suite.Nil(products)
-	suite.Equal(int64(0), totalCount)
+	suite.Nil(response)
+	suite.Equal(int64(0), total)
 	suite.ErrorContains(err, repoErr.Error())
 }
 
@@ -268,11 +268,11 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_Success_DefaultIsActive(
 		return product.IsActive
 	})).Return(nil).Once()
 
-	product, err := suite.productService.CreateProduct(suite.ctx, req)
+	response, err := suite.productService.CreateProduct(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.NotNil(product)
-	suite.True(product.IsActive)
+	suite.NotNil(response)
+	suite.True(response.IsActive)
 }
 
 func (suite *ProductServiceTestSuite) TestCreateProduct_Success_IsActiveFalse() {
@@ -282,11 +282,11 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_Success_IsActiveFalse() 
 		return !product.IsActive
 	})).Return(nil).Once()
 
-	product, err := suite.productService.CreateProduct(suite.ctx, req)
+	response, err := suite.productService.CreateProduct(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.NotNil(product)
-	suite.False(product.IsActive)
+	suite.NotNil(response)
+	suite.False(response.IsActive)
 }
 
 func (suite *ProductServiceTestSuite) TestCreateProduct_RepositoryError() {
@@ -296,9 +296,9 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_RepositoryError() {
 	suite.productRepo.EXPECT().Create(suite.ctx, mock.Anything).
 		Return(repoErr).Once()
 
-	product, err := suite.productService.CreateProduct(suite.ctx, req)
+	response, err := suite.productService.CreateProduct(suite.ctx, req)
 
-	suite.Nil(product)
+	suite.Nil(response)
 	suite.ErrorContains(err, repoErr.Error())
 }
 
@@ -338,18 +338,18 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 		Return(nil).
 		Once()
 
-	product, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
+	response, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
 
 	suite.NoError(err)
-	suite.NotNil(product)
+	suite.NotNil(response)
 
-	suite.Equal(suite.productID, product.ID)
-	suite.Equal(name, product.Name)
-	suite.Equal(utils.Slugify(name), product.Slug)
-	suite.Equal(&description, product.Description)
-	suite.Equal(price, product.Price)
-	suite.Equal(stock, product.Stock)
-	suite.True(product.IsActive)
+	suite.Equal(suite.productID, response.ID)
+	suite.Equal(name, response.Name)
+	suite.Equal(utils.Slugify(name), response.Slug)
+	suite.Equal(&description, response.Description)
+	suite.Equal(price, response.Price)
+	suite.Equal(stock, response.Stock)
+	suite.True(response.IsActive)
 }
 
 func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() {
@@ -401,9 +401,9 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_ProductNotFound() {
 		Return(nil, repository.ErrRecordNotFound).
 		Once()
 
-	product, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
+	response, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
 
-	suite.Nil(product)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }
 
@@ -423,9 +423,9 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() 
 		Return(repoErr).
 		Once()
 
-	product, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
+	response, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
 
-	suite.Nil(product)
+	suite.Nil(response)
 	suite.ErrorContains(err, repoErr.Error())
 }
 

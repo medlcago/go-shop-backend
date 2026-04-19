@@ -49,22 +49,22 @@ func (suite *UserServiceTestSuite) TestGetUserByID_Success() {
 	suite.userRepo.EXPECT().GetByIDUnscoped(suite.ctx, suite.userID).
 		Return(mockUser, nil).Once()
 
-	user, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
+	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
 
 	suite.NoError(err)
-	suite.NotNil(user)
-	suite.Equal(suite.userID, user.ID)
-	suite.Equal(mockUser.Email, user.Email)
-	suite.NotZero(user.CreatedAt)
+	suite.NotNil(response)
+	suite.Equal(suite.userID, response.ID)
+	suite.Equal(mockUser.Email, response.Email)
+	suite.NotZero(response.CreatedAt)
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
 	suite.userRepo.EXPECT().GetByIDUnscoped(suite.ctx, suite.userID).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	user, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
+	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
 
-	suite.Nil(user)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrUserNotFound)
 }
 
@@ -72,9 +72,9 @@ func (suite *UserServiceTestSuite) TestGetUserByID_ProfileDeleted() {
 	suite.userRepo.EXPECT().GetByIDUnscoped(suite.ctx, suite.userID).
 		Return(&models.User{ID: suite.userID, DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
-	user, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
+	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
 
-	suite.Nil(user)
+	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
 }
 
@@ -83,8 +83,8 @@ func (suite *UserServiceTestSuite) TestGetUserByID_RepositoryError() {
 	suite.userRepo.EXPECT().GetByIDUnscoped(suite.ctx, suite.userID).
 		Return(nil, repoErr).Once()
 
-	user, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
+	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
 
-	suite.Nil(user)
+	suite.Nil(response)
 	suite.ErrorContains(err, repoErr.Error())
 }

@@ -28,9 +28,9 @@ type User struct {
 
 	TwoFAEnabled     bool       `gorm:"default:false;not null"`
 	TwoFASecret      *string    `gorm:"varchar(255)"`
-	TwoFaConfirmedAt *time.Time `gorm:"type:timestamptz"`
+	TwoFAConfirmedAt *time.Time `gorm:"type:timestamptz"`
 }
 
 func (u *User) IsTwoFAEnabled() bool {
-	return u.TwoFAEnabled && u.TwoFASecret != nil
+	return u.TwoFAEnabled && u.TwoFASecret != nil && *u.TwoFASecret != ""
 }

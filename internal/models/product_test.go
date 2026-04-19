@@ -153,8 +153,7 @@ func TestProduct_Reserve(t *testing.T) {
 			err := p.Reserve(tt.reserveQty)
 
 			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -247,8 +246,7 @@ func TestProduct_Release(t *testing.T) {
 			err := p.Release(tt.releaseQty)
 
 			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -375,8 +373,7 @@ func TestProduct_Deduct(t *testing.T) {
 			err := p.Deduct(tt.deductQty)
 
 			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
