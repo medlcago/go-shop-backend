@@ -153,111 +153,46 @@ func (_c *MockOrderItemRepository_Clear_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
-// DeleteItem provides a mock function for the type MockOrderItemRepository
-func (_mock *MockOrderItemRepository) DeleteItem(ctx context.Context, orderID uuid.UUID, productID uuid.UUID) error {
-	ret := _mock.Called(ctx, orderID, productID)
+// RemoveItem provides a mock function for the type MockOrderItemRepository
+func (_mock *MockOrderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error) {
+	ret := _mock.Called(ctx, orderID, itemID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteItem")
+		panic("no return value specified for RemoveItem")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r0 = returnFunc(ctx, orderID, productID)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockOrderItemRepository_DeleteItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteItem'
-type MockOrderItemRepository_DeleteItem_Call struct {
-	*mock.Call
-}
-
-// DeleteItem is a helper method to define mock.On call
-//   - ctx context.Context
-//   - orderID uuid.UUID
-//   - productID uuid.UUID
-func (_e *MockOrderItemRepository_Expecter) DeleteItem(ctx interface{}, orderID interface{}, productID interface{}) *MockOrderItemRepository_DeleteItem_Call {
-	return &MockOrderItemRepository_DeleteItem_Call{Call: _e.mock.On("DeleteItem", ctx, orderID, productID)}
-}
-
-func (_c *MockOrderItemRepository_DeleteItem_Call) Run(run func(ctx context.Context, orderID uuid.UUID, productID uuid.UUID)) *MockOrderItemRepository_DeleteItem_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		var arg2 uuid.UUID
-		if args[2] != nil {
-			arg2 = args[2].(uuid.UUID)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrderItemRepository_DeleteItem_Call) Return(err error) *MockOrderItemRepository_DeleteItem_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockOrderItemRepository_DeleteItem_Call) RunAndReturn(run func(ctx context.Context, orderID uuid.UUID, productID uuid.UUID) error) *MockOrderItemRepository_DeleteItem_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetItem provides a mock function for the type MockOrderItemRepository
-func (_mock *MockOrderItemRepository) GetItem(ctx context.Context, productID uuid.UUID, orderID uuid.UUID) (*models.OrderItem, error) {
-	ret := _mock.Called(ctx, productID, orderID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetItem")
-	}
-
-	var r0 *models.OrderItem
+	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (*models.OrderItem, error)); ok {
-		return returnFunc(ctx, productID, orderID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (bool, error)); ok {
+		return returnFunc(ctx, orderID, itemID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) *models.OrderItem); ok {
-		r0 = returnFunc(ctx, productID, orderID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) bool); ok {
+		r0 = returnFunc(ctx, orderID, itemID)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.OrderItem)
-		}
+		r0 = ret.Get(0).(bool)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, productID, orderID)
+		r1 = returnFunc(ctx, orderID, itemID)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockOrderItemRepository_GetItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetItem'
-type MockOrderItemRepository_GetItem_Call struct {
+// MockOrderItemRepository_RemoveItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveItem'
+type MockOrderItemRepository_RemoveItem_Call struct {
 	*mock.Call
 }
 
-// GetItem is a helper method to define mock.On call
+// RemoveItem is a helper method to define mock.On call
 //   - ctx context.Context
-//   - productID uuid.UUID
 //   - orderID uuid.UUID
-func (_e *MockOrderItemRepository_Expecter) GetItem(ctx interface{}, productID interface{}, orderID interface{}) *MockOrderItemRepository_GetItem_Call {
-	return &MockOrderItemRepository_GetItem_Call{Call: _e.mock.On("GetItem", ctx, productID, orderID)}
+//   - itemID uuid.UUID
+func (_e *MockOrderItemRepository_Expecter) RemoveItem(ctx interface{}, orderID interface{}, itemID interface{}) *MockOrderItemRepository_RemoveItem_Call {
+	return &MockOrderItemRepository_RemoveItem_Call{Call: _e.mock.On("RemoveItem", ctx, orderID, itemID)}
 }
 
-func (_c *MockOrderItemRepository_GetItem_Call) Run(run func(ctx context.Context, productID uuid.UUID, orderID uuid.UUID)) *MockOrderItemRepository_GetItem_Call {
+func (_c *MockOrderItemRepository_RemoveItem_Call) Run(run func(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID)) *MockOrderItemRepository_RemoveItem_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -280,12 +215,12 @@ func (_c *MockOrderItemRepository_GetItem_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockOrderItemRepository_GetItem_Call) Return(orderItem *models.OrderItem, err error) *MockOrderItemRepository_GetItem_Call {
-	_c.Call.Return(orderItem, err)
+func (_c *MockOrderItemRepository_RemoveItem_Call) Return(b bool, err error) *MockOrderItemRepository_RemoveItem_Call {
+	_c.Call.Return(b, err)
 	return _c
 }
 
-func (_c *MockOrderItemRepository_GetItem_Call) RunAndReturn(run func(ctx context.Context, productID uuid.UUID, orderID uuid.UUID) (*models.OrderItem, error)) *MockOrderItemRepository_GetItem_Call {
+func (_c *MockOrderItemRepository_RemoveItem_Call) RunAndReturn(run func(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error)) *MockOrderItemRepository_RemoveItem_Call {
 	_c.Call.Return(run)
 	return _c
 }

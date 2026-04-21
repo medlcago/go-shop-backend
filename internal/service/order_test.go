@@ -459,9 +459,9 @@ func (suite *OrderServiceTestSuite) TestAddItem_RepositoryError() {
 	suite.ErrorContains(err, dbError.Error())
 }
 
-// ==================== DeleteItem  Tests ====================
+// ==================== RemoveItem Tests ====================
 
-func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
+func (suite *OrderServiceTestSuite) TestRemoveItem_Success() {
 	order := &models.Order{
 		ID:          suite.orderID,
 		UserID:      &suite.userID,
@@ -490,11 +490,8 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
-		Return(&models.OrderItem{ID: suite.itemID, ProductID: suite.productID}, nil).Once()
-
-	suite.orderItemRepo.EXPECT().DeleteItem(suite.ctx, suite.orderID, suite.productID).
-		Return(nil).Once()
+	suite.orderItemRepo.EXPECT().RemoveItem(suite.ctx, suite.orderID, suite.itemID).
+		Return(true, nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(orderAfterDelete, nil).Once()
@@ -502,23 +499,23 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_Success() {
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(nil).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.RemoveItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.itemID)
 
 	suite.NoError(err)
 	suite.NotNil(response)
 }
 
-func (suite *OrderServiceTestSuite) TestDeleteItem_OrderNotFound() {
+func (suite *OrderServiceTestSuite) TestRemoveItem_OrderNotFound() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.RemoveItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.itemID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
 }
 
-func (suite *OrderServiceTestSuite) TestDeleteItem_InvalidOrderStatus() {
+func (suite *OrderServiceTestSuite) TestRemoveItem_InvalidOrderStatus() {
 	order := &models.Order{
 		ID:        suite.orderID,
 		UserID:    &suite.userID,
@@ -529,13 +526,13 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_InvalidOrderStatus() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.RemoveItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.itemID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
 }
 
-func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
+func (suite *OrderServiceTestSuite) TestRemoveItem_ItemNotFound() {
 	order := &models.Order{
 		ID:          suite.orderID,
 		UserID:      &suite.userID,
@@ -555,21 +552,21 @@ func (suite *OrderServiceTestSuite) TestDeleteItem_ItemNotFound() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
-	suite.orderItemRepo.EXPECT().GetItem(suite.ctx, suite.productID, suite.orderID).
-		Return(nil, repository.ErrRecordNotFound).Once()
+	suite.orderItemRepo.EXPECT().RemoveItem(suite.ctx, suite.orderID, suite.itemID).
+		Return(false, nil).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.RemoveItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.itemID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrItemNotFound)
 }
 
-func (suite *OrderServiceTestSuite) TestDeleteItem_RepositoryError() {
+func (suite *OrderServiceTestSuite) TestRemoveItem_RepositoryError() {
 	dbError := errors.New("db error")
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, dbError).Once()
 
-	response, err := suite.orderService.DeleteItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.productID)
+	response, err := suite.orderService.RemoveItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.itemID)
 
 	suite.Nil(response)
 	suite.ErrorContains(err, dbError.Error())

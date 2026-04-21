@@ -19,16 +19,6 @@ func NewOrderItemRepository(db database.Provider) *orderItemRepository {
 		db: db,
 	}
 }
-func (o *orderItemRepository) GetItem(ctx context.Context, productID uuid.UUID, orderID uuid.UUID) (*models.OrderItem, error) {
-	db := o.db.GetDB(ctx)
-
-	var item models.OrderItem
-	if err := db.Where("order_id = ? AND product_id = ?", orderID, productID).First(&item).Error; err != nil {
-		return nil, repository.HandleSQLError(err)
-	}
-
-	return &item, nil
-}
 
 func (o *orderItemRepository) AddItem(ctx context.Context, orderItem *models.OrderItem) error {
 	db := o.db.GetDB(ctx)
@@ -48,13 +38,17 @@ func (o *orderItemRepository) Upsert(ctx context.Context, orderItem *models.Orde
 	return repository.HandleSQLError(err)
 }
 
-func (o *orderItemRepository) DeleteItem(ctx context.Context, orderID uuid.UUID, productID uuid.UUID) error {
+func (o *orderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error) {
 	db := o.db.GetDB(ctx)
 
-	err := db.Where("order_id = ? AND product_id = ?", orderID, productID).
-		Delete(&models.OrderItem{}).Error
+	result := db.Where("id = ? AND order_id = ?", itemID, orderID).
+		Delete(&models.OrderItem{})
 
-	return repository.HandleSQLError(err)
+	if result.Error != nil {
+		return false, repository.HandleSQLError(result.Error)
+	}
+
+	return result.RowsAffected > 0, nil
 }
 
 func (o *orderItemRepository) Clear(ctx context.Context, orderID uuid.UUID) error {

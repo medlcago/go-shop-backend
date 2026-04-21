@@ -54,6 +54,7 @@ func (s *Server) Start(_ context.Context) error {
 
 	return s.app.Listen(addr, fiber.ListenConfig{
 		DisableStartupMessage: !s.IsDevMode(),
+		EnablePrintRoutes:     s.IsDevMode(),
 	})
 
 }

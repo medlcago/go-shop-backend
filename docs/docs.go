@@ -813,7 +813,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Removes all items from the order (clears shopping cart)",
+                "description": "Clear all items from order (clears shopping cart)",
                 "produces": [
                     "application/json"
                 ],
@@ -873,21 +873,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/orders/{id}/items/{product_id}": {
+        "/orders/{id}/items/{itemID}": {
             "delete": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete item from order",
+                "description": "Remove item from order",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Orders"
                 ],
-                "summary": "Delete item from order",
+                "summary": "Remove item from order",
                 "parameters": [
                     {
                         "type": "string",
@@ -900,8 +900,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "Product ID",
-                        "name": "product_id",
+                        "description": "Item ID",
+                        "name": "itemID",
                         "in": "path",
                         "required": true
                     },
@@ -1388,6 +1388,9 @@ const docTemplate = `{
         "go-shop-backend_internal_dto.OrderItemResponse": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "string"
+                },
                 "product_id": {
                     "type": "string"
                 },
@@ -1412,6 +1415,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
                     "type": "string"
                 },
                 "id": {

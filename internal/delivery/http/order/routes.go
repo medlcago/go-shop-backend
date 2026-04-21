@@ -20,7 +20,7 @@ func RegisterRoutes(r fiber.Router, orderHandler *Handler) {
 		orderGroup.Get("/", orderHandler.GetOrders)
 		orderGroup.Get("/:id<guid>", orderHandler.GetOrder)
 		orderGroup.Post("/:id<guid>/items", orderHandler.AddItem)
-		orderGroup.Delete("/:id<guid>/items/:productID<guid>", orderHandler.DeleteItem)
+		orderGroup.Delete("/:id<guid>/items/:itemID<guid>", orderHandler.RemoveItem)
 		orderGroup.Delete("/:id<guid>/items", orderHandler.ClearItems)
 
 		protectedOrderGroup := orderGroup.Group("/", middleware.RequireAuth())

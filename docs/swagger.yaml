@@ -43,6 +43,8 @@ definitions:
     type: object
   go-shop-backend_internal_dto.OrderItemResponse:
     properties:
+      id:
+        type: string
       product_id:
         type: string
       product_name:
@@ -59,6 +61,8 @@ definitions:
       completed_at:
         type: string
       created_at:
+        type: string
+      expires_at:
         type: string
       id:
         type: string
@@ -850,7 +854,7 @@ paths:
       - Orders
   /orders/{id}/items:
     delete:
-      description: Removes all items from the order (clears shopping cart)
+      description: Clear all items from order (clears shopping cart)
       parameters:
       - description: Order ID
         format: uuid
@@ -951,9 +955,9 @@ paths:
       summary: Add item to order
       tags:
       - Orders
-  /orders/{id}/items/{product_id}:
+  /orders/{id}/items/{itemID}:
     delete:
-      description: Delete item from order
+      description: Remove item from order
       parameters:
       - description: Order ID
         format: uuid
@@ -961,10 +965,10 @@ paths:
         name: id
         required: true
         type: string
-      - description: Product ID
+      - description: Item ID
         format: uuid
         in: path
-        name: product_id
+        name: itemID
         required: true
         type: string
       - description: Session ID
@@ -998,7 +1002,7 @@ paths:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       security:
       - BearerAuth: []
-      summary: Delete item from order
+      summary: Remove item from order
       tags:
       - Orders
   /products:

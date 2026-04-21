@@ -422,92 +422,6 @@ func (_c *MockOrderService_CreateOrder_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
-// DeleteItem provides a mock function for the type MockOrderService
-func (_mock *MockOrderService) DeleteItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, productID uuid.UUID) (*dto.OrderResponse, error) {
-	ret := _mock.Called(ctx, userID, sessionID, orderID, productID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteItem")
-	}
-
-	var r0 *dto.OrderResponse
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) (*dto.OrderResponse, error)); ok {
-		return returnFunc(ctx, userID, sessionID, orderID, productID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) *dto.OrderResponse); ok {
-		r0 = returnFunc(ctx, userID, sessionID, orderID, productID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.OrderResponse)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, userID, sessionID, orderID, productID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockOrderService_DeleteItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteItem'
-type MockOrderService_DeleteItem_Call struct {
-	*mock.Call
-}
-
-// DeleteItem is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID *uuid.UUID
-//   - sessionID uuid.UUID
-//   - orderID uuid.UUID
-//   - productID uuid.UUID
-func (_e *MockOrderService_Expecter) DeleteItem(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}, productID interface{}) *MockOrderService_DeleteItem_Call {
-	return &MockOrderService_DeleteItem_Call{Call: _e.mock.On("DeleteItem", ctx, userID, sessionID, orderID, productID)}
-}
-
-func (_c *MockOrderService_DeleteItem_Call) Run(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, productID uuid.UUID)) *MockOrderService_DeleteItem_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(*uuid.UUID)
-		}
-		var arg2 uuid.UUID
-		if args[2] != nil {
-			arg2 = args[2].(uuid.UUID)
-		}
-		var arg3 uuid.UUID
-		if args[3] != nil {
-			arg3 = args[3].(uuid.UUID)
-		}
-		var arg4 uuid.UUID
-		if args[4] != nil {
-			arg4 = args[4].(uuid.UUID)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-			arg4,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrderService_DeleteItem_Call) Return(orderResponse *dto.OrderResponse, err error) *MockOrderService_DeleteItem_Call {
-	_c.Call.Return(orderResponse, err)
-	return _c
-}
-
-func (_c *MockOrderService_DeleteItem_Call) RunAndReturn(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, productID uuid.UUID) (*dto.OrderResponse, error)) *MockOrderService_DeleteItem_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetOrder provides a mock function for the type MockOrderService
 func (_mock *MockOrderService) GetOrder(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error) {
 	ret := _mock.Called(ctx, userID, sessionID, orderID)
@@ -727,6 +641,92 @@ func (_c *MockOrderService_HandlePaymentWebhook_Call) Return(err error) *MockOrd
 }
 
 func (_c *MockOrderService_HandlePaymentWebhook_Call) RunAndReturn(run func(ctx context.Context, body []byte) error) *MockOrderService_HandlePaymentWebhook_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveItem provides a mock function for the type MockOrderService
+func (_mock *MockOrderService) RemoveItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error) {
+	ret := _mock.Called(ctx, userID, sessionID, orderID, itemID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveItem")
+	}
+
+	var r0 *dto.OrderResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) (*dto.OrderResponse, error)); ok {
+		return returnFunc(ctx, userID, sessionID, orderID, itemID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) *dto.OrderResponse); ok {
+		r0 = returnFunc(ctx, userID, sessionID, orderID, itemID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.OrderResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID, sessionID, orderID, itemID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderService_RemoveItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveItem'
+type MockOrderService_RemoveItem_Call struct {
+	*mock.Call
+}
+
+// RemoveItem is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID *uuid.UUID
+//   - sessionID uuid.UUID
+//   - orderID uuid.UUID
+//   - itemID uuid.UUID
+func (_e *MockOrderService_Expecter) RemoveItem(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}, itemID interface{}) *MockOrderService_RemoveItem_Call {
+	return &MockOrderService_RemoveItem_Call{Call: _e.mock.On("RemoveItem", ctx, userID, sessionID, orderID, itemID)}
+}
+
+func (_c *MockOrderService_RemoveItem_Call) Run(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID)) *MockOrderService_RemoveItem_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(*uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		var arg3 uuid.UUID
+		if args[3] != nil {
+			arg3 = args[3].(uuid.UUID)
+		}
+		var arg4 uuid.UUID
+		if args[4] != nil {
+			arg4 = args[4].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderService_RemoveItem_Call) Return(orderResponse *dto.OrderResponse, err error) *MockOrderService_RemoveItem_Call {
+	_c.Call.Return(orderResponse, err)
+	return _c
+}
+
+func (_c *MockOrderService_RemoveItem_Call) RunAndReturn(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error)) *MockOrderService_RemoveItem_Call {
 	_c.Call.Return(run)
 	return _c
 }

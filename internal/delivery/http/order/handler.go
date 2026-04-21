@@ -151,32 +151,32 @@ func (h *Handler) AddItem(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
-// DeleteItem godoc
+// RemoveItem godoc
 //
-//	@Summary		Delete item from order
-//	@Description	Delete item from order
+//	@Summary		Remove item from order
+//	@Description	Remove item from order
 //	@Tags			Orders
 //	@Security		BearerAuth
 //	@Produce		json
 //	@Param			id				path		string	true	"Order ID"		Format(uuid)
-//	@Param			product_id		path		string	true	"Product ID"	Format(uuid)
+//	@Param			itemID			path		string	true	"Item ID"		Format(uuid)
 //	@Param			X-Session-ID	header		string	true	"Session ID"	Format(uuid)
 //	@Success		200				{object}	response.Response[dto.OrderResponse]
 //	@Failure		401				{object}	response.Response[any]
 //	@Failure		403				{object}	response.Response[any]
 //	@Failure		409				{object}	response.Response[any]
 //	@Failure		500				{object}	response.Response[any]
-//	@Router			/orders/{id}/items/{product_id} [delete]
-func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
+//	@Router			/orders/{id}/items/{itemID} [delete]
+func (h *Handler) RemoveItem(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.SessionID == nil {
 		return apperror.ErrInvalidCredentials
 	}
 
 	orderID := uuid.MustParse(ctx.Params("id"))
-	productID := uuid.MustParse(ctx.Params("productID"))
+	itemID := uuid.MustParse(ctx.Params("itemID"))
 
-	resp, err := h.orderService.DeleteItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, productID)
+	resp, err := h.orderService.RemoveItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, itemID)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (h *Handler) DeleteItem(ctx fiber.Ctx) error {
 // ClearItems godoc
 //
 //	@Summary		Clear all items from order
-//	@Description	Removes all items from the order (clears shopping cart)
+//	@Description	Clear all items from order (clears shopping cart)
 //	@Tags			Orders
 //	@Security		BearerAuth
 //	@Produce		json

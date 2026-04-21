@@ -185,14 +185,14 @@ func (o *orderService) AddItem(
 	return response, nil
 }
 
-func (o *orderService) DeleteItem(
+func (o *orderService) RemoveItem(
 	ctx context.Context,
 	userID *uuid.UUID,
 	sessionID uuid.UUID,
 	orderID uuid.UUID,
-	productID uuid.UUID,
+	itemID uuid.UUID,
 ) (*dto.OrderResponse, error) {
-	const op = "orderService.DeleteItem"
+	const op = "orderService.RemoveItem"
 
 	var order *models.Order
 
@@ -208,16 +208,13 @@ func (o *orderService) DeleteItem(
 			return apperror.ErrInvalidOrderStatus
 		}
 
-		item, err := o.orderItemRepo.GetItem(ctx, productID, orderID)
+		removed, err := o.orderItemRepo.RemoveItem(ctx, orderID, itemID)
 		if err != nil {
-			if !errors.Is(err, repository.ErrRecordNotFound) {
-				return err
-			}
-			return apperror.ErrItemNotFound
+			return err
 		}
 
-		if err = o.orderItemRepo.DeleteItem(ctx, orderID, item.ProductID); err != nil {
-			return err
+		if !removed {
+			return apperror.ErrItemNotFound
 		}
 
 		order, err = o.recalculateOrder(ctx, orderID, userID, sessionID)

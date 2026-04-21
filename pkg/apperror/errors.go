@@ -32,7 +32,7 @@ var (
 
 	ErrInvalidQuantity    = New(http.StatusBadRequest, "quantity must be greater than zero")
 	ErrInsufficientStock  = New(http.StatusBadRequest, "insufficient product stock")
-	ErrInconsistentStock  = New(http.StatusConflict, "inconsistent product stock")
+	ErrInconsistentStock  = New(http.StatusBadRequest, "inconsistent product stock")
 	ErrInvalidOrderStatus = New(http.StatusConflict, "order status does not allow modifications")
 	ErrEmptyOrder         = New(http.StatusBadRequest, "order is empty")
 	ErrOrderNotFound      = New(http.StatusNotFound, "order not found")

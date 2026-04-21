@@ -13,6 +13,7 @@ type AddOrderItemRequest struct {
 }
 
 type OrderItemResponse struct {
+	ID          uuid.UUID `json:"id"`
 	ProductID   uuid.UUID `json:"product_id"`
 	ProductName string    `json:"product_name"`
 	Quantity    int       `json:"quantity"`
