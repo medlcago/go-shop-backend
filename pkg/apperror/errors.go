@@ -42,6 +42,10 @@ var (
 	Err2FANotEnabled     = New(http.StatusBadRequest, "2FA is not enabled")
 	Err2FANotInitialized = New(http.StatusBadRequest, "2FA is not initialized")
 	ErrInvalid2FACode    = New(http.StatusBadRequest, "invalid 2FA code")
+
+	ErrWishlistNotFound         = New(http.StatusNotFound, "wishlist not found or is private")
+	ErrWishlistItemNotFound     = New(http.StatusNotFound, "wishlist item not found")
+	ErrProductAlreadyInWishlist = New(http.StatusConflict, "product already in wishlist")
 )
 
 type AppError struct {

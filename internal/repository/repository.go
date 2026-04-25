@@ -52,3 +52,20 @@ type OrderItemRepository interface {
 	RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error)
 	Clear(ctx context.Context, orderID uuid.UUID) error
 }
+
+type WishlistRepository interface {
+	Create(ctx context.Context, wishlist *models.Wishlist) error
+	Update(ctx context.Context, wishlist *models.Wishlist) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Wishlist, error)
+	GetByShareToken(ctx context.Context, token string, preload bool) (*models.Wishlist, error)
+	GetListByUser(ctx context.Context, userID uuid.UUID, req dto.ListWishlistRequest) ([]*models.Wishlist, int64, error)
+}
+
+type WishlistItemRepository interface {
+	GetItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (*models.WishlistItem, error)
+	AddItem(ctx context.Context, item *models.WishlistItem) error
+	UpdateItem(ctx context.Context, wishlistItem *models.WishlistItem) error
+	RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (bool, error)
+	ProductExistsInWishlist(ctx context.Context, wishlistID uuid.UUID, productID uuid.UUID) (bool, error)
+}

@@ -9,6 +9,7 @@ import (
 	orderHttp "go-shop-backend/internal/delivery/http/order"
 	productHttp "go-shop-backend/internal/delivery/http/product"
 	userHttp "go-shop-backend/internal/delivery/http/user"
+	wishlistHttp "go-shop-backend/internal/delivery/http/wishlist"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/middleware"
 	"log/slog"
@@ -91,4 +92,7 @@ func (s *Server) Init() {
 
 	orderHandler := orderHttp.NewHandler(s.container.OrderService())
 	orderHttp.RegisterRoutes(v1, orderHandler)
+
+	wishlistHandler := wishlistHttp.NewHandler(s.container.WishlistService())
+	wishlistHttp.RegisterRoutes(v1, wishlistHandler)
 }

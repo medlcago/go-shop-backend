@@ -98,3 +98,11 @@ func CategoryWithParentID(parentID uuid.UUID) func(db *gorm.DB) *gorm.DB {
 		return db.Where("parent_id = ?", parentID)
 	}
 }
+
+func WishlistWithRelations() func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload("Items", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("priority DESC, created_at DESC")
+		}).Preload("Items.Product")
+	}
+}

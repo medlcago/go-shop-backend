@@ -45,12 +45,14 @@ type Container struct {
 	uploadManager        upload.Manager
 
 	// repositories
-	userRepository      repository.UserRepository
-	productRepository   repository.ProductRepository
-	categoryRepository  repository.CategoryRepository
-	uploadRepository    repository.UploadRepository
-	orderRepository     repository.OrderRepository
-	orderItemRepository repository.OrderItemRepository
+	userRepository         repository.UserRepository
+	productRepository      repository.ProductRepository
+	categoryRepository     repository.CategoryRepository
+	uploadRepository       repository.UploadRepository
+	orderRepository        repository.OrderRepository
+	orderItemRepository    repository.OrderItemRepository
+	wishlistRepository     repository.WishlistRepository
+	wishlistItemRepository repository.WishlistItemRepository
 
 	// services
 	authService     service.AuthService
@@ -58,6 +60,7 @@ type Container struct {
 	productService  service.ProductService
 	categoryService service.CategoryService
 	orderService    service.OrderService
+	wishlistService service.WishlistService
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -298,6 +301,22 @@ func (c *Container) UploadRepo() repository.UploadRepository {
 	return c.uploadRepository
 }
 
+func (c *Container) WishlistRepo() repository.WishlistRepository {
+	if c.wishlistRepository == nil {
+		c.wishlistRepository = gormRepo.NewWishlistRepository(c.DB())
+	}
+
+	return c.wishlistRepository
+}
+
+func (c *Container) WishlistItemRepo() repository.WishlistItemRepository {
+	if c.wishlistItemRepository == nil {
+		c.wishlistItemRepository = gormRepo.NewWishlistItemRepository(c.DB())
+	}
+
+	return c.wishlistItemRepository
+}
+
 func (c *Container) UploadManager() upload.Manager {
 	if c.uploadManager == nil {
 		c.uploadManager = upload.NewManager(
@@ -367,6 +386,18 @@ func (c *Container) OrderService() service.OrderService {
 	}
 
 	return c.orderService
+}
+
+func (c *Container) WishlistService() service.WishlistService {
+	if c.wishlistService == nil {
+		c.wishlistService = service.NewWishlistService(
+			c.WishlistRepo(),
+			c.WishlistItemRepo(),
+			c.ProductRepo(),
+		)
+	}
+
+	return c.wishlistService
 }
 
 func (c *Container) Close() error {

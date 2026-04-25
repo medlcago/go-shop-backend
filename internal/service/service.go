@@ -45,3 +45,16 @@ type OrderService interface {
 	HandlePaymentWebhook(ctx context.Context, body []byte) error
 	CancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error
 }
+
+type WishlistService interface {
+	CreateWishlist(ctx context.Context, userID uuid.UUID, req dto.CreateWishlistRequest) (*dto.WishlistResponse, error)
+	GetWishlist(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID) (*dto.WishlistResponse, error)
+	GetWishlists(ctx context.Context, userID uuid.UUID, req dto.ListWishlistRequest) ([]*dto.WishlistResponse, int64, error)
+	GetSharedWishlist(ctx context.Context, shareToken string) (*dto.WishlistResponse, error)
+	UpdateWishlist(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID, req dto.UpdateWishlistRequest) (*dto.WishlistResponse, error)
+	DeleteWishlist(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID) error
+	RegenerateShareToken(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID) (*dto.WishlistShareTokenResponse, error)
+	AddItem(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID, req dto.AddWishlistItemRequest) (*dto.WishlistResponse, error)
+	UpdateItem(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID, itemID uuid.UUID, req dto.UpdateWishlistItemRequest) (*dto.WishlistResponse, error)
+	RemoveItem(ctx context.Context, userID, wishlistID, itemID uuid.UUID) (*dto.WishlistResponse, error)
+}
