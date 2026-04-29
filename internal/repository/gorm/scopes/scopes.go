@@ -84,7 +84,13 @@ func OrderOwner(userID *uuid.UUID, sessionID uuid.UUID) func(db *gorm.DB) *gorm.
 func OrderWithRelations() func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Preload("Items", func(tx *gorm.DB) *gorm.DB {
-			return tx.Order("order_items.created_at ASC")
+			return tx.Order("order_items.created_at ASC").
+				Preload("Product", func(tx *gorm.DB) *gorm.DB {
+					return tx.Select("id").
+						Preload("Images", func(tx *gorm.DB) *gorm.DB {
+							return tx.Select("id", "object_key", "entity_id", "entity_type")
+						})
+				})
 		})
 	}
 }

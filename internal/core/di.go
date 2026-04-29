@@ -113,7 +113,7 @@ func (c *Container) DB() database.DB {
 
 func (c *Container) TxManager() database.TxManager {
 	if c.txManager == nil {
-		c.txManager = database.NewGormManager(c.DB().GetDB(context.Background()))
+		c.txManager = database.NewGormTxManager(c.DB().GetDB(context.Background()))
 	}
 
 	return c.txManager
@@ -382,6 +382,7 @@ func (c *Container) OrderService() service.OrderService {
 			c.TxManager(),
 			c.Config().OrderCancelDelay,
 			c.Config().OrderCheckoutTimeout,
+			c.UploadManager(),
 		)
 	}
 

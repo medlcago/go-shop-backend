@@ -10,7 +10,7 @@ var (
 	ErrRecordNotFound = errors.New("record not found")
 )
 
-func HandleSQLError(err error) error {
+func HandleError(err error) error {
 	if err == nil {
 		return nil
 	}

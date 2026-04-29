@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -33,18 +32,14 @@ func NewProductService(
 func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error) {
 	const op = "productService.GetProductByID"
 
-	product, err := p.productRepo.GetByID(ctx, productID, true)
+	product, err := p.getProductByID(ctx, productID, true)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, fmt.Errorf("%s: %w", op, apperror.ErrProductNotFound)
-		}
-
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := p.mapProduct(product)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -55,12 +50,12 @@ func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRe
 
 	products, total, err := p.productRepo.ListProducts(ctx, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	response, err := p.mapProducts(products)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	return response, total, nil
@@ -84,12 +79,12 @@ func (p *productService) CreateProduct(ctx context.Context, req dto.ProductCreat
 
 	err := p.productRepo.Create(ctx, product)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := p.mapProduct(product)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -98,39 +93,22 @@ func (p *productService) CreateProduct(ctx context.Context, req dto.ProductCreat
 func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error) {
 	const op = "productService.UpdateProduct"
 
-	product, err := p.productRepo.GetByID(ctx, productID, false)
+	product, err := p.getProductByID(ctx, productID, false)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrProductNotFound)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if req.Name != nil {
-		product.Name = *req.Name
-		product.Slug = utils.Slugify(product.Name)
-	}
-
-	if req.Description != nil {
-		product.Description = req.Description
-	}
-
-	if req.Price != nil {
-		product.Price = *req.Price
-	}
-
-	if req.Stock != nil {
-		product.Stock = *req.Stock
-	}
-
-	if req.IsActive != nil {
-		product.IsActive = *req.IsActive
+	if err := applyProductUpdates(product, req); err != nil {
+		return nil, apperror.Wrap(op, err)
 	}
 
 	if err := p.productRepo.Update(ctx, product); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := p.mapProduct(product)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -141,12 +119,12 @@ func (p *productService) Search(ctx context.Context, req dto.SearchProductReques
 
 	products, total, err := p.productRepo.Search(ctx, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	response, err := p.mapProducts(products)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	return response, total, nil
@@ -160,7 +138,7 @@ func (p *productService) UploadImage(
 	const op = "productService.UploadProductImage"
 
 	if err := p.productExists(ctx, productID); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	signUrlReq := upload.SignURLRequest{
@@ -171,12 +149,12 @@ func (p *productService) UploadImage(
 
 	signUrlResp, err := p.uploadManager.SignURL(ctx, signUrlReq, upload.ProductImagePolicy)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := mapper.MapOne[*upload.SignURLResponse, dto.SignURLResponse](signUrlResp)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -190,7 +168,7 @@ func (p *productService) ConfirmUploadImage(
 	const op = "productService.ConfirmUploadImage"
 
 	if err := p.productExists(ctx, productID); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	saveUploadReq := upload.SaveUploadRequest{
@@ -202,15 +180,34 @@ func (p *productService) ConfirmUploadImage(
 
 	saveUploadResp, err := p.uploadManager.Save(ctx, saveUploadReq, upload.ProductImagePolicy)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := mapper.MapOne[*upload.ContentResponse, dto.UploadResponse](saveUploadResp)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
+}
+
+func (p *productService) getProductByID(
+	ctx context.Context,
+	productID uuid.UUID,
+	preload bool,
+) (*models.Product, error) {
+	const op = "productService.getProductByID"
+
+	product, err := p.productRepo.GetByID(ctx, productID, preload)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrProductNotFound)
+		}
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return product, nil
 }
 
 func (p *productService) productExists(ctx context.Context, productID uuid.UUID) error {
@@ -218,11 +215,11 @@ func (p *productService) productExists(ctx context.Context, productID uuid.UUID)
 
 	exists, err := p.productRepo.Exists(ctx, productID)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	if !exists {
-		return fmt.Errorf("%s: %w", op, apperror.ErrProductNotFound)
+		return apperror.Wrap(op, apperror.ErrProductNotFound)
 	}
 
 	return nil
@@ -235,7 +232,7 @@ func (p *productService) mapProduct(product *models.Product) (*dto.ProductRespon
 
 	response, err := mapper.MapOne[*models.Product, dto.ProductResponse](product)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -250,8 +247,39 @@ func (p *productService) mapProducts(products []*models.Product) ([]*dto.Product
 
 	response, err := mapper.MapList[*models.Product, *dto.ProductResponse](products)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
+}
+
+func applyProductUpdates(product *models.Product, req dto.ProductUpdateRequest) error {
+	if req.Name != nil {
+		product.Name = *req.Name
+		product.Slug = utils.Slugify(product.Name)
+	}
+
+	if req.Description != nil {
+		product.Description = req.Description
+	}
+
+	if req.Price != nil {
+		product.Price = *req.Price
+	}
+
+	if req.Stock != nil {
+		stock := *req.Stock
+
+		if stock < product.Reserved {
+			return apperror.ErrStockLessThanReserved
+		}
+
+		product.Stock = stock
+	}
+
+	if req.IsActive != nil {
+		product.IsActive = *req.IsActive
+	}
+
+	return nil
 }

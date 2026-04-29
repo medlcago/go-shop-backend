@@ -25,14 +25,14 @@ func (w *wishlistRepository) Create(ctx context.Context, wishlist *models.Wishli
 	db := w.db.GetDB(ctx)
 
 	err := db.Create(wishlist).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (w *wishlistRepository) Update(ctx context.Context, wishlist *models.Wishlist) error {
 	db := w.db.GetDB(ctx)
 
 	err := db.Select("*").Updates(wishlist).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (w *wishlistRepository) Delete(ctx context.Context, id uuid.UUID) error {
@@ -40,7 +40,7 @@ func (w *wishlistRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 	result := db.Delete(&models.Wishlist{}, id)
 	if result.Error != nil {
-		return repository.HandleSQLError(result.Error)
+		return repository.HandleError(result.Error)
 	}
 
 	if result.RowsAffected == 0 {
@@ -60,9 +60,8 @@ func (w *wishlistRepository) GetByID(ctx context.Context, id uuid.UUID, preload 
 	}
 
 	var wishlist models.Wishlist
-	err := db.First(&wishlist, id).Error
-	if err != nil {
-		return nil, repository.HandleSQLError(err)
+	if err := db.First(&wishlist, id).Error; err != nil {
+		return nil, repository.HandleError(err)
 	}
 
 	return &wishlist, nil
@@ -80,9 +79,8 @@ func (w *wishlistRepository) GetByShareToken(ctx context.Context, token string, 
 	db = db.Where("share_token = ?", token)
 
 	var wishlist models.Wishlist
-	err := db.First(&wishlist).Error
-	if err != nil {
-		return nil, repository.HandleSQLError(err)
+	if err := db.First(&wishlist).Error; err != nil {
+		return nil, repository.HandleError(err)
 	}
 
 	return &wishlist, nil
@@ -95,7 +93,7 @@ func (w *wishlistRepository) GetListByUser(ctx context.Context, userID uuid.UUID
 
 	var total int64
 	if err := db.Model(&models.Wishlist{}).Count(&total).Error; err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	if total == 0 {
@@ -109,7 +107,7 @@ func (w *wishlistRepository) GetListByUser(ctx context.Context, userID uuid.UUID
 	).Find(&wishlists).Error
 
 	if err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	return wishlists, total, nil

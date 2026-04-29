@@ -24,7 +24,7 @@ func (o *orderItemRepository) AddItem(ctx context.Context, orderItem *models.Ord
 	db := o.db.GetDB(ctx)
 
 	err := db.Create(orderItem).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (o *orderItemRepository) Upsert(ctx context.Context, orderItem *models.OrderItem) error {
@@ -35,7 +35,7 @@ func (o *orderItemRepository) Upsert(ctx context.Context, orderItem *models.Orde
 		UpdateAll: true,
 	}).Create(orderItem).Error
 
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (o *orderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error) {
@@ -45,7 +45,7 @@ func (o *orderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID,
 		Delete(&models.OrderItem{})
 
 	if result.Error != nil {
-		return false, repository.HandleSQLError(result.Error)
+		return false, repository.HandleError(result.Error)
 	}
 
 	return result.RowsAffected > 0, nil
@@ -57,5 +57,5 @@ func (o *orderItemRepository) Clear(ctx context.Context, orderID uuid.UUID) erro
 	err := db.Where("order_id = ?", orderID).
 		Delete(&models.OrderItem{}).Error
 
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"go-shop-backend/pkg/apperror"
 	"time"
 
@@ -21,8 +20,8 @@ const (
 type Order struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 
-	UserID    *uuid.UUID `gorm:"type:uuid;index"`
-	SessionID uuid.UUID  `gorm:"type:uuid;index"`
+	UserID    *uuid.UUID `gorm:"type:uuid;index:idx_orders_user_id"`
+	SessionID uuid.UUID  `gorm:"type:uuid;index:idx_orders_session_id"`
 
 	Status OrderStatus `gorm:"type:order_status;not null;index:idx_orders_status;index:idx_orders_status_expires_at;default:'draft'"`
 
@@ -34,23 +33,27 @@ type Order struct {
 	PaidAt       *time.Time `gorm:"type:timestamptz"`
 	CanceledAt   *time.Time `gorm:"type:timestamptz"`
 
-	CreatedAt   time.Time    `gorm:"type:timestamptz;default:now();not null"`
-	UpdatedAt   time.Time    `gorm:"type:timestamptz;default:now();not null"`
-	CompletedAt sql.NullTime `gorm:"type:timestamptz"`
+	CreatedAt   time.Time  `gorm:"type:timestamptz;default:now();not null"`
+	UpdatedAt   time.Time  `gorm:"type:timestamptz;default:now();not null"`
+	CompletedAt *time.Time `gorm:"type:timestamptz"`
 
 	Items []OrderItem `gorm:"foreignKey:OrderID;constraint:OnDelete:RESTRICT;"`
 }
 
-func (o *Order) CanEdit() bool {
-	return o.Status == OrderStatusDraft
+func (o *Order) IsOwnedBy(userID uuid.UUID) bool {
+	return o.UserID != nil && *o.UserID == userID
+}
+
+func (o *Order) IsGuestOrder() bool {
+	return o.UserID == nil
 }
 
 func (o *Order) HasItems() bool {
 	return len(o.Items) > 0
 }
 
-func (o *Order) Checkout(userID uuid.UUID) error {
-	if !o.CanEdit() {
+func (o *Order) Checkout() error {
+	if o.Status != OrderStatusDraft {
 		return apperror.ErrInvalidOrderStatus
 	}
 
@@ -58,21 +61,12 @@ func (o *Order) Checkout(userID uuid.UUID) error {
 		return apperror.ErrEmptyOrder
 	}
 
-	// If the order does not have a user, we link the order to the user
-	if o.UserID == nil {
-		o.UserID = &userID
-	}
-
 	o.Status = OrderStatusPending
 	o.Recalculate()
 	return nil
 }
 
-func (o *Order) Pay(userID uuid.UUID) error {
-	if o.UserID == nil || *o.UserID != userID {
-		return apperror.ErrForbidden
-	}
-
+func (o *Order) Pay() error {
 	if o.Status != OrderStatusPending {
 		return apperror.ErrInvalidOrderStatus
 	}
@@ -82,11 +76,7 @@ func (o *Order) Pay(userID uuid.UUID) error {
 	return nil
 }
 
-func (o *Order) Cancel(userID uuid.UUID) error {
-	if o.UserID == nil || *o.UserID != userID {
-		return apperror.ErrForbidden
-	}
-
+func (o *Order) Cancel() error {
 	if o.Status != OrderStatusPending {
 		return apperror.ErrInvalidOrderStatus
 	}

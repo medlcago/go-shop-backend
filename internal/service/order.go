@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/internal/tasks"
+	"go-shop-backend/internal/upload"
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/mapper"
@@ -26,6 +26,7 @@ type orderService struct {
 	txManager            database.TxManager
 	orderCancelDelay     time.Duration
 	orderCheckoutTimeout time.Duration
+	uploadManager        upload.Manager
 }
 
 func NewOrderService(
@@ -37,6 +38,7 @@ func NewOrderService(
 	txManager database.TxManager,
 	orderCancelDelay time.Duration,
 	orderCheckoutTimeout time.Duration,
+	uploadManager upload.Manager,
 ) *orderService {
 	return &orderService{
 		orderRepo:            orderRepo,
@@ -47,6 +49,7 @@ func NewOrderService(
 		txManager:            txManager,
 		orderCancelDelay:     orderCancelDelay,
 		orderCheckoutTimeout: orderCheckoutTimeout,
+		uploadManager:        uploadManager,
 	}
 }
 
@@ -64,12 +67,12 @@ func (o *orderService) CreateOrder(
 	}
 
 	if err := o.orderRepo.Create(ctx, order); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := o.mapOrder(order)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -81,16 +84,16 @@ func (o *orderService) GetOrder(
 	sessionID uuid.UUID,
 	orderID uuid.UUID,
 ) (*dto.OrderResponse, error) {
-	const op = "orderService.GerOrder"
+	const op = "orderService.GetOrder"
 
-	order, err := o.getOrder(ctx, orderID, userID, sessionID, true)
+	order, err := o.getOrderByOwner(ctx, orderID, userID, sessionID, true)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := o.mapOrder(order)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -106,12 +109,12 @@ func (o *orderService) GetOrders(
 
 	orders, total, err := o.orderRepo.GetListByOwner(ctx, userID, sessionID, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	response, err := o.mapOrders(orders)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	return response, total, nil
@@ -127,7 +130,7 @@ func (o *orderService) AddItem(
 	const op = "orderService.AddItem"
 
 	if req.Quantity <= 0 {
-		return nil, apperror.ErrInvalidQuantity
+		return nil, apperror.Wrap(op, apperror.ErrInvalidQuantity)
 	}
 
 	var order *models.Order
@@ -135,24 +138,17 @@ func (o *orderService) AddItem(
 	handle := func(ctx context.Context) error {
 		var err error
 
-		order, err = o.getOrder(ctx, orderID, userID, sessionID, false)
+		order, err = o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
 		if err != nil {
 			return err
 		}
 
-		if !order.CanEdit() {
+		if order.Status != models.OrderStatusDraft {
 			return apperror.ErrInvalidOrderStatus
 		}
 
-		product, err := o.productRepo.GetByID(ctx, req.ProductID, false)
+		product, err := o.getProductForOrder(ctx, req.ProductID, req.Quantity)
 		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				return apperror.ErrProductNotFound
-			}
-			return err
-		}
-
-		if err := product.CanBeAdded(req.Quantity); err != nil {
 			return err
 		}
 
@@ -168,18 +164,18 @@ func (o *orderService) AddItem(
 			return err
 		}
 
-		order, err = o.recalculateOrder(ctx, orderID, userID, sessionID)
+		order, err = o.recalculateOrder(ctx, orderID)
 		return err
 	}
 
 	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := o.mapOrder(order)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -199,12 +195,12 @@ func (o *orderService) RemoveItem(
 	handle := func(ctx context.Context) error {
 		var err error
 
-		order, err = o.getOrder(ctx, orderID, userID, sessionID, false)
+		order, err = o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
 		if err != nil {
 			return err
 		}
 
-		if !order.CanEdit() {
+		if order.Status != models.OrderStatusDraft {
 			return apperror.ErrInvalidOrderStatus
 		}
 
@@ -217,18 +213,18 @@ func (o *orderService) RemoveItem(
 			return apperror.ErrItemNotFound
 		}
 
-		order, err = o.recalculateOrder(ctx, orderID, userID, sessionID)
+		order, err = o.recalculateOrder(ctx, orderID)
 		return err
 	}
 
 	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := o.mapOrder(order)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -247,12 +243,12 @@ func (o *orderService) Clear(
 	handle := func(ctx context.Context) error {
 		var err error
 
-		order, err = o.getOrder(ctx, orderID, userID, sessionID, false)
+		order, err = o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
 		if err != nil {
 			return err
 		}
 
-		if !order.CanEdit() {
+		if order.Status != models.OrderStatusDraft {
 			return apperror.ErrInvalidOrderStatus
 		}
 
@@ -260,18 +256,18 @@ func (o *orderService) Clear(
 			return err
 		}
 
-		order, err = o.recalculateOrder(ctx, orderID, userID, sessionID)
+		order, err = o.recalculateOrder(ctx, orderID)
 		return err
 	}
 
 	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := o.mapOrder(order)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -288,23 +284,15 @@ func (o *orderService) Checkout(
 	ctx, cancel := context.WithTimeout(ctx, o.orderCheckoutTimeout)
 	defer cancel()
 
-	response := &dto.OrderCheckoutResponse{
-		OrderID: orderID,
-	}
+	var confirmationURL string
 
 	handle := func(ctx context.Context) error {
-		order, err := o.getOrder(ctx, orderID, &userID, sessionID, true)
+		order, err := o.getOrderByOwner(ctx, orderID, &userID, sessionID, true)
 		if err != nil {
 			return err
 		}
 
 		if err := o.checkoutOrder(ctx, order, userID); err != nil {
-			if unavailableErr, ok := errors.AsType[*apperror.ItemsUnavailableError](err); ok {
-				var unavailableItems dto.UnavailableItems
-				response.UnavailableItems = unavailableItems.FromErr(unavailableErr)
-				return nil
-			}
-
 			return err
 		}
 
@@ -324,20 +312,30 @@ func (o *orderService) Checkout(
 			return err
 		}
 
-		response.ConfirmationURL = payment.ConfirmationURL
+		confirmationURL = payment.ConfirmationURL
 		return nil
 	}
 
 	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, fmt.Errorf("%s: %w", op, apperror.ErrGatewayTimeout)
+			return nil, apperror.Wrap(op, apperror.ErrGatewayTimeout)
 		}
 
-		return nil, fmt.Errorf("%s: %w", op, err)
+		if unavailableErr, ok := errors.AsType[*apperror.ItemsUnavailableError](err); ok {
+			return &dto.OrderCheckoutResponse{
+				OrderID:          orderID,
+				UnavailableItems: o.mapUnavailableItems(unavailableErr),
+			}, nil
+		}
+
+		return nil, apperror.Wrap(op, err)
 	}
 
-	return response, nil
+	return &dto.OrderCheckoutResponse{
+		OrderID:         orderID,
+		ConfirmationURL: confirmationURL,
+	}, nil
 }
 
 func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) error {
@@ -345,7 +343,7 @@ func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) er
 
 	event, err := o.paymentProvider.ParseWebhook(body)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	handle := func(ctx context.Context) error {
@@ -354,6 +352,7 @@ func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) er
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				return nil
 			}
+
 			return err
 		}
 
@@ -370,7 +369,7 @@ func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) er
 
 	err = o.txManager.Wrap(ctx, handle)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -380,12 +379,8 @@ func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderI
 	const op = "orderService.CancelOrder"
 
 	handle := func(ctx context.Context) error {
-		order, err := o.orderRepo.GetByID(ctx, orderID, true)
+		order, err := o.getOrderByID(ctx, orderID, true)
 		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				return apperror.ErrOrderNotFound
-			}
-
 			return err
 		}
 
@@ -398,7 +393,7 @@ func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderI
 
 	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -419,7 +414,7 @@ func (o *orderService) processWebhookEvent(ctx context.Context, event *paymentpr
 	}
 
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -428,12 +423,21 @@ func (o *orderService) processWebhookEvent(ctx context.Context, event *paymentpr
 func (o *orderService) checkoutOrder(ctx context.Context, order *models.Order, userID uuid.UUID) error {
 	const op = "orderService.checkoutOrder"
 
-	if err := order.Checkout(userID); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+	// If the order does not have a user, we link the order to the user
+	if order.UserID == nil {
+		order.UserID = &userID
+	}
+
+	if err := o.checkAccess(order, userID); err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if err := order.Checkout(); err != nil {
+		return apperror.Wrap(op, err)
 	}
 
 	if err := o.reserveItems(ctx, order.Items); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -442,12 +446,16 @@ func (o *orderService) checkoutOrder(ctx context.Context, order *models.Order, u
 func (o *orderService) payOrder(ctx context.Context, order *models.Order, userID uuid.UUID) error {
 	const op = "orderService.payOrder"
 
-	if err := order.Pay(userID); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+	if err := o.checkAccess(order, userID); err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if err := order.Pay(); err != nil {
+		return apperror.Wrap(op, err)
 	}
 
 	if err := o.deductItems(ctx, order.Items); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -456,12 +464,16 @@ func (o *orderService) payOrder(ctx context.Context, order *models.Order, userID
 func (o *orderService) cancelOrder(ctx context.Context, order *models.Order, userID uuid.UUID) error {
 	const op = "orderService.cancelOrder"
 
-	if err := order.Cancel(userID); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+	if err := o.checkAccess(order, userID); err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if err := order.Cancel(); err != nil {
+		return apperror.Wrap(op, err)
 	}
 
 	if err := o.releaseItems(ctx, order.Items); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -470,41 +482,58 @@ func (o *orderService) cancelOrder(ctx context.Context, order *models.Order, use
 func (o *orderService) recalculateOrder(
 	ctx context.Context,
 	orderID uuid.UUID,
-	userID *uuid.UUID,
-	sessionID uuid.UUID,
 ) (*models.Order, error) {
 	const op = "orderService.recalculateOrder"
 
-	order, err := o.getOrder(ctx, orderID, userID, sessionID, true)
+	order, err := o.getOrderByID(ctx, orderID, true)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	order.Recalculate()
 
 	if err := o.orderRepo.Update(ctx, order); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return order, nil
 }
 
-func (o *orderService) getOrder(
+func (o *orderService) getOrderByOwner(
 	ctx context.Context,
 	orderID uuid.UUID,
 	userID *uuid.UUID,
 	sessionID uuid.UUID,
 	preload bool,
 ) (*models.Order, error) {
-	const op = "orderService.getOrder"
+	const op = "orderService.getOrderByOwner"
 
 	order, err := o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, preload)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+			return nil, apperror.Wrap(op, apperror.ErrForbidden)
 		}
 
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return order, nil
+}
+
+func (o *orderService) getOrderByID(
+	ctx context.Context,
+	orderID uuid.UUID,
+	preload bool,
+) (*models.Order, error) {
+	const op = "orderService.getOrderByID"
+
+	order, err := o.orderRepo.GetByID(ctx, orderID, preload)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrOrderNotFound)
+		}
+
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return order, nil
@@ -520,18 +549,53 @@ func (o *orderService) createPayment(
 	req := paymentprovider.NewCreatePaymentRequest(userID, orderID, amount)
 	payment, err := o.paymentProvider.CreatePayment(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return payment, nil
 }
 
+func (o *orderService) getProductForOrder(
+	ctx context.Context,
+	productID uuid.UUID,
+	quantity int,
+) (*models.Product, error) {
+	const op = "orderService.getProductForOrder"
+
+	product, err := o.productRepo.GetByID(ctx, productID, false)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrProductNotFound)
+		}
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	if err := product.CanBeAdded(quantity); err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return product, nil
+}
+
+func (o *orderService) checkAccess(order *models.Order, userID uuid.UUID) error {
+	if !order.IsOwnedBy(userID) {
+		return apperror.ErrForbidden
+	}
+
+	return nil
+}
+
 func (o *orderService) mapOrder(order *models.Order) (*dto.OrderResponse, error) {
 	const op = "orderService.mapOrder"
 
+	for _, item := range order.Items {
+		upload.AssignPublicURLs(item.Product.Images, o.uploadManager)
+	}
+
 	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -540,12 +604,34 @@ func (o *orderService) mapOrder(order *models.Order) (*dto.OrderResponse, error)
 func (o *orderService) mapOrders(orders []*models.Order) ([]*dto.OrderResponse, error) {
 	const op = "orderService.mapOrders"
 
+	for _, order := range orders {
+		for _, item := range order.Items {
+			upload.AssignPublicURLs(item.Product.Images, o.uploadManager)
+		}
+	}
+
 	response, err := mapper.MapList[*models.Order, *dto.OrderResponse](orders)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
+}
+
+func (o *orderService) mapUnavailableItems(unavailableErr *apperror.ItemsUnavailableError) []dto.UnavailableItem {
+	items := make([]dto.UnavailableItem, len(unavailableErr.Items))
+
+	for i, item := range unavailableErr.Items {
+		items[i] = dto.UnavailableItem{
+			ProductID:    item.ProductID,
+			RequestedQty: item.RequestedQty,
+			AvailableQty: item.AvailableQty,
+			Action:       item.Action,
+			Reason:       item.Reason,
+		}
+	}
+
+	return items
 }
 
 func (o *orderService) reserveItems(ctx context.Context, items []models.OrderItem) error {
@@ -558,7 +644,7 @@ func (o *orderService) reserveItems(ctx context.Context, items []models.OrderIte
 	)
 
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -574,7 +660,7 @@ func (o *orderService) releaseItems(ctx context.Context, items []models.OrderIte
 	)
 
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -590,7 +676,7 @@ func (o *orderService) deductItems(ctx context.Context, items []models.OrderItem
 	)
 
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -611,7 +697,7 @@ func (o *orderService) applyOnProducts(
 
 	products, err := o.productRepo.GetByIDsForUpdate(ctx, productIDs)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	productMap := make(map[uuid.UUID]*models.Product, len(products))
@@ -650,11 +736,11 @@ func (o *orderService) applyOnProducts(
 			Items: unavailable,
 		}
 
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	if err := o.productRepo.BulkUpsert(ctx, products); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil

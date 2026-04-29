@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -41,23 +40,23 @@ func (w *wishlistService) CreateWishlist(
 
 	shareToken, err := w.newShareToken()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	wishlist := &models.Wishlist{
+	wl := &models.Wishlist{
 		UserID:     userID,
 		Title:      req.Title,
 		IsPublic:   req.IsPublic,
 		ShareToken: shareToken,
 	}
 
-	if err := w.wishlistRepo.Create(ctx, wishlist); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+	if err := w.wishlistRepo.Create(ctx, wl); err != nil {
+		return nil, apperror.Wrap(op, err)
 	}
 
-	response, err := w.mapWishlist(wishlist)
+	response, err := w.mapWishlist(wl)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -70,23 +69,18 @@ func (w *wishlistService) GetWishlist(
 ) (*dto.WishlistResponse, error) {
 	const op = "wishlistService.GetWishlist"
 
-	wishlist, err := w.getWishlist(ctx, wishlistID, false)
+	wl, err := w.getWishlistByID(ctx, wishlistID, false)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if !wishlist.CanView(userID) {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+	if !wl.IsOwnedBy(userID) && !wl.IsPublic {
+		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
-	wishlist, err = w.getWishlist(ctx, wishlistID, true)
+	response, err := w.getWishlistResponse(ctx, wishlistID)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	response, err := w.mapWishlist(wishlist)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -101,12 +95,12 @@ func (w *wishlistService) GetWishlists(
 
 	wishlists, total, err := w.wishlistRepo.GetListByUser(ctx, userID, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	response, err := w.mapWishlists(wishlists)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	return response, total, nil
@@ -118,22 +112,22 @@ func (w *wishlistService) GetSharedWishlist(
 ) (*dto.WishlistResponse, error) {
 	const op = "wishlistService.GetSharedWishlist"
 
-	wishlist, err := w.wishlistRepo.GetByShareToken(ctx, shareToken, true)
+	wl, err := w.wishlistRepo.GetByShareToken(ctx, shareToken, true)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, fmt.Errorf("%s: %w", op, apperror.ErrWishlistNotFound)
+			return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
 		}
 
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if !wishlist.IsPublic {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrWishlistNotFound)
+	if !wl.IsPublic {
+		return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
 	}
 
-	response, err := w.mapWishlist(wishlist)
+	response, err := w.mapWishlist(wl)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -147,35 +141,24 @@ func (w *wishlistService) UpdateWishlist(
 ) (*dto.WishlistResponse, error) {
 	const op = "wishlistService.UpdateWishlist"
 
-	wishlist, err := w.getWishlist(ctx, wishlistID, false)
+	wl, err := w.getWishlistByID(ctx, wishlistID, false)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if !wishlist.CanEdit(userID) {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+	if !wl.IsOwnedBy(userID) {
+		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
-	if req.Title != nil {
-		wishlist.Title = *req.Title
+	applyWishlistUpdates(wl, req)
+
+	if err := w.wishlistRepo.Update(ctx, wl); err != nil {
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if req.IsPublic != nil {
-		wishlist.IsPublic = *req.IsPublic
-	}
-
-	if err := w.wishlistRepo.Update(ctx, wishlist); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	wishlist, err = w.getWishlist(ctx, wishlistID, true)
+	response, err := w.getWishlistResponse(ctx, wishlistID)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	response, err := w.mapWishlist(wishlist)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -188,17 +171,17 @@ func (w *wishlistService) DeleteWishlist(
 ) error {
 	const op = "wishlistService.DeleteWishlist"
 
-	wishlist, err := w.getWishlist(ctx, wishlistID, false)
+	wl, err := w.getWishlistByID(ctx, wishlistID, false)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
-	if !wishlist.CanEdit(userID) {
-		return fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+	if !wl.IsOwnedBy(userID) {
+		return apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
 	if err := w.wishlistRepo.Delete(ctx, wishlistID); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	return nil
@@ -211,23 +194,23 @@ func (w *wishlistService) RegenerateShareToken(
 ) (*dto.WishlistShareTokenResponse, error) {
 	const op = "wishlistService.RegenerateShareToken"
 
-	wishlist, err := w.getWishlist(ctx, wishlistID, false)
+	wl, err := w.getWishlistByID(ctx, wishlistID, false)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if !wishlist.CanEdit(userID) {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+	if !wl.IsOwnedBy(userID) {
+		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
 	shareToken, err := w.newShareToken()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	wishlist.ShareToken = shareToken
-	if err := w.wishlistRepo.Update(ctx, wishlist); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+	wl.ShareToken = shareToken
+	if err := w.wishlistRepo.Update(ctx, wl); err != nil {
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return &dto.WishlistShareTokenResponse{
@@ -243,52 +226,33 @@ func (w *wishlistService) AddItem(
 ) (*dto.WishlistResponse, error) {
 	const op = "wishlistService.AddItem"
 
-	wishlist, err := w.getWishlist(ctx, wishlistID, false)
+	wl, err := w.getWishlistByID(ctx, wishlistID, false)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if !wishlist.CanEdit(userID) {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+	if !wl.IsOwnedBy(userID) {
+		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
-	existsInWishlist, err := w.wishlistItemRepo.ProductExistsInWishlist(ctx, wishlistID, req.ProductID)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	if existsInWishlist {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrProductAlreadyInWishlist)
-	}
-
-	productExists, err := w.productRepo.Exists(ctx, req.ProductID)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	if !productExists {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrProductNotFound)
+	if err := w.ensureProductCanBeAdded(ctx, wishlistID, req.ProductID); err != nil {
+		return nil, apperror.Wrap(op, err)
 	}
 
 	item := &models.WishlistItem{
-		WishlistID: wishlist.ID,
+		WishlistID: wl.ID,
 		ProductID:  req.ProductID,
 		Note:       req.Note,
 		Priority:   req.Priority,
 	}
 
 	if err := w.wishlistItemRepo.AddItem(ctx, item); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	wishlist, err = w.getWishlist(ctx, wishlistID, true)
+	response, err := w.getWishlistResponse(ctx, wishlistID)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	response, err := w.mapWishlist(wishlist)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -303,44 +267,29 @@ func (w *wishlistService) UpdateItem(
 ) (*dto.WishlistResponse, error) {
 	const op = "wishlistService.UpdateItem"
 
-	wishlist, err := w.getWishlist(ctx, wishlistID, false)
+	wl, err := w.getWishlistByID(ctx, wishlistID, false)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if !wishlist.CanEdit(userID) {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+	if !wl.IsOwnedBy(userID) {
+		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
-	item, err := w.wishlistItemRepo.GetItem(ctx, wishlistID, itemID)
+	item, err := w.getWishlistItem(ctx, wishlistID, itemID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, fmt.Errorf("%s: %w", op, apperror.ErrWishlistItemNotFound)
-		}
-
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if req.Note != nil {
-		item.Note = req.Note
-	}
-
-	if req.Priority != nil {
-		item.Priority = *req.Priority
-	}
+	applyWishlistItemUpdates(item, req)
 
 	if err := w.wishlistItemRepo.UpdateItem(ctx, item); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	wishlist, err = w.getWishlist(ctx, wishlistID, true)
+	response, err := w.getWishlistResponse(ctx, wishlistID)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	response, err := w.mapWishlist(wishlist)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -354,54 +303,108 @@ func (w *wishlistService) RemoveItem(
 ) (*dto.WishlistResponse, error) {
 	const op = "wishlistService.RemoveItem"
 
-	wishlist, err := w.getWishlist(ctx, wishlistID, false)
+	wl, err := w.getWishlistByID(ctx, wishlistID, false)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	if !wishlist.CanEdit(userID) {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrForbidden)
+	if !wl.IsOwnedBy(userID) {
+		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
 	removed, err := w.wishlistItemRepo.RemoveItem(ctx, wishlistID, itemID)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	if !removed {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrWishlistItemNotFound)
+		return nil, apperror.Wrap(op, apperror.ErrWishlistItemNotFound)
 	}
 
-	wishlist, err = w.getWishlist(ctx, wishlistID, true)
+	response, err := w.getWishlistResponse(ctx, wishlistID)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	response, err := w.mapWishlist(wishlist)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
 }
 
-func (w *wishlistService) getWishlist(
+func (w *wishlistService) getWishlistByID(
 	ctx context.Context,
 	id uuid.UUID,
 	preload bool,
 ) (*models.Wishlist, error) {
-	const op = "wishlistService.getWishlist"
+	const op = "wishlistService.getWishlistByID"
 
-	wishlist, err := w.wishlistRepo.GetByID(ctx, id, preload)
+	wl, err := w.wishlistRepo.GetByID(ctx, id, preload)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, fmt.Errorf("%s: %w", op, apperror.ErrWishlistNotFound)
+			return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
 		}
 
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	return wishlist, nil
+	return wl, nil
+}
+
+func (w *wishlistService) getWishlistItem(
+	ctx context.Context,
+	wishlistID uuid.UUID,
+	itemID uuid.UUID,
+) (*models.WishlistItem, error) {
+	const op = "wishlistService.getWishlistItem"
+
+	item, err := w.wishlistItemRepo.GetItem(ctx, wishlistID, itemID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrWishlistItemNotFound)
+		}
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return item, nil
+}
+
+func (w *wishlistService) getWishlistResponse(
+	ctx context.Context,
+	wishlistID uuid.UUID,
+) (*dto.WishlistResponse, error) {
+	wl, err := w.getWishlistByID(ctx, wishlistID, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.mapWishlist(wl)
+}
+
+func (w *wishlistService) ensureProductCanBeAdded(
+	ctx context.Context,
+	wishlistID uuid.UUID,
+	productID uuid.UUID,
+) error {
+	const op = "wishlistService.ensureProductCanBeAdded"
+
+	exists, err := w.wishlistItemRepo.ProductExistsInWishlist(ctx, wishlistID, productID)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if exists {
+		return apperror.Wrap(op, apperror.ErrProductAlreadyInWishlist)
+	}
+
+	productExists, err := w.productRepo.Exists(ctx, productID)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if !productExists {
+		return apperror.Wrap(op, apperror.ErrProductNotFound)
+	}
+
+	return nil
 }
 
 func (w *wishlistService) mapWishlist(wishlist *models.Wishlist) (*dto.WishlistResponse, error) {
@@ -409,7 +412,7 @@ func (w *wishlistService) mapWishlist(wishlist *models.Wishlist) (*dto.WishlistR
 
 	response, err := mapper.MapOne[*models.Wishlist, dto.WishlistResponse](wishlist)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -420,7 +423,7 @@ func (w *wishlistService) mapWishlists(wishlists []*models.Wishlist) ([]*dto.Wis
 
 	response, err := mapper.MapList[*models.Wishlist, *dto.WishlistResponse](wishlists)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
@@ -428,4 +431,24 @@ func (w *wishlistService) mapWishlists(wishlists []*models.Wishlist) ([]*dto.Wis
 
 func (w *wishlistService) newShareToken() (string, error) {
 	return gonanoid.New(21)
+}
+
+func applyWishlistUpdates(wl *models.Wishlist, req dto.UpdateWishlistRequest) {
+	if req.Title != nil {
+		wl.Title = *req.Title
+	}
+
+	if req.IsPublic != nil {
+		wl.IsPublic = *req.IsPublic
+	}
+}
+
+func applyWishlistItemUpdates(wlItem *models.WishlistItem, req dto.UpdateWishlistItemRequest) {
+	if req.Note != nil {
+		wlItem.Note = req.Note
+	}
+
+	if req.Priority != nil {
+		wlItem.Priority = *req.Priority
+	}
 }

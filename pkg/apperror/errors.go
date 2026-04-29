@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrUserNotFound       = New(http.StatusNotFound, "user not found")
-	ErrUserProfileDeleted = New(http.StatusForbidden, "profile deleted")
+	ErrUserProfileDeleted = New(http.StatusForbidden, "account has been deleted, contact support")
 	ErrEmailTaken         = New(http.StatusConflict, "email already in use")
 
 	ErrInvalidCredentials = New(http.StatusUnauthorized, "invalid credentials")
@@ -26,9 +26,10 @@ var (
 	ErrFileAlreadyUploaded = New(http.StatusConflict, "file already uploaded")
 	ErrFileTooLarge        = New(http.StatusRequestEntityTooLarge, "file too large")
 
-	ErrProductNotFound  = New(http.StatusNotFound, "product not found")
-	ErrProductNotActive = New(http.StatusBadRequest, "product is not active")
-	ErrItemNotFound     = New(http.StatusNotFound, "item not found in this order")
+	ErrProductNotFound       = New(http.StatusNotFound, "product not found")
+	ErrProductNotActive      = New(http.StatusBadRequest, "product is not active")
+	ErrItemNotFound          = New(http.StatusNotFound, "item not found in this order")
+	ErrStockLessThanReserved = New(http.StatusBadRequest, "stock cannot be less than reserved quantity")
 
 	ErrInvalidQuantity    = New(http.StatusBadRequest, "quantity must be greater than zero")
 	ErrInsufficientStock  = New(http.StatusBadRequest, "insufficient product stock")
@@ -49,12 +50,21 @@ var (
 )
 
 type AppError struct {
-	Code    int
-	Message string
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Err     error  `json:"-"`
 }
 
 func (e *AppError) Error() string {
-	return e.Message
+	if e.Err != nil {
+		return fmt.Sprintf("%s (code=%d): %v", e.Message, e.Code, e.Err)
+	}
+
+	return fmt.Sprintf("%s (code=%d)", e.Message, e.Code)
+}
+
+func (e *AppError) Unwrap() error {
+	return e.Err
 }
 
 func New(code int, message string) *AppError {

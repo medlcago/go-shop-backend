@@ -37,7 +37,7 @@ func (p *productRepository) GetByID(ctx context.Context, id uuid.UUID, preload b
 
 	var product models.Product
 	if err := db.First(&product).Error; err != nil {
-		return nil, repository.HandleSQLError(err)
+		return nil, repository.HandleError(err)
 	}
 
 	return &product, nil
@@ -55,7 +55,7 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	if total == 0 {
@@ -71,7 +71,7 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 			scopes.ProductWithRelations(),
 		).
 		Find(&products).Error; err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	return products, total, nil
@@ -81,14 +81,14 @@ func (p *productRepository) Create(ctx context.Context, product *models.Product)
 	db := p.db.GetDB(ctx)
 
 	err := db.Create(product).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (p *productRepository) Update(ctx context.Context, product *models.Product) error {
 	db := p.db.GetDB(ctx)
 
 	err := db.Select("*").Updates(product).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (p *productRepository) BulkUpsert(ctx context.Context, products []*models.Product) error {
@@ -99,7 +99,7 @@ func (p *productRepository) BulkUpsert(ctx context.Context, products []*models.P
 		UpdateAll: true,
 	}).Create(products).Error
 
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -107,7 +107,7 @@ func (p *productRepository) Exists(ctx context.Context, id uuid.UUID) (bool, err
 
 	var exists bool
 	if err := db.Raw("SELECT EXISTS(SELECT 1 FROM products WHERE id = ?)", id).Scan(&exists).Error; err != nil {
-		return false, repository.HandleSQLError(err)
+		return false, repository.HandleError(err)
 	}
 
 	return exists, nil
@@ -120,7 +120,7 @@ func (p *productRepository) GetByIDsForUpdate(ctx context.Context, ids []uuid.UU
 	if err := db.Clauses(clause.Locking{Strength: clause.LockingStrengthUpdate}).
 		Where("id IN (?)", ids).
 		Find(&products).Error; err != nil {
-		return nil, repository.HandleSQLError(err)
+		return nil, repository.HandleError(err)
 	}
 
 	return products, nil
@@ -145,7 +145,7 @@ func (p *productRepository) Search(ctx context.Context, req dto.SearchProductReq
 
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	if total == 0 {
@@ -163,7 +163,7 @@ func (p *productRepository) Search(ctx context.Context, req dto.SearchProductReq
 		Find(&products).Error
 
 	if err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	return products, total, nil

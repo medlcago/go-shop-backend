@@ -65,6 +65,6 @@ func NewReadSeekCloser() io.ReadSeekCloser {
 	return obj
 }
 
-func NewLogger() *slog.Logger {
+func NewSlogLogger() *slog.Logger {
 	return slog.New(slog.DiscardHandler)
 }

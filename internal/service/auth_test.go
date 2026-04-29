@@ -70,7 +70,7 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 		Role:         models.UserRoleCustomer,
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
 		Return(expectedUser, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
@@ -106,7 +106,7 @@ func (suite *AuthServiceTestSuite) TestLogin_UserNotFound() {
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.authService.Login(suite.ctx, req)
@@ -121,7 +121,7 @@ func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
 		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, mock.Anything).
@@ -144,7 +144,7 @@ func (suite *AuthServiceTestSuite) TestLogin_InvalidPassword() {
 		PasswordHash: "test123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -163,13 +163,13 @@ func (suite *AuthServiceTestSuite) TestLogin_RepositoryError() {
 	}
 
 	repoErr := errors.New("database error")
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
 		Return(nil, repoErr).Once()
 
 	response, err := suite.authService.Login(suite.ctx, req)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, repoErr.Error())
+	suite.ErrorIs(err, repoErr)
 }
 
 func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Success() {
@@ -188,7 +188,7 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Success() {
 		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
 		Return(expectedUser, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
@@ -231,7 +231,7 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_PartialTokenError() {
 		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
 		Return(expectedUser, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
@@ -261,8 +261,8 @@ func (suite *AuthServiceTestSuite) TestRegister_Success() {
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
-		Return(nil, repository.ErrRecordNotFound).Once()
+	suite.userRepo.EXPECT().ExistsByEmail(suite.ctx, req.Email).
+		Return(false, nil).Once()
 
 	suite.hasher.EXPECT().Hash(req.Password).
 		Return("test123", nil).Once()
@@ -302,27 +302,8 @@ func (suite *AuthServiceTestSuite) TestRegister_EmailAlreadyExists() {
 		Password: "password123",
 	}
 
-	user := &models.User{
-		Email: req.Email,
-	}
-
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
-		Return(user, nil).Once()
-
-	response, err := suite.authService.Register(suite.ctx, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.ErrEmailTaken)
-}
-
-func (suite *AuthServiceTestSuite) TestRegister_ProfileDeleted() {
-	req := dto.UserRegisterRequest{
-		Email:    "testuser@example.com",
-		Password: "password123",
-	}
-
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
-		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
+	suite.userRepo.EXPECT().ExistsByEmail(suite.ctx, req.Email).
+		Return(true, nil).Once()
 
 	response, err := suite.authService.Register(suite.ctx, req)
 
@@ -337,13 +318,13 @@ func (suite *AuthServiceTestSuite) TestRegister_RepositoryError() {
 	}
 
 	repoErr := errors.New("database error")
-	suite.userRepo.EXPECT().GetByEmailUnscoped(suite.ctx, req.Email).
-		Return(nil, repoErr).Once()
+	suite.userRepo.EXPECT().ExistsByEmail(suite.ctx, req.Email).
+		Return(false, repoErr).Once()
 
 	response, err := suite.authService.Register(suite.ctx, req)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, repoErr.Error())
+	suite.ErrorIs(err, repoErr)
 }
 
 // ==================== Setup2FA Tests ====================
@@ -423,7 +404,7 @@ func (suite *AuthServiceTestSuite) TestSetup2FA_EncryptionError() {
 	response, err := suite.authService.Setup2FA(suite.ctx, suite.userID)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, encryptionErr.Error())
+	suite.ErrorIs(err, encryptionErr)
 }
 
 // ==================== Confirm2FA Tests ====================
@@ -488,7 +469,6 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_2FANotInitialized() {
 		Return(true, nil).Once()
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
-
 	suite.ErrorIs(err, apperror.Err2FANotInitialized)
 }
 
@@ -511,7 +491,6 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_2FAAlreadyEnabled() {
 		Return(true, nil).Once()
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
-
 	suite.ErrorIs(err, apperror.Err2FAAlreadyEnabled)
 }
 
@@ -531,7 +510,6 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_InvalidPassword() {
 		Return(false, nil).Once()
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
-
 	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
@@ -565,7 +543,6 @@ func (suite *AuthServiceTestSuite) TestConfirm2FA_InvalidCode() {
 		Return(false).Once()
 
 	err := suite.authService.Confirm2FA(suite.ctx, suite.userID, req)
-
 	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
 }
 
@@ -629,7 +606,6 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_2FANotEnabled() {
 		Return(true, nil).Once()
 
 	err := suite.authService.Disable2FA(suite.ctx, suite.userID, req)
-
 	suite.ErrorIs(err, apperror.Err2FANotEnabled)
 }
 
@@ -649,7 +625,6 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidPassword() {
 		Return(false, nil).Once()
 
 	err := suite.authService.Disable2FA(suite.ctx, suite.userID, req)
-
 	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }
 
@@ -687,7 +662,6 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidCode() {
 		Return(false).Once()
 
 	err := suite.authService.Disable2FA(suite.ctx, suite.userID, req)
-
 	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
 }
 
@@ -837,28 +811,4 @@ func (suite *AuthServiceTestSuite) TestVerify2FA_2FANotEnabled() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.Err2FANotEnabled)
-}
-
-func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidCredentials() {
-	req := dto.Verify2FARequest{
-		Token: "partial",
-	}
-
-	claims := &token.UserClaims{
-		UserID:    suite.userID.String(),
-		TokenType: token.PartialTokenType,
-	}
-
-	suite.tokenManager.EXPECT().
-		ValidateToken(req.Token).
-		Return(claims, nil).Once()
-
-	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
-		Return(nil, repository.ErrRecordNotFound).Once()
-
-	response, err := suite.authService.Verify2FA(suite.ctx, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 }

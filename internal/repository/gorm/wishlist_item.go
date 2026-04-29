@@ -27,7 +27,7 @@ func (w *wishlistItemRepository) GetItem(ctx context.Context, wishlistID uuid.UU
 		First(&item).Error
 
 	if err != nil {
-		return nil, repository.HandleSQLError(err)
+		return nil, repository.HandleError(err)
 	}
 
 	return &item, nil
@@ -37,14 +37,14 @@ func (w *wishlistItemRepository) AddItem(ctx context.Context, item *models.Wishl
 	db := w.db.GetDB(ctx)
 
 	err := db.Create(item).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (w *wishlistItemRepository) UpdateItem(ctx context.Context, wishlistItem *models.WishlistItem) error {
 	db := w.db.GetDB(ctx)
 
 	err := db.Select("*").Updates(wishlistItem).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (w *wishlistItemRepository) RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (bool, error) {
@@ -54,7 +54,7 @@ func (w *wishlistItemRepository) RemoveItem(ctx context.Context, wishlistID uuid
 		Delete(&models.WishlistItem{})
 
 	if result.Error != nil {
-		return false, repository.HandleSQLError(result.Error)
+		return false, repository.HandleError(result.Error)
 	}
 
 	return result.RowsAffected > 0, nil
@@ -68,7 +68,7 @@ func (w *wishlistItemRepository) ProductExistsInWishlist(ctx context.Context, wi
 		"SELECT EXISTS(SELECT 1 FROM wishlist_items WHERE wishlist_id = ? AND product_id = ?)",
 		wishlistID, productID,
 	).Scan(&exists).Error; err != nil {
-		return false, repository.HandleSQLError(err)
+		return false, repository.HandleError(err)
 	}
 
 	return exists, nil

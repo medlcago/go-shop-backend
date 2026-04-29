@@ -11,17 +11,13 @@ type Wishlist struct {
 	UserID     uuid.UUID `gorm:"type:uuid;not null"`
 	Title      string    `gorm:"type:varchar(255);not null"`
 	IsPublic   bool      `gorm:"default:false;not null"`
-	ShareToken string    `gorm:"type:varchar(64);index:idx_wishlist_share_token;not null"`
+	ShareToken string    `gorm:"type:varchar(64);uniqueIndex:idx_wishlists_share_token_unique;not null"`
 	CreatedAt  time.Time `gorm:"type:timestamptz;default:now();not null"`
 	UpdatedAt  time.Time `gorm:"type:timestamptz;default:now();not null"`
 
 	Items []WishlistItem `gorm:"foreignKey:WishlistID;constraint:OnDelete:CASCADE"`
 }
 
-func (w *Wishlist) CanView(userID uuid.UUID) bool {
-	return w.IsPublic || w.UserID == userID
-}
-
-func (w *Wishlist) CanEdit(userID uuid.UUID) bool {
+func (w *Wishlist) IsOwnedBy(userID uuid.UUID) bool {
 	return w.UserID == userID
 }

@@ -21,7 +21,7 @@ func (u *uploadRepository) Create(ctx context.Context, req *models.Upload) error
 	db := u.db.GetDB(ctx)
 
 	err := db.Create(req).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (u *uploadRepository) Exists(ctx context.Context, objectKey string) (bool, error) {
@@ -29,7 +29,7 @@ func (u *uploadRepository) Exists(ctx context.Context, objectKey string) (bool, 
 
 	var exists bool
 	if err := db.Raw("SELECT EXISTS(SELECT 1 FROM uploads WHERE object_key = ?)", objectKey).Scan(&exists).Error; err != nil {
-		return false, repository.HandleSQLError(err)
+		return false, repository.HandleError(err)
 	}
 
 	return exists, nil

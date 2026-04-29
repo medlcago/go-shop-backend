@@ -54,11 +54,11 @@ func (m *uploadManager) SignURL(ctx context.Context, req SignURLRequest, policy 
 
 	constraints, err := m.policyProvider.Get(policy)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	if err := m.validateSignURLRequest(req, constraints); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	uploadID := uuid.New()
@@ -83,7 +83,7 @@ func (m *uploadManager) SignURL(ctx context.Context, req SignURLRequest, policy 
 	result, err := m.storage.TemporaryUploadURL(ctx, options)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response := &SignURLResponse{
@@ -103,36 +103,36 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 
 	obj, err := m.storage.GetObjectInfo(ctx, req.ObjectKey)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %v: %w", op, err, apperror.ErrNotFound)
+		return nil, apperror.Wrap(op, apperror.ErrNotFound)
 	}
 
 	if err := m.validateMetadata(req, obj.Metadata); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	if err := m.ensureNotDuplicate(ctx, req.ObjectKey); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	constraints, err := m.policyProvider.Get(policy)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	effectiveMaxSize := m.effectiveMaxSize(constraints)
 	if obj.Size > effectiveMaxSize {
 		m.delete(ctx, req.ObjectKey)
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrFileTooLarge)
+		return nil, apperror.Wrap(op, apperror.ErrFileTooLarge)
 	}
 
 	detectedCT, err := m.detectContentType(ctx, req.ObjectKey)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	if !constraints.IsValidType(detectedCT) {
 		m.delete(ctx, req.ObjectKey)
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrInvalidFileType)
+		return nil, apperror.Wrap(op, apperror.ErrInvalidFileType)
 	}
 
 	upload := &models.Upload{
@@ -146,7 +146,7 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 
 	if err := m.uploadRepo.Create(ctx, upload); err != nil {
 		m.delete(ctx, req.ObjectKey)
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	url := m.PublicURL(req.ObjectKey)
@@ -170,7 +170,7 @@ func (m *uploadManager) validateSignURLRequest(req SignURLRequest, constraints F
 	const op = "uploadManager.validateSignURLRequest"
 
 	if !constraints.IsValidExt(req.Ext, req.ContentType) {
-		return fmt.Errorf("%s: %w", op, apperror.ErrContentTypeMismatch)
+		return apperror.Wrap(op, apperror.ErrContentTypeMismatch)
 	}
 
 	return nil
@@ -190,11 +190,11 @@ func (m *uploadManager) ensureNotDuplicate(ctx context.Context, objectKey string
 
 	exists, err := m.uploadRepo.Exists(ctx, objectKey)
 	if err != nil {
-		return fmt.Errorf("%s: check duplicate: %w", op, err)
+		return apperror.Wrap(op, err)
 	}
 
 	if exists {
-		return fmt.Errorf("%s: %w", op, apperror.ErrFileAlreadyUploaded)
+		return apperror.Wrap(op, apperror.ErrFileAlreadyUploaded)
 	}
 
 	return nil
@@ -205,7 +205,7 @@ func (m *uploadManager) detectContentType(ctx context.Context, objectKey string)
 
 	file, err := m.storage.Open(ctx, objectKey)
 	if err != nil {
-		return "", fmt.Errorf("%s: open object: %w", op, err)
+		return "", apperror.Wrap(op, err)
 	}
 	defer func() {
 		_ = file.Close()
@@ -213,7 +213,7 @@ func (m *uploadManager) detectContentType(ctx context.Context, objectKey string)
 
 	ct, err := m.ctDetector.Detect(file)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
+		return "", apperror.Wrap(op, err)
 	}
 
 	return ct, nil
@@ -223,7 +223,11 @@ func (m *uploadManager) delete(ctx context.Context, objectKey string) {
 	const op = "uploadManager.delete"
 
 	if err := m.storage.Delete(ctx, objectKey); err != nil {
-		m.logger.Error("failed to delete object from storage", logger.Err(err), "op", op)
+		m.logger.Error(
+			"failed to delete object from storage",
+			logger.Err(err),
+			slog.String("op", op),
+		)
 	}
 }
 
@@ -235,15 +239,15 @@ func (m *uploadManager) validateMetadata(req SaveUploadRequest, metadata map[str
 	const op = "uploadManager.validateMetadata"
 
 	if metadata["Upload-Id"] != req.UploadID.String() {
-		return fmt.Errorf("%s: %w", op, apperror.ErrInvalidUploadID)
+		return apperror.Wrap(op, apperror.ErrInvalidUploadID)
 	}
 
 	if metadata["Entity-Id"] != req.Entity.ID.String() {
-		return fmt.Errorf("%s: %w", op, apperror.ErrInvalidEntityID)
+		return apperror.Wrap(op, apperror.ErrInvalidEntityID)
 	}
 
 	if metadata["Entity-Type"] != string(req.Entity.Type) {
-		return fmt.Errorf("%s: %w", op, apperror.ErrInvalidEntityType)
+		return apperror.Wrap(op, apperror.ErrInvalidEntityType)
 	}
 
 	return nil

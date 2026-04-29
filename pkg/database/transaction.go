@@ -32,7 +32,7 @@ type gormTxManager struct {
 	db *gorm.DB
 }
 
-func NewGormManager(db *gorm.DB) *gormTxManager {
+func NewGormTxManager(db *gorm.DB) *gormTxManager {
 	return &gormTxManager{db: db}
 }
 

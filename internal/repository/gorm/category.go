@@ -29,7 +29,7 @@ func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCat
 
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	if total == 0 {
@@ -42,7 +42,7 @@ func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCat
 			scopes.Paginate(req.Limit, req.Offset),
 		).
 		Find(&categories).Error; err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	return categories, total, nil

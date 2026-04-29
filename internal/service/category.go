@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
+	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/mapper"
 )
 
@@ -24,12 +24,12 @@ func (c *categoryService) ListCategories(ctx context.Context, req dto.ListCatego
 
 	categories, total, err := c.categoryRepo.ListCategories(ctx, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	response, err := c.mapCategories(categories)
 	if err != nil {
-		return nil, 0, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, apperror.Wrap(op, err)
 	}
 
 	return response, total, nil
@@ -40,7 +40,7 @@ func (c *categoryService) mapCategories(categories []*models.Category) ([]*dto.P
 
 	response, err := mapper.MapList[*models.Category, *dto.ProductCategoryResponse](categories)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil

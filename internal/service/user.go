@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -26,25 +25,37 @@ func NewUserService(userRepo repository.UserRepository) *userService {
 func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error) {
 	const op = "userService.GetUserByID"
 
-	user, err := u.userRepo.GetByIDUnscoped(ctx, userID)
+	user, err := u.getUserByIDIncludingDeleted(ctx, userID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, fmt.Errorf("%s: %w", op, apperror.ErrUserNotFound)
-		}
-
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	if user.DeletedAt.Valid {
-		return nil, fmt.Errorf("%s: %w", op, apperror.ErrUserProfileDeleted)
+		return nil, apperror.Wrap(op, apperror.ErrUserProfileDeleted)
 	}
 
 	response, err := u.mapUser(user)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil
+}
+
+func (u *userService) getUserByIDIncludingDeleted(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+	const op = "userService.getUserByIDIncludingDeleted"
+
+	user, err := u.userRepo.GetByIDIncludingDeleted(ctx, userID)
+
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
+		}
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return user, nil
 }
 
 func (u *userService) mapUser(user *models.User) (*dto.UserResponse, error) {
@@ -52,7 +63,7 @@ func (u *userService) mapUser(user *models.User) (*dto.UserResponse, error) {
 
 	response, err := mapper.MapOne[*models.User, dto.UserResponse](user)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	return response, nil

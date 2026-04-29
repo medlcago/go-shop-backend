@@ -25,14 +25,14 @@ func (o *orderRepository) Create(ctx context.Context, order *models.Order) error
 	db := o.db.GetDB(ctx)
 
 	err := db.Create(order).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (o *orderRepository) Update(ctx context.Context, order *models.Order) error {
 	db := o.db.GetDB(ctx)
 
 	err := db.Select("*").Updates(order).Error
-	return repository.HandleSQLError(err)
+	return repository.HandleError(err)
 }
 
 func (o *orderRepository) GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Order, error) {
@@ -47,7 +47,7 @@ func (o *orderRepository) GetByID(ctx context.Context, id uuid.UUID, preload boo
 	var order models.Order
 	err := db.First(&order, id).Error
 	if err != nil {
-		return nil, repository.HandleSQLError(err)
+		return nil, repository.HandleError(err)
 	}
 
 	return &order, nil
@@ -77,7 +77,7 @@ func (o *orderRepository) GetByOwner(
 	err := db.First(&order).Error
 
 	if err != nil {
-		return nil, repository.HandleSQLError(err)
+		return nil, repository.HandleError(err)
 	}
 
 	return &order, nil
@@ -98,7 +98,7 @@ func (o *orderRepository) GetListByOwner(
 
 	var total int64
 	if err := db.Model(&models.Order{}).Count(&total).Error; err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	if total == 0 {
@@ -114,7 +114,7 @@ func (o *orderRepository) GetListByOwner(
 		Find(&orders).Error
 
 	if err != nil {
-		return nil, 0, repository.HandleSQLError(err)
+		return nil, 0, repository.HandleError(err)
 	}
 
 	return orders, total, nil
@@ -143,7 +143,7 @@ func (o *orderRepository) GetByPayment(
 	err := db.First(&order).Error
 
 	if err != nil {
-		return nil, repository.HandleSQLError(err)
+		return nil, repository.HandleError(err)
 	}
 
 	return &order, nil

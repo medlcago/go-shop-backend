@@ -50,7 +50,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 		suite.uploadConfig,
 		suite.ctDetector,
 		suite.policyProvider,
-		testutils.NewLogger(),
+		testutils.NewSlogLogger(),
 	)
 
 	suite.ctx = context.Background()
@@ -137,7 +137,7 @@ func (suite *ManagerTestSuite) TestSignURL_UnknownPolicy() {
 	response, err := suite.uploadManager.SignURL(suite.ctx, upload.SignURLRequest{}, "test")
 
 	suite.Nil(response)
-	suite.ErrorContains(err, policyErr.Error())
+	suite.ErrorIs(err, policyErr)
 }
 
 func (suite *ManagerTestSuite) TestSignURL_StorageError() {
@@ -163,7 +163,7 @@ func (suite *ManagerTestSuite) TestSignURL_StorageError() {
 	response, err := suite.uploadManager.SignURL(suite.ctx, req, upload.ProductImagePolicy)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, expectedErr.Error())
+	suite.ErrorIs(err, expectedErr)
 }
 
 // ==================== Save Tests ====================
@@ -377,5 +377,5 @@ func (suite *ManagerTestSuite) TestSave_RepositoryError() {
 	response, err := suite.uploadManager.Save(suite.ctx, req, upload.ProductImagePolicy)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, expectedErr.Error())
+	suite.ErrorIs(err, expectedErr)
 }

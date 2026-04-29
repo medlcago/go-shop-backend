@@ -15,5 +15,5 @@ type WishlistItem struct {
 	CreatedAt  time.Time `gorm:"type:timestamptz;default:now();not null"`
 	UpdatedAt  time.Time `gorm:"type:timestamptz;default:now();not null"`
 
-	Product *Product `gorm:"foreignKey:ProductID"`
+	Product Product `gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE"`
 }

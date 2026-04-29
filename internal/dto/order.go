@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"go-shop-backend/pkg/apperror"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,12 +11,21 @@ type AddOrderItemRequest struct {
 	Quantity  int       `json:"quantity" validate:"required,gt=0"`
 }
 
+type OrderItemProductResponse struct {
+	ID     uuid.UUID `json:"id"`
+	Images []struct {
+		URL string `json:"url"`
+	} `json:"images"`
+}
+
 type OrderItemResponse struct {
 	ID          uuid.UUID `json:"id"`
 	ProductID   uuid.UUID `json:"product_id"`
 	ProductName string    `json:"product_name"`
 	Quantity    int       `json:"quantity"`
 	UnitPrice   int64     `json:"unit_price"`
+
+	Product OrderItemProductResponse `json:"product"`
 }
 
 type OrderResponse struct {
@@ -33,6 +41,7 @@ type OrderResponse struct {
 	ExpiresAt    *time.Time          `json:"expires_at"`
 	CanceledAt   *time.Time          `json:"canceled_at"`
 	CompletedAt  *time.Time          `json:"completed_at"`
+	IsGuestOrder bool                `json:"is_guest_order"`
 }
 
 type UnavailableItem struct {
@@ -41,24 +50,6 @@ type UnavailableItem struct {
 	AvailableQty int       `json:"available_qty"`
 	Action       string    `json:"action"`
 	Reason       string    `json:"reason"`
-}
-
-type UnavailableItems []UnavailableItem
-
-func (u *UnavailableItems) FromErr(unavailableErr *apperror.ItemsUnavailableError) UnavailableItems {
-	items := make([]UnavailableItem, len(unavailableErr.Items))
-
-	for i, item := range unavailableErr.Items {
-		items[i] = UnavailableItem{
-			ProductID:    item.ProductID,
-			RequestedQty: item.RequestedQty,
-			AvailableQty: item.AvailableQty,
-			Action:       item.Action,
-			Reason:       item.Reason,
-		}
-	}
-
-	return items
 }
 
 type OrderCheckoutResponse struct {

@@ -9,12 +9,12 @@ import (
 type OrderItem struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 
-	OrderID uuid.UUID `gorm:"type:uuid;not null;index"`
+	OrderID uuid.UUID `gorm:"type:uuid;not null;index:idx_order_items_order_id;uniqueIndex:uniq_order_items_order_product"`
 	Order   Order     `gorm:"foreignKey:OrderID;constraint:OnDelete:RESTRICT;"`
 
-	ProductID   uuid.UUID `gorm:"type:uuid;not null;index"`
+	ProductID   uuid.UUID `gorm:"type:uuid;not null;index:idx_order_items_product_id;uniqueIndex:uniq_order_items_order_product"`
+	Product     Product   `gorm:"foreignKey:ProductID;constraint:OnDelete:RESTRICT;"`
 	ProductName string    `gorm:"type:varchar(255);not null"`
-	Product     *Product  `gorm:"constraint:OnUpdate:RESTRICT;"`
 
 	Quantity  int   `gorm:"not null;check:quantity > 0"`
 	UnitPrice int64 `gorm:"not null;check:unit_price >= 0"`

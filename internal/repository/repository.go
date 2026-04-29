@@ -11,9 +11,10 @@ import (
 type UserRepository interface {
 	Create(ctx context.Context, user *models.User) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
-	GetByIDUnscoped(ctx context.Context, id uuid.UUID) (*models.User, error)
+	GetByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
-	GetByEmailUnscoped(ctx context.Context, email string) (*models.User, error)
+	GetByEmailIncludingDeleted(ctx context.Context, email string) (*models.User, error)
+	ExistsByEmail(ctx context.Context, email string) (bool, error)
 	Update(ctx context.Context, user *models.User) error
 }
 

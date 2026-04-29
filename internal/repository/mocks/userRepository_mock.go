@@ -96,6 +96,72 @@ func (_c *MockUserRepository_Create_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// ExistsByEmail provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	ret := _mock.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExistsByEmail")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
+		return returnFunc(ctx, email)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = returnFunc(ctx, email)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_ExistsByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExistsByEmail'
+type MockUserRepository_ExistsByEmail_Call struct {
+	*mock.Call
+}
+
+// ExistsByEmail is a helper method to define mock.On call
+//   - ctx context.Context
+//   - email string
+func (_e *MockUserRepository_Expecter) ExistsByEmail(ctx interface{}, email interface{}) *MockUserRepository_ExistsByEmail_Call {
+	return &MockUserRepository_ExistsByEmail_Call{Call: _e.mock.On("ExistsByEmail", ctx, email)}
+}
+
+func (_c *MockUserRepository_ExistsByEmail_Call) Run(run func(ctx context.Context, email string)) *MockUserRepository_ExistsByEmail_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_ExistsByEmail_Call) Return(b bool, err error) *MockUserRepository_ExistsByEmail_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockUserRepository_ExistsByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (bool, error)) *MockUserRepository_ExistsByEmail_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByEmail provides a mock function for the type MockUserRepository
 func (_mock *MockUserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	ret := _mock.Called(ctx, email)
@@ -164,12 +230,12 @@ func (_c *MockUserRepository_GetByEmail_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
-// GetByEmailUnscoped provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) GetByEmailUnscoped(ctx context.Context, email string) (*models.User, error) {
+// GetByEmailIncludingDeleted provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) GetByEmailIncludingDeleted(ctx context.Context, email string) (*models.User, error) {
 	ret := _mock.Called(ctx, email)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByEmailUnscoped")
+		panic("no return value specified for GetByEmailIncludingDeleted")
 	}
 
 	var r0 *models.User
@@ -192,19 +258,19 @@ func (_mock *MockUserRepository) GetByEmailUnscoped(ctx context.Context, email s
 	return r0, r1
 }
 
-// MockUserRepository_GetByEmailUnscoped_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByEmailUnscoped'
-type MockUserRepository_GetByEmailUnscoped_Call struct {
+// MockUserRepository_GetByEmailIncludingDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByEmailIncludingDeleted'
+type MockUserRepository_GetByEmailIncludingDeleted_Call struct {
 	*mock.Call
 }
 
-// GetByEmailUnscoped is a helper method to define mock.On call
+// GetByEmailIncludingDeleted is a helper method to define mock.On call
 //   - ctx context.Context
 //   - email string
-func (_e *MockUserRepository_Expecter) GetByEmailUnscoped(ctx interface{}, email interface{}) *MockUserRepository_GetByEmailUnscoped_Call {
-	return &MockUserRepository_GetByEmailUnscoped_Call{Call: _e.mock.On("GetByEmailUnscoped", ctx, email)}
+func (_e *MockUserRepository_Expecter) GetByEmailIncludingDeleted(ctx interface{}, email interface{}) *MockUserRepository_GetByEmailIncludingDeleted_Call {
+	return &MockUserRepository_GetByEmailIncludingDeleted_Call{Call: _e.mock.On("GetByEmailIncludingDeleted", ctx, email)}
 }
 
-func (_c *MockUserRepository_GetByEmailUnscoped_Call) Run(run func(ctx context.Context, email string)) *MockUserRepository_GetByEmailUnscoped_Call {
+func (_c *MockUserRepository_GetByEmailIncludingDeleted_Call) Run(run func(ctx context.Context, email string)) *MockUserRepository_GetByEmailIncludingDeleted_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -222,12 +288,12 @@ func (_c *MockUserRepository_GetByEmailUnscoped_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockUserRepository_GetByEmailUnscoped_Call) Return(user *models.User, err error) *MockUserRepository_GetByEmailUnscoped_Call {
+func (_c *MockUserRepository_GetByEmailIncludingDeleted_Call) Return(user *models.User, err error) *MockUserRepository_GetByEmailIncludingDeleted_Call {
 	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockUserRepository_GetByEmailUnscoped_Call) RunAndReturn(run func(ctx context.Context, email string) (*models.User, error)) *MockUserRepository_GetByEmailUnscoped_Call {
+func (_c *MockUserRepository_GetByEmailIncludingDeleted_Call) RunAndReturn(run func(ctx context.Context, email string) (*models.User, error)) *MockUserRepository_GetByEmailIncludingDeleted_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -300,12 +366,12 @@ func (_c *MockUserRepository_GetByID_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
-// GetByIDUnscoped provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) GetByIDUnscoped(ctx context.Context, id uuid.UUID) (*models.User, error) {
+// GetByIDIncludingDeleted provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) GetByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByIDUnscoped")
+		panic("no return value specified for GetByIDIncludingDeleted")
 	}
 
 	var r0 *models.User
@@ -328,19 +394,19 @@ func (_mock *MockUserRepository) GetByIDUnscoped(ctx context.Context, id uuid.UU
 	return r0, r1
 }
 
-// MockUserRepository_GetByIDUnscoped_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDUnscoped'
-type MockUserRepository_GetByIDUnscoped_Call struct {
+// MockUserRepository_GetByIDIncludingDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDIncludingDeleted'
+type MockUserRepository_GetByIDIncludingDeleted_Call struct {
 	*mock.Call
 }
 
-// GetByIDUnscoped is a helper method to define mock.On call
+// GetByIDIncludingDeleted is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUserRepository_Expecter) GetByIDUnscoped(ctx interface{}, id interface{}) *MockUserRepository_GetByIDUnscoped_Call {
-	return &MockUserRepository_GetByIDUnscoped_Call{Call: _e.mock.On("GetByIDUnscoped", ctx, id)}
+func (_e *MockUserRepository_Expecter) GetByIDIncludingDeleted(ctx interface{}, id interface{}) *MockUserRepository_GetByIDIncludingDeleted_Call {
+	return &MockUserRepository_GetByIDIncludingDeleted_Call{Call: _e.mock.On("GetByIDIncludingDeleted", ctx, id)}
 }
 
-func (_c *MockUserRepository_GetByIDUnscoped_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUserRepository_GetByIDUnscoped_Call {
+func (_c *MockUserRepository_GetByIDIncludingDeleted_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUserRepository_GetByIDIncludingDeleted_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -358,12 +424,12 @@ func (_c *MockUserRepository_GetByIDUnscoped_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockUserRepository_GetByIDUnscoped_Call) Return(user *models.User, err error) *MockUserRepository_GetByIDUnscoped_Call {
+func (_c *MockUserRepository_GetByIDIncludingDeleted_Call) Return(user *models.User, err error) *MockUserRepository_GetByIDIncludingDeleted_Call {
 	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockUserRepository_GetByIDUnscoped_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*models.User, error)) *MockUserRepository_GetByIDUnscoped_Call {
+func (_c *MockUserRepository_GetByIDIncludingDeleted_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*models.User, error)) *MockUserRepository_GetByIDIncludingDeleted_Call {
 	_c.Call.Return(run)
 	return _c
 }
