@@ -24,11 +24,13 @@ type ProductResponse struct {
 }
 
 type ListProductRequest struct {
-	Limit      int       `query:"limit"`
-	Offset     int       `query:"offset"`
+	Limit      int       `query:"limit" validate:"omitempty,gte=1,lte=50"`
+	Offset     int       `query:"offset" validate:"omitempty,gte=0"`
 	OrderBy    string    `query:"order_by"`
 	OrderDesc  bool      `query:"order_desc"`
 	CategoryID uuid.UUID `query:"category_id"`
+	MinPrice   int64     `query:"min_price"  validate:"omitempty,gte=0"`
+	MaxPrice   int64     `query:"max_price"  validate:"omitempty,gte=0,gtefield=MinPrice"`
 }
 
 type ProductCreateRequest struct {
@@ -49,8 +51,8 @@ type ProductUpdateRequest struct {
 
 type SearchProductRequest struct {
 	Query  string `query:"q" validate:"required"`
-	Limit  int    `query:"limit"`
-	Offset int    `query:"offset"`
+	Limit  int    `query:"limit" validate:"omitempty,gte=1,lte=50"`
+	Offset int    `query:"offset" validate:"omitempty,gte=0"`
 }
 
 type UploadProductImageRequest struct {

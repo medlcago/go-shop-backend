@@ -159,16 +159,14 @@ func TestProductHandler_ListProducts(t *testing.T) {
 			expectedBody: response.NewError(http.StatusText(http.StatusBadRequest)),
 		},
 		{
-			name:  "negative limit and offset",
-			query: "limit=-10&offset=-10",
-			setupMock: func(serviceMock *serviceMocks.MockProductService) {
-				serviceMock.EXPECT().ListProducts(mock.Anything, dto.ListProductRequest{
-					Limit:  -10,
-					Offset: -10,
-				}).Return([]*dto.ProductResponse{}, 2, nil).Once()
-			},
-			expectedCode: http.StatusOK,
-			expectedBody: response.NewResponse(response.NewPaginated([]*dto.ProductResponse{}, 2)),
+			name:         "negative limit and offset",
+			query:        "limit=-10&offset=-10",
+			setupMock:    nil,
+			expectedCode: http.StatusBadRequest,
+			expectedBody: testutils.ValidationError(dto.ListProductRequest{
+				Limit:  -10,
+				Offset: -10,
+			}),
 		},
 		{
 			name: "internal server error",

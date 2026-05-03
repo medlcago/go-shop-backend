@@ -51,6 +51,7 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 		Scopes(
 			scopes.AvailableProducts(),
 			scopes.ProductWithCategory(req.CategoryID),
+			scopes.ProductPriceBetween(req.MinPrice, req.MaxPrice),
 		)
 
 	var total int64

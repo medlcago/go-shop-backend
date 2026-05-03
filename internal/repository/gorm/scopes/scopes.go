@@ -2,6 +2,7 @@ package scopes
 
 import (
 	"go-shop-backend/pkg/paging"
+	"math"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -48,6 +49,20 @@ func ProductWithCategory(categoryID uuid.UUID) func(db *gorm.DB) *gorm.DB {
 func AvailableProducts() func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where("is_active = ? AND stock > ?", true, 0)
+	}
+}
+
+func ProductPriceBetween(min int64, max int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if min <= 0 {
+			min = 0
+		}
+
+		if max <= 0 {
+			max = math.MaxInt64
+		}
+
+		return db.Where("price BETWEEN ? AND ?", min, max)
 	}
 }
 
