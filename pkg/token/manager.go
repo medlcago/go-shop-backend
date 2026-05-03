@@ -11,16 +11,18 @@ const (
 )
 
 type Payload struct {
-	UserID       string `json:"user_id"`
-	UserRole     string `json:"user_role"`
-	TwoFAEnabled bool   `json:"two_fa_enabled"`
+	UserID         string `json:"user_id"`
+	UserRole       string `json:"user_role"`
+	TwoFAEnabled   bool   `json:"two_fa_enabled"`
+	EmailConfirmed bool   `json:"email_confirmed"`
 }
 
 type UserClaims struct {
-	UserID       string `json:"user_id"`
-	UserRole     string `json:"user_role"`
-	TokenType    string `json:"token_type"`
-	TwoFAEnabled bool   `json:"two_fa_enabled"`
+	UserID         string `json:"user_id"`
+	UserRole       string `json:"user_role"`
+	TokenType      string `json:"token_type"`
+	TwoFAEnabled   bool   `json:"two_fa_enabled"`
+	EmailConfirmed bool   `json:"email_confirmed"`
 	jwt.RegisteredClaims
 }
 

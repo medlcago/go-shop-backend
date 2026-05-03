@@ -37,6 +37,52 @@ func (_m *MockFactory) EXPECT() *MockFactory_Expecter {
 	return &MockFactory_Expecter{mock: &_m.Mock}
 }
 
+// Notifications provides a mock function for the type MockFactory
+func (_mock *MockFactory) Notifications() tasks.NotificationTask {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Notifications")
+	}
+
+	var r0 tasks.NotificationTask
+	if returnFunc, ok := ret.Get(0).(func() tasks.NotificationTask); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(tasks.NotificationTask)
+		}
+	}
+	return r0
+}
+
+// MockFactory_Notifications_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Notifications'
+type MockFactory_Notifications_Call struct {
+	*mock.Call
+}
+
+// Notifications is a helper method to define mock.On call
+func (_e *MockFactory_Expecter) Notifications() *MockFactory_Notifications_Call {
+	return &MockFactory_Notifications_Call{Call: _e.mock.On("Notifications")}
+}
+
+func (_c *MockFactory_Notifications_Call) Run(run func()) *MockFactory_Notifications_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockFactory_Notifications_Call) Return(notificationTask tasks.NotificationTask) *MockFactory_Notifications_Call {
+	_c.Call.Return(notificationTask)
+	return _c
+}
+
+func (_c *MockFactory_Notifications_Call) RunAndReturn(run func() tasks.NotificationTask) *MockFactory_Notifications_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Orders provides a mock function for the type MockFactory
 func (_mock *MockFactory) Orders() tasks.OrderTask {
 	ret := _mock.Called()

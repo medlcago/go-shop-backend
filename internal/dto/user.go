@@ -17,11 +17,12 @@ type UserRegisterRequest struct {
 }
 
 type UserResponse struct {
-	ID           uuid.UUID `json:"id"`
-	Email        string    `json:"email"`
-	CreatedAt    time.Time `json:"created_at"`
-	Role         string    `json:"role"`
-	TwoFAEnabled bool      `json:"two_fa_enabled"`
+	ID             uuid.UUID `json:"id"`
+	Email          string    `json:"email"`
+	CreatedAt      time.Time `json:"created_at"`
+	Role           string    `json:"role"`
+	TwoFAEnabled   bool      `json:"two_fa_enabled"`
+	EmailConfirmed bool      `json:"email_confirmed"`
 }
 
 type UserTokenResponse struct {
@@ -48,4 +49,16 @@ type Verify2FARequest struct {
 type Disable2FARequest struct {
 	Password string `json:"password" validate:"required"`
 	Code     string `json:"code" validate:"required"`
+}
+
+type EmailConfirmationResponse struct {
+	ExpiresIn int `json:"expires_in"` // seconds
+}
+
+type ConfirmEmailRequest struct {
+	Code string `json:"code" validate:"required"`
+}
+
+type ConfirmEmailResponse struct {
+	OK bool `json:"ok"`
 }

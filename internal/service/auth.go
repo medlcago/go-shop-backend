@@ -276,9 +276,10 @@ func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error
 	)
 
 	payload := token.Payload{
-		UserID:       user.ID.String(),
-		UserRole:     string(user.Role),
-		TwoFAEnabled: user.TwoFAEnabled,
+		UserID:         user.ID.String(),
+		UserRole:       string(user.Role),
+		TwoFAEnabled:   user.TwoFAEnabled,
+		EmailConfirmed: user.EmailConfirmed(),
 	}
 
 	accessToken, err := a.tokenManager.GenerateAccessToken(payload)
@@ -302,9 +303,10 @@ func (a *authService) createPartialToken(user *models.User) (*dto.TokenResponse,
 	const op = "authService.createPartialToken"
 
 	partialToken, err := a.tokenManager.GeneratePartialToken(token.Payload{
-		UserID:       user.ID.String(),
-		UserRole:     string(user.Role),
-		TwoFAEnabled: user.TwoFAEnabled,
+		UserID:         user.ID.String(),
+		UserRole:       string(user.Role),
+		TwoFAEnabled:   user.TwoFAEnabled,
+		EmailConfirmed: user.EmailConfirmed(),
 	})
 	if err != nil {
 		return nil, apperror.Wrap(op, fmt.Errorf("failed to generate partial token: %w", err))
@@ -338,11 +340,12 @@ func buildUserTokenResponse(user *models.User, token *dto.TokenResponse, require
 
 	if !requires2FA {
 		response.User = &dto.UserResponse{
-			ID:           user.ID,
-			Email:        user.Email,
-			CreatedAt:    user.CreatedAt,
-			Role:         string(user.Role),
-			TwoFAEnabled: user.TwoFAEnabled,
+			ID:             user.ID,
+			Email:          user.Email,
+			CreatedAt:      user.CreatedAt,
+			Role:           string(user.Role),
+			TwoFAEnabled:   user.TwoFAEnabled,
+			EmailConfirmed: user.EmailConfirmed(),
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 
 type Factory interface {
 	Orders() OrderTask
+	Notifications() NotificationTask
 }
 
 type factory struct {
@@ -23,4 +24,8 @@ func NewFactory(rdb redis.UniversalClient) Factory {
 
 func (f *factory) Orders() OrderTask {
 	return &orderTask{f.client}
+}
+
+func (f *factory) Notifications() NotificationTask {
+	return &notificationTask{f.client}
 }

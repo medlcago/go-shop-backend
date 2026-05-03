@@ -65,10 +65,11 @@ func (j JWT) ValidateToken(tokenString string) (*UserClaims, error) {
 
 func (j JWT) generateToken(payload Payload, tokenType string, exp time.Time) (string, error) {
 	claims := UserClaims{
-		UserID:       payload.UserID,
-		UserRole:     payload.UserRole,
-		TokenType:    tokenType,
-		TwoFAEnabled: payload.TwoFAEnabled,
+		UserID:         payload.UserID,
+		UserRole:       payload.UserRole,
+		TokenType:      tokenType,
+		TwoFAEnabled:   payload.TwoFAEnabled,
+		EmailConfirmed: payload.EmailConfirmed,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
 		},

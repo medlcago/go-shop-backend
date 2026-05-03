@@ -7,8 +7,11 @@ import (
 )
 
 func RegisterRoutes(r fiber.Router, userHandler *Handler) {
-	userGroup := r.Group("/users")
+	userGroup := r.Group("/users", middleware.RequireAuth())
 	{
-		userGroup.Get("/me", middleware.RequireAuth(), userHandler.GetMe)
+		userGroup.Get("/me", userHandler.GetMe)
+
+		userGroup.Post("/email/confirmation", userHandler.EmailConfirmation)
+		userGroup.Post("/email/confirmation/confirm", userHandler.ConfirmEmail)
 	}
 }

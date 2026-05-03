@@ -42,7 +42,13 @@ func (s *Server) IsDevMode() bool {
 	return s.container.Config().Environment == string(logger.EnvDevelopment)
 }
 
-func (s *Server) Start(_ context.Context) error {
+func (s *Server) Start(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	s.Init()
 
 	addr := fmt.Sprintf(":%d", s.container.Config().HttpServer.Port)

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/service"
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/middleware"
@@ -39,6 +40,39 @@ func (h *Handler) GetMe(ctx fiber.Ctx) error {
 	}
 
 	resp, err := h.userService.GetUserByID(ctx, *userCtx.UserID)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) EmailConfirmation(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	resp, err := h.userService.EmailConfirmation(ctx, *userCtx.UserID)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) ConfirmEmail(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	var req dto.ConfirmEmailRequest
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return err
+	}
+
+	resp, err := h.userService.ConfirmEmail(ctx, *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}

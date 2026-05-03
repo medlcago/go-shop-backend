@@ -43,7 +43,13 @@ func NewServer(container *core.Container) *Server {
 	}
 }
 
-func (s *Server) Start(_ context.Context) error {
+func (s *Server) Start(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	s.Init()
 
 	s.logger.Info(
@@ -72,6 +78,8 @@ func (s *Server) Name() string {
 
 func (s *Server) Init() {
 	orderHandler := taskHandlers.NewOrderTaskHandler(s.container.OrderService(), s.logger)
-
 	s.mux.HandleFunc(tasks.TypeCancelOrder, orderHandler.CancelOrder)
+
+	notificationHandler := taskHandlers.NewNotificationTaskHandler(s.container.NotificationService(), s.logger)
+	s.mux.HandleFunc(tasks.TypeSendEmailConfirmationCode, notificationHandler.SendEmailConfirmationCode)
 }

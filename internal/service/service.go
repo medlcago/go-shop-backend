@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"go-shop-backend/internal/dto"
+	"go-shop-backend/pkg/notification"
 
 	"github.com/google/uuid"
 )
@@ -18,6 +19,8 @@ type AuthService interface {
 
 type UserService interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error)
+	EmailConfirmation(ctx context.Context, userID uuid.UUID) (*dto.EmailConfirmationResponse, error)
+	ConfirmEmail(ctx context.Context, userID uuid.UUID, req dto.ConfirmEmailRequest) (*dto.ConfirmEmailResponse, error)
 }
 
 type ProductService interface {
@@ -57,4 +60,8 @@ type WishlistService interface {
 	AddItem(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID, req dto.AddWishlistItemRequest) (*dto.WishlistResponse, error)
 	UpdateItem(ctx context.Context, userID uuid.UUID, wishlistID uuid.UUID, itemID uuid.UUID, req dto.UpdateWishlistItemRequest) (*dto.WishlistResponse, error)
 	RemoveItem(ctx context.Context, userID, wishlistID, itemID uuid.UUID) (*dto.WishlistResponse, error)
+}
+
+type NotificationService interface {
+	SendEmailConfirmationCode(ctx context.Context, to string, code string, channel notification.Channel) error
 }

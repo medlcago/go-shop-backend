@@ -14,7 +14,7 @@ import (
 
 func SetupApp(cfg *config.Config, log *slog.Logger, validate *validator.Validate) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:         "Go Shop API",
+		AppName:         cfg.AppName,
 		ReadTimeout:     cfg.HttpServer.ReadTimeout,
 		WriteTimeout:    cfg.HttpServer.WriteTimeout,
 		IdleTimeout:     cfg.HttpServer.IdleTimeout,

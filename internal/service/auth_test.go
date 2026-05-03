@@ -45,7 +45,14 @@ func (suite *AuthServiceTestSuite) SetupTest() {
 	suite.hasher = hasherMocks.NewMockHasher(suite.T())
 	suite.totpManager = totpMocks.NewMockManager(suite.T())
 	suite.encryptionManager = cryptoMocks.NewMockEncryptionManager(suite.T())
-	suite.authService = NewAuthService(suite.userRepo, suite.tokenManager, suite.hasher, suite.totpManager, suite.encryptionManager, suite.txManager)
+	suite.authService = NewAuthService(
+		suite.userRepo,
+		suite.tokenManager,
+		suite.hasher,
+		suite.totpManager,
+		suite.encryptionManager,
+		suite.txManager,
+	)
 
 	suite.ctx = context.Background()
 	suite.userID = uuid.New()
@@ -63,22 +70,25 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 		Password: "test123",
 	}
 
-	expectedUser := &models.User{
-		ID:           uuid.New(),
-		Email:        req.Email,
-		PasswordHash: "test123",
-		Role:         models.UserRoleCustomer,
+	user := &models.User{
+		ID:               uuid.New(),
+		Email:            req.Email,
+		PasswordHash:     "test123",
+		Role:             models.UserRoleCustomer,
+		TwoFAEnabled:     false,
+		EmailConfirmedAt: new(time.Now()),
 	}
 
 	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
-		Return(expectedUser, nil).Once()
+		Return(user, nil).Once()
 
-	suite.hasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
+	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
 		Return(true, nil).Once()
 
 	payload := token.Payload{
-		UserID:   expectedUser.ID.String(),
-		UserRole: string(expectedUser.Role),
+		UserID:         user.ID.String(),
+		UserRole:       string(user.Role),
+		EmailConfirmed: user.EmailConfirmed(),
 	}
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
@@ -92,8 +102,9 @@ func (suite *AuthServiceTestSuite) TestLogin_Success() {
 	suite.NoError(err)
 	suite.NotNil(response)
 	suite.NotNil(response.User)
-	suite.Equal(response.User.ID, expectedUser.ID)
-	suite.Equal(response.User.Email, expectedUser.Email)
+	suite.Equal(response.User.ID, user.ID)
+	suite.Equal(response.User.Email, user.Email)
+	suite.True(response.User.EmailConfirmed)
 	suite.NotNil(response.TokenResponse)
 	suite.Equal(response.AccessToken, "test_access_token")
 	suite.Equal(response.RefreshToken, "test_refresh_token")
@@ -178,7 +189,7 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Success() {
 		Password: "test123",
 	}
 
-	expectedUser := &models.User{
+	user := &models.User{
 		ID:               suite.userID,
 		Email:            req.Email,
 		PasswordHash:     "hashed_password",
@@ -189,15 +200,15 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Success() {
 	}
 
 	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
-		Return(expectedUser, nil).Once()
+		Return(user, nil).Once()
 
-	suite.hasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
+	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
 		Return(true, nil).Once()
 
 	payload := token.Payload{
-		UserID:       expectedUser.ID.String(),
-		UserRole:     string(expectedUser.Role),
-		TwoFAEnabled: expectedUser.TwoFAEnabled,
+		UserID:       user.ID.String(),
+		UserRole:     string(user.Role),
+		TwoFAEnabled: user.TwoFAEnabled,
 	}
 
 	suite.tokenManager.EXPECT().GeneratePartialToken(payload).
@@ -221,7 +232,7 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_PartialTokenError() {
 		Password: "test123",
 	}
 
-	expectedUser := &models.User{
+	user := &models.User{
 		ID:               suite.userID,
 		Email:            req.Email,
 		PasswordHash:     "hashed_password",
@@ -232,15 +243,15 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_PartialTokenError() {
 	}
 
 	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
-		Return(expectedUser, nil).Once()
+		Return(user, nil).Once()
 
-	suite.hasher.EXPECT().Verify(req.Password, expectedUser.PasswordHash).
+	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
 		Return(true, nil).Once()
 
 	payload := token.Payload{
-		UserID:       expectedUser.ID.String(),
-		UserRole:     string(expectedUser.Role),
-		TwoFAEnabled: expectedUser.TwoFAEnabled,
+		UserID:       user.ID.String(),
+		UserRole:     string(user.Role),
+		TwoFAEnabled: user.TwoFAEnabled,
 	}
 
 	tokenErr := errors.New("token generation failed")

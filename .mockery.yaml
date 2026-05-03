@@ -48,3 +48,15 @@ packages:
   go-shop-backend/pkg/crypto:
     interfaces:
       EncryptionManager:
+
+  go-shop-backend/pkg/cache:
+    config:
+      all: true
+
+  go-shop-backend/pkg/template:
+    config:
+      all: true
+
+  go-shop-backend/pkg/notification:
+    config:
+      all: true

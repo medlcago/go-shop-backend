@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"math/big"
 	"strings"
 	"unicode"
 
@@ -30,4 +32,19 @@ func BuildSearchQuery(input string) string {
 	}
 
 	return strings.Join(parts, " & ")
+}
+
+func GenerateCode(n int) (string, error) {
+	const digits = "0123456789"
+	code := make([]byte, n)
+
+	for i := 0; i < n; i++ {
+		n, err := rand.Int(rand.Reader, big.NewInt(10))
+		if err != nil {
+			return "", err
+		}
+		code[i] = digits[n.Int64()]
+	}
+
+	return string(code), nil
 }

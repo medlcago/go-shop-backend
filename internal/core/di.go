@@ -8,17 +8,21 @@ import (
 	gormRepo "go-shop-backend/internal/repository/gorm"
 	"go-shop-backend/internal/service"
 	"go-shop-backend/internal/tasks"
+	"go-shop-backend/internal/templates"
 	"go-shop-backend/internal/upload"
+	"go-shop-backend/pkg/cache"
 	"go-shop-backend/pkg/contenttype"
 	"go-shop-backend/pkg/crypto"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/hasher"
 	"go-shop-backend/pkg/logger"
+	"go-shop-backend/pkg/notification"
 	"go-shop-backend/pkg/paymentprovider"
 	"go-shop-backend/pkg/paymentprovider/yookassa"
 	"go-shop-backend/pkg/redis"
 	"go-shop-backend/pkg/storage"
 	"go-shop-backend/pkg/storage/minio"
+	"go-shop-backend/pkg/template"
 	"go-shop-backend/pkg/token"
 	"go-shop-backend/pkg/totp"
 	"log/slog"
@@ -43,6 +47,9 @@ type Container struct {
 	contentTypeDetector  contenttype.Detector
 	uploadPolicyProvider upload.PolicyProvider
 	uploadManager        upload.Manager
+	cache                cache.Cache
+	templateManager      template.Manager
+	notificationRegistry notification.SenderRegistry
 
 	// repositories
 	userRepository         repository.UserRepository
@@ -55,12 +62,13 @@ type Container struct {
 	wishlistItemRepository repository.WishlistItemRepository
 
 	// services
-	authService     service.AuthService
-	userService     service.UserService
-	productService  service.ProductService
-	categoryService service.CategoryService
-	orderService    service.OrderService
-	wishlistService service.WishlistService
+	authService         service.AuthService
+	userService         service.UserService
+	productService      service.ProductService
+	categoryService     service.CategoryService
+	orderService        service.OrderService
+	wishlistService     service.WishlistService
+	notificationService service.NotificationService
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -253,6 +261,51 @@ func (c *Container) UploadPolicyProvider() upload.PolicyProvider {
 	return c.uploadPolicyProvider
 }
 
+func (c *Container) UploadManager() upload.Manager {
+	if c.uploadManager == nil {
+		c.uploadManager = upload.NewManager(
+			c.Storage(),
+			c.UploadRepo(),
+			c.Config().Upload,
+			c.ContentTypeDetector(),
+			c.UploadPolicyProvider(),
+			c.Logger(),
+		)
+	}
+
+	return c.uploadManager
+}
+
+func (c *Container) Cache() cache.Cache {
+	if c.cache == nil {
+		c.cache = cache.NewRedisCache(c.RedisClient().RDB(), c.Config().AppName)
+	}
+
+	return c.cache
+}
+
+func (c *Container) TemplateManager() template.Manager {
+	if c.templateManager != nil {
+		return c.templateManager
+	}
+
+	templateManager := template.NewManager()
+	if err := templateManager.LoadFromFS(templates.FS, "*.gohtml"); err != nil {
+		logger.Fatal(c.Logger(), "failed to load templates from FS", err)
+	}
+
+	c.templateManager = templateManager
+	return c.templateManager
+}
+
+func (c *Container) NotificationRegistry() notification.SenderRegistry {
+	if c.notificationRegistry == nil {
+		c.notificationRegistry = NewNotificationRegistry(c.Config())
+	}
+
+	return c.notificationRegistry
+}
+
 func (c *Container) UserRepo() repository.UserRepository {
 	if c.userRepository == nil {
 		c.userRepository = gormRepo.NewUserRepository(c.DB())
@@ -317,21 +370,6 @@ func (c *Container) WishlistItemRepo() repository.WishlistItemRepository {
 	return c.wishlistItemRepository
 }
 
-func (c *Container) UploadManager() upload.Manager {
-	if c.uploadManager == nil {
-		c.uploadManager = upload.NewManager(
-			c.Storage(),
-			c.UploadRepo(),
-			c.Config().Upload,
-			c.ContentTypeDetector(),
-			c.UploadPolicyProvider(),
-			c.Logger(),
-		)
-	}
-
-	return c.uploadManager
-}
-
 func (c *Container) AuthService() service.AuthService {
 	if c.authService == nil {
 		c.authService = service.NewAuthService(
@@ -349,7 +387,13 @@ func (c *Container) AuthService() service.AuthService {
 
 func (c *Container) UserService() service.UserService {
 	if c.userService == nil {
-		c.userService = service.NewUserService(c.UserRepo())
+		c.userService = service.NewUserService(
+			c.UserRepo(),
+			c.TaskFactory().Notifications(),
+			c.Cache(),
+			c.Config().Email.ConfirmationCodeLength,
+			c.Config().Email.ConfirmationCodeTTL,
+		)
 	}
 
 	return c.userService
@@ -399,6 +443,17 @@ func (c *Container) WishlistService() service.WishlistService {
 	}
 
 	return c.wishlistService
+}
+
+func (c *Container) NotificationService() service.NotificationService {
+	if c.notificationService == nil {
+		c.notificationService = service.NewNotificationService(
+			c.NotificationRegistry(),
+			c.TemplateManager(),
+		)
+	}
+
+	return c.notificationService
 }
 
 func (c *Container) Close() error {

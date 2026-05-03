@@ -27,6 +27,7 @@ type Config struct {
 	Upload     Upload     `env-prefix:"UPLOAD_"`
 	Yookassa   Yookassa   `env-prefix:"YOOKASSA_"`
 	Redis      Redis      `env-prefix:"REDIS_"`
+	Email      Email      `env-prefix:"EMAIL_"`
 }
 
 func (cfg *Config) Validate() error {

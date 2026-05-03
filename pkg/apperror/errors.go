@@ -47,6 +47,10 @@ var (
 	ErrWishlistNotFound         = New(http.StatusNotFound, "wishlist not found or is private")
 	ErrWishlistItemNotFound     = New(http.StatusNotFound, "wishlist item not found")
 	ErrProductAlreadyInWishlist = New(http.StatusConflict, "product already in wishlist")
+
+	ErrEmailConfirmationCodeAlreadySent = New(http.StatusTooManyRequests, "email confirmation code already sent, please wait before requesting a new one")
+	ErrInvalidCode                      = New(http.StatusBadRequest, "invalid code")
+	ErrEmailAlreadyConfirmed            = New(http.StatusConflict, "email already confirmed")
 )
 
 type AppError struct {
