@@ -25,15 +25,14 @@ import (
 	"go-shop-backend/pkg/template"
 	"go-shop-backend/pkg/token"
 	"go-shop-backend/pkg/totp"
+	"go-shop-backend/pkg/validator"
 	"log/slog"
-
-	"github.com/go-playground/validator/v10"
 )
 
 type Container struct {
 	cfg                  *config.Config
 	logger               *slog.Logger
-	validator            *validator.Validate
+	validator            validator.Validator
 	hasher               hasher.Hasher
 	tokenManager         token.Manager
 	totpManager          totp.Manager
@@ -90,9 +89,9 @@ func (c *Container) Logger() *slog.Logger {
 	return c.logger
 }
 
-func (c *Container) Validator() *validator.Validate {
+func (c *Container) Validator() validator.Validator {
 	if c.validator == nil {
-		c.validator = validator.New()
+		c.validator = NewValidator()
 	}
 
 	return c.validator

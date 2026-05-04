@@ -16,6 +16,7 @@ func Wrap(op string, err error) *AppError {
 			Code:    appErr.Code,
 			Message: appErr.Message,
 			Err:     fmt.Errorf("%s: %w", op, appErr),
+			Details: appErr.Details,
 		}
 	}
 

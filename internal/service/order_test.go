@@ -928,16 +928,17 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock() {
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
-	suite.Nil(err)
-	suite.NotNil(response)
+	suite.Nil(response)
 
-	suite.Equal(order.ID, response.OrderID)
-	suite.Len(response.UnavailableItems, 1)
-	suite.Equal(suite.productID, response.UnavailableItems[0].ProductID)
-	suite.Equal(10, response.UnavailableItems[0].RequestedQty)
-	suite.Equal(5, response.UnavailableItems[0].AvailableQty)
-	suite.Equal("reserve", response.UnavailableItems[0].Action)
-	suite.Equal(apperror.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
+	items, ok := apperror.GetUnavailableItemsFromError(err)
+	suite.True(ok)
+	suite.Len(items, 1)
+	suite.Equal(suite.itemID, items[0].ID)
+	suite.Equal(suite.productID, items[0].ProductID)
+	suite.Equal(10, items[0].RequestedQty)
+	suite.Equal(5, items[0].AvailableQty)
+	suite.Equal("reserve", items[0].Action)
+	suite.Equal(apperror.ErrInsufficientStock.Error(), items[0].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
@@ -967,16 +968,17 @@ func (suite *OrderServiceTestSuite) TestCheckout_ProductNotActive() {
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
-	suite.Nil(err)
-	suite.NotNil(response)
+	suite.Nil(response)
 
-	suite.Equal(order.ID, response.OrderID)
-	suite.Len(response.UnavailableItems, 1)
-	suite.Equal(suite.productID, response.UnavailableItems[0].ProductID)
-	suite.Equal(10, response.UnavailableItems[0].RequestedQty)
-	suite.Equal(5, response.UnavailableItems[0].AvailableQty)
-	suite.Equal("reserve", response.UnavailableItems[0].Action)
-	suite.Equal(apperror.ErrProductNotActive.Error(), response.UnavailableItems[0].Reason)
+	items, ok := apperror.GetUnavailableItemsFromError(err)
+	suite.True(ok)
+	suite.Len(items, 1)
+	suite.Equal(suite.itemID, items[0].ID)
+	suite.Equal(suite.productID, items[0].ProductID)
+	suite.Equal(10, items[0].RequestedQty)
+	suite.Equal(5, items[0].AvailableQty)
+	suite.Equal("reserve", items[0].Action)
+	suite.Equal(apperror.ErrProductNotActive.Error(), items[0].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNotActive() {
@@ -1012,15 +1014,17 @@ func (suite *OrderServiceTestSuite) TestCheckout_InsufficientStock_And_ProductNo
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
-	suite.Nil(err)
-	suite.NotNil(response)
+	suite.Nil(response)
 
-	suite.Equal(order.ID, response.OrderID)
-	suite.Len(response.UnavailableItems, 2)
-	suite.Equal(order.Items[0].ProductID, response.UnavailableItems[0].ProductID)
-	suite.Equal(order.Items[1].ProductID, response.UnavailableItems[1].ProductID)
-	suite.Equal(apperror.ErrInsufficientStock.Error(), response.UnavailableItems[0].Reason)
-	suite.Equal(apperror.ErrProductNotActive.Error(), response.UnavailableItems[1].Reason)
+	items, ok := apperror.GetUnavailableItemsFromError(err)
+	suite.True(ok)
+	suite.Len(items, 2)
+	suite.Equal(order.Items[0].ID, items[0].ID)
+	suite.Equal(order.Items[1].ID, items[1].ID)
+	suite.Equal(order.Items[0].ProductID, items[0].ProductID)
+	suite.Equal(order.Items[1].ProductID, items[1].ProductID)
+	suite.Equal(apperror.ErrInsufficientStock.Error(), items[0].Reason)
+	suite.Equal(apperror.ErrProductNotActive.Error(), items[1].Reason)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
@@ -1279,8 +1283,8 @@ func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_PayOrderFails_Retur
 		Status:      models.OrderStatusPending,
 		TotalAmount: 2500,
 		Items: []models.OrderItem{
-			{ProductID: uuid.New(), Quantity: 10, UnitPrice: 1000},
-			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
+			{ID: suite.itemID, ProductID: uuid.New(), Quantity: 10, UnitPrice: 1000},
+			{ID: suite.itemID, ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
 		},
 	}
 
@@ -1299,14 +1303,14 @@ func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_PayOrderFails_Retur
 		}, nil).Once()
 
 	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-	suite.Error(err)
 
-	var target *apperror.ItemsUnavailableError
-	if suite.ErrorAs(err, &target) {
-		suite.Len(target.Items, 1)
-		suite.Equal(target.Items[0].ProductID, order.Items[0].ProductID)
-		suite.Equal(target.Items[0].Action, "deduct")
-	}
+	items, ok := apperror.GetUnavailableItemsFromError(err)
+	suite.True(ok)
+	suite.Len(items, 1)
+	suite.Equal(items[0].ID, order.Items[0].ID)
+	suite.Equal(items[0].ProductID, order.Items[0].ProductID)
+	suite.Equal(items[0].Action, "deduct")
+
 }
 
 // ==================== CancelOrder Tests ====================

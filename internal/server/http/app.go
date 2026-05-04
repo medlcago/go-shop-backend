@@ -1,37 +1,34 @@
 package http
 
 import (
-	"go-shop-backend/config"
+	"go-shop-backend/internal/core"
 	"go-shop-backend/pkg/middleware"
-	structValidator "go-shop-backend/pkg/validator"
-	"log/slog"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
-func SetupApp(cfg *config.Config, log *slog.Logger, validate *validator.Validate) *fiber.App {
+func SetupApp(container *core.Container) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:         cfg.AppName,
-		ReadTimeout:     cfg.HttpServer.ReadTimeout,
-		WriteTimeout:    cfg.HttpServer.WriteTimeout,
-		IdleTimeout:     cfg.HttpServer.IdleTimeout,
-		ErrorHandler:    middleware.ErrorHandler(log),
-		StructValidator: structValidator.New(validate),
+		AppName:         container.Config().AppName,
+		ReadTimeout:     container.Config().HttpServer.ReadTimeout,
+		WriteTimeout:    container.Config().HttpServer.WriteTimeout,
+		IdleTimeout:     container.Config().HttpServer.IdleTimeout,
+		ErrorHandler:    middleware.ErrorHandler(container.Logger()),
+		StructValidator: container.Validator(),
 	})
 
 	app.Use(recover.New())
-	app.Use(middleware.Logger(log))
+	app.Use(middleware.Logger(container.Logger()))
 	app.Use(cors.New(cors.Config{
-		AllowMethods:        cfg.Cors.AllowMethods,
-		AllowOrigins:        cfg.Cors.AllowOrigins,
-		AllowHeaders:        cfg.Cors.AllowHeaders,
-		ExposeHeaders:       cfg.Cors.ExposeHeaders,
-		AllowCredentials:    cfg.Cors.AllowCredentials,
-		MaxAge:              cfg.Cors.MaxAge,
-		AllowPrivateNetwork: cfg.Cors.AllowPrivateNetwork,
+		AllowMethods:        container.Config().Cors.AllowMethods,
+		AllowOrigins:        container.Config().Cors.AllowOrigins,
+		AllowHeaders:        container.Config().Cors.AllowHeaders,
+		ExposeHeaders:       container.Config().Cors.ExposeHeaders,
+		AllowCredentials:    container.Config().Cors.AllowCredentials,
+		MaxAge:              container.Config().Cors.MaxAge,
+		AllowPrivateNetwork: container.Config().Cors.AllowPrivateNetwork,
 	}))
 
 	return app

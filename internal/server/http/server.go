@@ -28,7 +28,7 @@ func NewServer(container *core.Container) *Server {
 	log := container.Logger().With("server", "http")
 
 	return &Server{
-		app:       SetupApp(container.Config(), container.Logger(), container.Validator()),
+		app:       SetupApp(container),
 		container: container,
 		logger:    log,
 	}

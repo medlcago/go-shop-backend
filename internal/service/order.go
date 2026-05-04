@@ -322,13 +322,6 @@ func (o *orderService) Checkout(
 			return nil, apperror.Wrap(op, apperror.ErrGatewayTimeout)
 		}
 
-		if unavailableErr, ok := errors.AsType[*apperror.ItemsUnavailableError](err); ok {
-			return &dto.OrderCheckoutResponse{
-				OrderID:          orderID,
-				UnavailableItems: o.mapUnavailableItems(unavailableErr),
-			}, nil
-		}
-
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -618,22 +611,6 @@ func (o *orderService) mapOrders(orders []*models.Order) ([]*dto.OrderResponse, 
 	return response, nil
 }
 
-func (o *orderService) mapUnavailableItems(unavailableErr *apperror.ItemsUnavailableError) []dto.UnavailableItem {
-	items := make([]dto.UnavailableItem, len(unavailableErr.Items))
-
-	for i, item := range unavailableErr.Items {
-		items[i] = dto.UnavailableItem{
-			ProductID:    item.ProductID,
-			RequestedQty: item.RequestedQty,
-			AvailableQty: item.AvailableQty,
-			Action:       item.Action,
-			Reason:       item.Reason,
-		}
-	}
-
-	return items
-}
-
 func (o *orderService) reserveItems(ctx context.Context, items []models.OrderItem) error {
 	const op = "orderService.reserveItems"
 
@@ -705,12 +682,13 @@ func (o *orderService) applyOnProducts(
 		productMap[p.ID] = p
 	}
 
-	var unavailable []apperror.UnavailableItem
+	var unavailableItems []apperror.UnavailableItem
 
 	for _, item := range items {
 		product := productMap[item.ProductID]
 		if product == nil {
-			unavailable = append(unavailable, apperror.UnavailableItem{
+			unavailableItems = append(unavailableItems, apperror.UnavailableItem{
+				ID:           item.ID,
 				ProductID:    item.ProductID,
 				RequestedQty: item.Quantity,
 				Action:       actionName,
@@ -720,7 +698,8 @@ func (o *orderService) applyOnProducts(
 		}
 
 		if err := action(product, item.Quantity); err != nil {
-			unavailable = append(unavailable, apperror.UnavailableItem{
+			unavailableItems = append(unavailableItems, apperror.UnavailableItem{
+				ID:           item.ID,
 				ProductID:    product.ID,
 				RequestedQty: item.Quantity,
 				AvailableQty: product.Available(),
@@ -731,12 +710,8 @@ func (o *orderService) applyOnProducts(
 		}
 	}
 
-	if len(unavailable) > 0 {
-		err := &apperror.ItemsUnavailableError{
-			Items: unavailable,
-		}
-
-		return apperror.Wrap(op, err)
+	if len(unavailableItems) > 0 {
+		return apperror.Wrap(op, apperror.UnavailableItemsError(unavailableItems))
 	}
 
 	if err := o.productRepo.BulkUpsert(ctx, products); err != nil {

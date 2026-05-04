@@ -27,8 +27,9 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 		}
 
 		if appErr, ok := errors.AsType[*apperror.AppError](err); ok {
-			status = appErr.Code
+			status = appErr.HttpStatusCode()
 			message = appErr.Message
+			details = appErr.Details
 		}
 
 		if _, ok := errors.AsType[validator.ValidationErrors](err); ok {

@@ -1,6 +1,7 @@
 package apperror
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -57,6 +58,19 @@ type AppError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Err     error  `json:"-"`
+	Details any    `json:"details"`
+}
+
+func New(code int, message string) *AppError {
+	return &AppError{
+		Code:    code,
+		Message: message,
+	}
+}
+
+func (e *AppError) WithDetails(details any) *AppError {
+	e.Details = details
+	return e
 }
 
 func (e *AppError) Error() string {
@@ -71,25 +85,49 @@ func (e *AppError) Unwrap() error {
 	return e.Err
 }
 
-func New(code int, message string) *AppError {
-	return &AppError{
-		Code:    code,
-		Message: message,
-	}
+func (e *AppError) HttpStatusCode() int {
+	return e.Code
 }
 
 type UnavailableItem struct {
-	ProductID    uuid.UUID
-	RequestedQty int
-	AvailableQty int
-	Action       string
-	Reason       string
+	ID           uuid.UUID `json:"id"`
+	ProductID    uuid.UUID `json:"product_id"`
+	RequestedQty int       `json:"requested_qty"`
+	AvailableQty int       `json:"available_qty"`
+	Action       string    `json:"action"`
+	Reason       string    `json:"reason"`
 }
 
-type ItemsUnavailableError struct {
-	Items []UnavailableItem
+var (
+	errUnavailableItems = errors.New("unavailable items")
+)
+
+func UnavailableItemsError(unavailableItems []UnavailableItem) *AppError {
+	return &AppError{
+		Code:    http.StatusBadRequest,
+		Message: errUnavailableItems.Error(),
+		Err:     errUnavailableItems,
+		Details: map[string]any{
+			"unavailable_items": unavailableItems,
+		},
+	}
 }
 
-func (e *ItemsUnavailableError) Error() string {
-	return fmt.Sprintf("%d items unavailable", len(e.Items))
+func GetUnavailableItemsFromError(err error) ([]UnavailableItem, bool) {
+	if appErr, ok := errors.AsType[*AppError](err); ok && errors.Is(appErr, errUnavailableItems) {
+		details, ok := appErr.Details.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+
+		itemsRaw, exists := details["unavailable_items"]
+		if !exists {
+			return nil, false
+		}
+
+		items, ok := itemsRaw.([]UnavailableItem)
+		return items, ok
+	}
+
+	return nil, false
 }
