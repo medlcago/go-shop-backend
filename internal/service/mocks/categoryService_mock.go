@@ -39,24 +39,24 @@ func (_m *MockCategoryService) EXPECT() *MockCategoryService_Expecter {
 }
 
 // ListCategories provides a mock function for the type MockCategoryService
-func (_mock *MockCategoryService) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error) {
+func (_mock *MockCategoryService) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.CategoryResponse, int64, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCategories")
 	}
 
-	var r0 []*dto.ProductCategoryResponse
+	var r0 []*dto.CategoryResponse
 	var r1 int64
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListCategoryRequest) ([]*dto.CategoryResponse, int64, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListCategoryRequest) []*dto.ProductCategoryResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListCategoryRequest) []*dto.CategoryResponse); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*dto.ProductCategoryResponse)
+			r0 = ret.Get(0).([]*dto.CategoryResponse)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.ListCategoryRequest) int64); ok {
@@ -102,12 +102,12 @@ func (_c *MockCategoryService_ListCategories_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockCategoryService_ListCategories_Call) Return(productCategoryResponses []*dto.ProductCategoryResponse, n int64, err error) *MockCategoryService_ListCategories_Call {
+func (_c *MockCategoryService_ListCategories_Call) Return(productCategoryResponses []*dto.CategoryResponse, n int64, err error) *MockCategoryService_ListCategories_Call {
 	_c.Call.Return(productCategoryResponses, n, err)
 	return _c
 }
 
-func (_c *MockCategoryService_ListCategories_Call) RunAndReturn(run func(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error)) *MockCategoryService_ListCategories_Call {
+func (_c *MockCategoryService_ListCategories_Call) RunAndReturn(run func(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.CategoryResponse, int64, error)) *MockCategoryService_ListCategories_Call {
 	_c.Call.Return(run)
 	return _c
 }

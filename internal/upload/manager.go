@@ -141,7 +141,8 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 		EntityType:  string(req.Entity.Type),
 		FileSize:    obj.Size,
 		ContentType: &detectedCT,
-		IsMain:      req.IsMain,
+		MediaType:   models.UploadMediaTypeDefault,
+		Variant:     models.UploadVariantOriginal,
 	}
 
 	if err := m.uploadRepo.Create(ctx, upload); err != nil {
@@ -154,7 +155,8 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 	response := &ContentResponse{
 		URL:         url,
 		ContentType: upload.ContentType,
-		IsMain:      upload.IsMain,
+		MediaType:   string(upload.MediaType),
+		Variant:     string(upload.Variant),
 		CreatedAt:   upload.CreatedAt,
 		UpdatedAt:   upload.UpdatedAt,
 	}

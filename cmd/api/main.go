@@ -28,9 +28,11 @@ func main() {
 
 	container := core.NewContainer(cfg)
 
-	container.Logger().Info("starting database migration...")
-	if err := container.DB().Migrate(cfg.Database.Dialect); err != nil {
-		logger.Fatal(container.Logger(), "failed to migrate database", err)
+	if cfg.Database.AutoMigrate {
+		container.Logger().Info("starting database migration...")
+		if err := container.DB().Migrate(cfg.Database.Dialect); err != nil {
+			logger.Fatal(container.Logger(), "failed to migrate database", err)
+		}
 	}
 
 	httpSrv := httpServer.NewServer(container)

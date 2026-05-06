@@ -47,7 +47,6 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 	db := p.db.GetDB(ctx)
 
 	db = db.Model(&models.Product{}).
-		Group("products.id").
 		Scopes(
 			scopes.AvailableProducts(),
 			scopes.ProductWithCategory(req.CategoryID),

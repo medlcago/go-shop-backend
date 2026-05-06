@@ -19,7 +19,7 @@ func NewCategoryService(categoryRepo repository.CategoryRepository) *categorySer
 	}
 }
 
-func (c *categoryService) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error) {
+func (c *categoryService) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.CategoryResponse, int64, error) {
 	const op = "categoryService.ListCategories"
 
 	categories, total, err := c.categoryRepo.ListCategories(ctx, req)
@@ -35,10 +35,10 @@ func (c *categoryService) ListCategories(ctx context.Context, req dto.ListCatego
 	return response, total, nil
 }
 
-func (c *categoryService) mapCategories(categories []*models.Category) ([]*dto.ProductCategoryResponse, error) {
+func (c *categoryService) mapCategories(categories []*models.Category) ([]*dto.CategoryResponse, error) {
 	const op = "categoryService.mapCategories"
 
-	response, err := mapper.MapList[*models.Category, *dto.ProductCategoryResponse](categories)
+	response, err := mapper.MapList[*models.Category, *dto.CategoryResponse](categories)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}

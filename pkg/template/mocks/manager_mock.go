@@ -155,7 +155,7 @@ func (_c *MockManager_LoadFromFS_Call) RunAndReturn(run func(fs1 fs.FS, patterns
 }
 
 // Render provides a mock function for the type MockManager
-func (_mock *MockManager) Render(name string, data interface{}) (string, error) {
+func (_mock *MockManager) Render(name string, data any) (string, error) {
 	ret := _mock.Called(name, data)
 
 	if len(ret) == 0 {
@@ -164,15 +164,15 @@ func (_mock *MockManager) Render(name string, data interface{}) (string, error) 
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string, interface{}) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(string, any) (string, error)); ok {
 		return returnFunc(name, data)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string, interface{}) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(string, any) string); ok {
 		r0 = returnFunc(name, data)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(string, interface{}) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(string, any) error); ok {
 		r1 = returnFunc(name, data)
 	} else {
 		r1 = ret.Error(1)
@@ -187,20 +187,20 @@ type MockManager_Render_Call struct {
 
 // Render is a helper method to define mock.On call
 //   - name string
-//   - data interface{}
+//   - data any
 func (_e *MockManager_Expecter) Render(name interface{}, data interface{}) *MockManager_Render_Call {
 	return &MockManager_Render_Call{Call: _e.mock.On("Render", name, data)}
 }
 
-func (_c *MockManager_Render_Call) Run(run func(name string, data interface{})) *MockManager_Render_Call {
+func (_c *MockManager_Render_Call) Run(run func(name string, data any)) *MockManager_Render_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 string
 		if args[0] != nil {
 			arg0 = args[0].(string)
 		}
-		var arg1 interface{}
+		var arg1 any
 		if args[1] != nil {
-			arg1 = args[1].(interface{})
+			arg1 = args[1].(any)
 		}
 		run(
 			arg0,
@@ -215,7 +215,7 @@ func (_c *MockManager_Render_Call) Return(s string, err error) *MockManager_Rend
 	return _c
 }
 
-func (_c *MockManager_Render_Call) RunAndReturn(run func(name string, data interface{}) (string, error)) *MockManager_Render_Call {
+func (_c *MockManager_Render_Call) RunAndReturn(run func(name string, data any) (string, error)) *MockManager_Render_Call {
 	_c.Call.Return(run)
 	return _c
 }

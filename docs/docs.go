@@ -372,7 +372,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse"
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse"
                         }
                     },
                     "400": {
@@ -438,7 +438,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse"
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse"
                         }
                     },
                     "400": {
@@ -1338,6 +1338,32 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.CategoryResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.Confirm2FARequest": {
             "type": "object",
             "required": [
@@ -1376,11 +1402,24 @@ const docTemplate = `{
                 },
                 "order_id": {
                     "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.OrderItemProductResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
                 },
-                "unavailable_items": {
+                "images": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/go-shop-backend_internal_dto.UnavailableItem"
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
@@ -1390,6 +1429,9 @@ const docTemplate = `{
             "properties": {
                 "id": {
                     "type": "string"
+                },
+                "product": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.OrderItemProductResponse"
                 },
                 "product_id": {
                     "type": "string"
@@ -1422,6 +1464,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "is_guest_order": {
+                    "type": "boolean"
                 },
                 "items": {
                     "type": "array",
@@ -1456,9 +1501,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "parent_id": {
                     "type": "string"
                 },
                 "slug": {
@@ -1581,26 +1623,6 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_internal_dto.UnavailableItem": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "type": "string"
-                },
-                "available_qty": {
-                    "type": "integer"
-                },
-                "product_id": {
-                    "type": "string"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "requested_qty": {
-                    "type": "integer"
-                }
-            }
-        },
         "go-shop-backend_internal_dto.UploadResponse": {
             "type": "object",
             "properties": {
@@ -1610,13 +1632,16 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
-                "is_main": {
-                    "type": "boolean"
+                "media_type": {
+                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string"
                 },
                 "url": {
+                    "type": "string"
+                },
+                "variant": {
                     "type": "string"
                 }
             }
@@ -1661,6 +1686,9 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                },
+                "email_confirmed": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "string"
@@ -1711,13 +1739,13 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse": {
+        "go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/go-shop-backend_internal_dto.OrderResponse"
+                        "$ref": "#/definitions/go-shop-backend_internal_dto.CategoryResponse"
                     }
                 },
                 "total": {
@@ -1725,13 +1753,13 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse": {
+        "go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/go-shop-backend_internal_dto.ProductCategoryResponse"
+                        "$ref": "#/definitions/go-shop-backend_internal_dto.OrderResponse"
                     }
                 },
                 "total": {
@@ -1823,7 +1851,7 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse": {
+        "go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse": {
             "type": "object",
             "properties": {
                 "details": {},
@@ -1831,7 +1859,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "result": {
-                    "$ref": "#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductCategoryResponse"
+                    "$ref": "#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse"
                 }
             }
         },
@@ -1879,6 +1907,9 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                },
+                "email_confirmed": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "string"

@@ -41,8 +41,16 @@ func ProductWithCategory(categoryID uuid.UUID) func(db *gorm.DB) *gorm.DB {
 			return db
 		}
 
-		return db.Joins("JOIN product_categories pc ON pc.product_id = products.id").
-			Where("pc.category_id = ?", categoryID)
+		return db.Where(`
+			EXISTS (
+				SELECT 1
+				FROM product_categories pc
+				JOIN categories c ON c.id = pc.category_id
+				WHERE pc.product_id = products.id
+				  AND pc.category_id = ?
+				  AND c.is_active = true
+			)
+		`, categoryID)
 	}
 }
 
@@ -68,7 +76,9 @@ func ProductPriceBetween(min int64, max int64) func(db *gorm.DB) *gorm.DB {
 
 func ProductWithRelations() func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Preload("Categories").Preload("Images")
+		return db.Preload("Images").Preload("Categories", func(tx *gorm.DB) *gorm.DB {
+			return tx.Select("id", "name", "slug").Where("is_active = ?", true)
+		})
 	}
 }
 

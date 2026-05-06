@@ -34,7 +34,7 @@ type ProductService interface {
 }
 
 type CategoryService interface {
-	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.ProductCategoryResponse, int64, error)
+	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.CategoryResponse, int64, error)
 }
 
 type OrderService interface {

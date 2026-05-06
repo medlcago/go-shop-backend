@@ -6,6 +6,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type ProductCategoryResponse struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Slug string    `json:"slug"`
+}
+
 type ProductResponse struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`

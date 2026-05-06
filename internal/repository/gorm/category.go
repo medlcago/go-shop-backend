@@ -41,6 +41,7 @@ func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCat
 		Scopes(
 			scopes.Paginate(req.Limit, req.Offset),
 		).
+		Order("sort_order DESC, created_at DESC").
 		Find(&categories).Error; err != nil {
 		return nil, 0, repository.HandleError(err)
 	}

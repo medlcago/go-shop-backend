@@ -29,10 +29,10 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 			categoryID: "",
 			setupMock: func(serviceMock *serviceMocks.MockCategoryService) {
 				serviceMock.EXPECT().ListCategories(mock.Anything, dto.ListCategoryRequest{}).
-					Return([]*dto.ProductCategoryResponse{}, 3, nil).Once()
+					Return([]*dto.CategoryResponse{}, 3, nil).Once()
 			},
 			expectedCode: http.StatusOK,
-			expectedBody: response.NewResponse(response.NewPaginated([]*dto.ProductCategoryResponse{}, 3)),
+			expectedBody: response.NewResponse(response.NewPaginated([]*dto.CategoryResponse{}, 3)),
 		},
 		{
 			name:       "success get subcategory",
@@ -40,10 +40,10 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 			setupMock: func(serviceMock *serviceMocks.MockCategoryService) {
 				serviceMock.EXPECT().ListCategories(mock.Anything, dto.ListCategoryRequest{
 					ID: uuid.MustParse("e267ab94-8c00-4dce-b44e-93dc546f631a"),
-				}).Return([]*dto.ProductCategoryResponse{}, 3, nil).Once()
+				}).Return([]*dto.CategoryResponse{}, 3, nil).Once()
 			},
 			expectedCode: http.StatusOK,
-			expectedBody: response.NewResponse(response.NewPaginated([]*dto.ProductCategoryResponse{}, 3)),
+			expectedBody: response.NewResponse(response.NewPaginated([]*dto.CategoryResponse{}, 3)),
 		},
 		{
 			name:         "invalid query",
@@ -57,7 +57,7 @@ func TestCategoryHandler_ListCategories(t *testing.T) {
 			name: "internal server error",
 			setupMock: func(serviceMock *serviceMocks.MockCategoryService) {
 				serviceMock.EXPECT().ListCategories(mock.Anything, dto.ListCategoryRequest{}).
-					Return([]*dto.ProductCategoryResponse{}, 0, fmt.Errorf("unexpected error")).Once()
+					Return([]*dto.CategoryResponse{}, 0, fmt.Errorf("unexpected error")).Once()
 			},
 			expectedCode: http.StatusInternalServerError,
 			expectedBody: response.NewError(http.StatusText(http.StatusInternalServerError)),

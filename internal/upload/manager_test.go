@@ -215,7 +215,9 @@ func (suite *ManagerTestSuite) TestSave_Success() {
 		return u.ObjectKey == req.ObjectKey &&
 			u.EntityID == suite.entityID &&
 			u.EntityType == string(upload.EntityTypeProduct) &&
-			*u.ContentType == detectedCT
+			*u.ContentType == detectedCT &&
+			u.MediaType != "" &&
+			u.Variant != ""
 	})).Return(nil).Once()
 
 	url := "https://s3.example.com/img.png"
