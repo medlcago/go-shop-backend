@@ -1344,10 +1344,16 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "has_children": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "string"
                 },
                 "is_active": {
+                    "type": "boolean"
+                },
+                "is_root": {
                     "type": "boolean"
                 },
                 "name": {

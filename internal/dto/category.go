@@ -10,6 +10,8 @@ type CategoryResponse struct {
 	Description string     `json:"description"`
 	IsActive    bool       `json:"is_active"`
 	SortOrder   int        `json:"sort_order"`
+	HasChildren bool       `json:"has_children"`
+	IsRoot      bool       `json:"is_root"`
 }
 
 type ListCategoryRequest struct {

@@ -41,7 +41,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 		Offset: 0,
 	}
 
-	mockCategories := []*models.Category{
+	categories := []*models.Category{
 		{
 			Name: "Electronics",
 		},
@@ -51,16 +51,18 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 	}
 
 	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
-		Return(mockCategories, 5, nil).Once()
+		Return(categories, 5, nil).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
+	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.Equal(int64(5), totalCount)
-	suite.Len(categories, 2)
+	suite.Equal(int64(5), total)
+	suite.Len(response, 2)
 
-	suite.Equal("Electronics", categories[0].Name)
-	suite.Equal("Clothing", categories[1].Name)
+	suite.Equal("Electronics", response[0].Name)
+	suite.True(response[0].IsRoot)
+	suite.Equal("Clothing", response[1].Name)
+	suite.True(response[1].IsRoot)
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories() {
@@ -70,7 +72,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 		Offset: 0,
 	}
 
-	mockCategories := []*models.Category{
+	categories := []*models.Category{
 		{
 			Name:     "Laptops",
 			ParentID: new(suite.parentID),
@@ -82,16 +84,18 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 	}
 
 	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
-		Return(mockCategories, 2, nil).Once()
+		Return(categories, 2, nil).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
+	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.Equal(int64(2), totalCount)
-	suite.Len(categories, 2)
+	suite.Equal(int64(2), total)
+	suite.Len(response, 2)
 
-	suite.Equal(suite.parentID, *categories[0].ParentID)
-	suite.Equal(suite.parentID, *categories[1].ParentID)
+	suite.Equal(suite.parentID, *response[0].ParentID)
+	suite.False(response[0].IsRoot)
+	suite.Equal(suite.parentID, *response[1].ParentID)
+	suite.False(response[1].IsRoot)
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
@@ -104,11 +108,12 @@ func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
 	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
 		Return(nil, 0, repoErr).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
+	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)
 
-	suite.Nil(categories)
-	suite.Equal(int64(0), totalCount)
-	suite.ErrorContains(err, repoErr.Error())
+	suite.Nil(response)
+	suite.Equal(int64(0), total)
+	suite.ErrorIs(err, repoErr)
+	suite.ErrorContains(err, "categoryService.ListCategories")
 }
 
 func (suite *CategoryServiceTestSuite) TestListCategories_EmptyResult() {
@@ -120,10 +125,9 @@ func (suite *CategoryServiceTestSuite) TestListCategories_EmptyResult() {
 	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
 		Return([]*models.Category{}, 0, nil).Once()
 
-	categories, totalCount, err := suite.categoryService.ListCategories(suite.ctx, req)
+	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)
 
 	suite.NoError(err)
-	suite.Equal(int64(0), totalCount)
-	suite.Empty(categories)
-	suite.Len(categories, 0)
+	suite.Equal(int64(0), total)
+	suite.Empty(response)
 }

@@ -15,6 +15,7 @@ type Category struct {
 	Description string     `gorm:"type:text;not null"`
 	IsActive    bool       `gorm:"type:boolean;not null;default:true"`
 	SortOrder   int        `gorm:"type:integer;not null;default:0"`
+	HasChildren bool       `gorm:"column:has_children;->"`
 
 	CreatedAt time.Time      `gorm:"type:timestamptz;default:now();not null"`
 	UpdatedAt time.Time      `gorm:"type:timestamptz;default:now();not null"`
@@ -23,4 +24,8 @@ type Category struct {
 	Parent *Category `gorm:"foreignKey:ParentID;constraint:OnDelete:SET NULL"`
 
 	Products []Product `gorm:"many2many:product_categories;constraint:OnDelete:CASCADE"`
+}
+
+func (c *Category) IsRoot() bool {
+	return c.ParentID == nil
 }

@@ -41,6 +41,15 @@ func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCat
 		Scopes(
 			scopes.Paginate(req.Limit, req.Offset),
 		).
+		Select(`
+		categories.*,
+		EXISTS (
+			SELECT 1
+			FROM categories c2
+			WHERE c2.parent_id = categories.id
+			AND c2.deleted_at IS NULL
+		) AS has_children
+	`).
 		Order("sort_order DESC, created_at DESC").
 		Find(&categories).Error; err != nil {
 		return nil, 0, repository.HandleError(err)
