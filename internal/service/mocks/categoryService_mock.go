@@ -102,8 +102,8 @@ func (_c *MockCategoryService_ListCategories_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockCategoryService_ListCategories_Call) Return(productCategoryResponses []*dto.CategoryResponse, n int64, err error) *MockCategoryService_ListCategories_Call {
-	_c.Call.Return(productCategoryResponses, n, err)
+func (_c *MockCategoryService_ListCategories_Call) Return(categoryResponses []*dto.CategoryResponse, n int64, err error) *MockCategoryService_ListCategories_Call {
+	_c.Call.Return(categoryResponses, n, err)
 	return _c
 }
 

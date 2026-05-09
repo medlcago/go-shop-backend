@@ -133,23 +133,19 @@ func (o *orderService) AddItem(
 		return nil, apperror.Wrap(op, apperror.ErrInvalidQuantity)
 	}
 
-	var order *models.Order
-
-	handle := func(ctx context.Context) error {
-		var err error
-
-		order, err = o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
+	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
+		order, err := o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if order.Status != models.OrderStatusDraft {
-			return apperror.ErrInvalidOrderStatus
+			return nil, apperror.ErrInvalidOrderStatus
 		}
 
 		product, err := o.getProductForOrder(ctx, req.ProductID, req.Quantity)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		item := &models.OrderItem{
@@ -161,14 +157,12 @@ func (o *orderService) AddItem(
 		}
 
 		if err := o.orderItemRepo.Upsert(ctx, item); err != nil {
-			return err
+			return nil, err
 		}
 
-		order, err = o.recalculateOrder(ctx, orderID)
-		return err
-	}
+		return o.recalculateOrder(ctx, orderID)
+	})
 
-	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -190,34 +184,28 @@ func (o *orderService) RemoveItem(
 ) (*dto.OrderResponse, error) {
 	const op = "orderService.RemoveItem"
 
-	var order *models.Order
-
-	handle := func(ctx context.Context) error {
-		var err error
-
-		order, err = o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
+	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
+		order, err := o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if order.Status != models.OrderStatusDraft {
-			return apperror.ErrInvalidOrderStatus
+			return nil, apperror.ErrInvalidOrderStatus
 		}
 
 		removed, err := o.orderItemRepo.RemoveItem(ctx, orderID, itemID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !removed {
-			return apperror.ErrItemNotFound
+			return nil, apperror.ErrItemNotFound
 		}
 
-		order, err = o.recalculateOrder(ctx, orderID)
-		return err
-	}
+		return o.recalculateOrder(ctx, orderID)
+	})
 
-	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -238,29 +226,23 @@ func (o *orderService) Clear(
 ) (*dto.OrderResponse, error) {
 	const op = "orderService.Clear"
 
-	var order *models.Order
-
-	handle := func(ctx context.Context) error {
-		var err error
-
-		order, err = o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
+	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
+		order, err := o.getOrderByOwner(ctx, orderID, userID, sessionID, false)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if order.Status != models.OrderStatusDraft {
-			return apperror.ErrInvalidOrderStatus
+			return nil, apperror.ErrInvalidOrderStatus
 		}
 
 		if err := o.orderItemRepo.Clear(ctx, orderID); err != nil {
-			return err
+			return nil, err
 		}
 
-		order, err = o.recalculateOrder(ctx, orderID)
-		return err
-	}
+		return o.recalculateOrder(ctx, orderID)
+	})
 
-	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -284,39 +266,39 @@ func (o *orderService) Checkout(
 	ctx, cancel := context.WithTimeout(ctx, o.orderCheckoutTimeout)
 	defer cancel()
 
-	var confirmationURL string
-
-	handle := func(ctx context.Context) error {
+	confirmationURL, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (string, error) {
 		order, err := o.getOrderByOwner(ctx, orderID, &userID, sessionID, true)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		if err := o.checkoutOrder(ctx, order, userID); err != nil {
-			return err
+			return "", err
 		}
 
 		payment, err := o.createPayment(ctx, userID, orderID, order.TotalAmount)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		expiresAt := time.Now().UTC().Add(o.orderCancelDelay)
 		order.SetPaymentInfo(payment.ID, o.paymentProvider.GetName(), expiresAt)
 
 		if err := o.orderRepo.Update(ctx, order); err != nil {
-			return err
+			return "", err
 		}
 
 		if err := o.orderTask.EnqueueCancelOrder(ctx, userID, orderID, o.orderCancelDelay); err != nil {
-			return err
+			return "", err
 		}
 
-		confirmationURL = payment.ConfirmationURL
-		return nil
-	}
+		if payment.ConfirmationURL == "" {
+			return "", errors.New("internal error: ConfirmationURL is empty")
+		}
 
-	err := o.txManager.Wrap(ctx, handle)
+		return payment.ConfirmationURL, nil
+	})
+
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return nil, apperror.Wrap(op, apperror.ErrGatewayTimeout)
@@ -339,7 +321,7 @@ func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) er
 		return apperror.Wrap(op, err)
 	}
 
-	handle := func(ctx context.Context) error {
+	err = o.txManager.Wrap(ctx, func(ctx context.Context) error {
 		order, err := o.orderRepo.GetByPayment(ctx, o.paymentProvider.GetName(), event.PaymentID, true)
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
@@ -358,9 +340,8 @@ func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) er
 		}
 
 		return o.orderRepo.Update(ctx, order)
-	}
+	})
 
-	err = o.txManager.Wrap(ctx, handle)
 	if err != nil {
 		return apperror.Wrap(op, err)
 	}
@@ -371,7 +352,7 @@ func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) er
 func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error {
 	const op = "orderService.CancelOrder"
 
-	handle := func(ctx context.Context) error {
+	err := o.txManager.Wrap(ctx, func(ctx context.Context) error {
 		order, err := o.getOrderByID(ctx, orderID, true)
 		if err != nil {
 			return err
@@ -382,9 +363,8 @@ func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderI
 		}
 
 		return o.orderRepo.Update(ctx, order)
-	}
+	})
 
-	err := o.txManager.Wrap(ctx, handle)
 	if err != nil {
 		return apperror.Wrap(op, err)
 	}

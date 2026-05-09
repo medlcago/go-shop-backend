@@ -36,7 +36,7 @@ func NewGormTxManager(db *gorm.DB) *gormTxManager {
 	return &gormTxManager{db: db}
 }
 
-func (m *gormTxManager) Wrap(ctx context.Context, fn func(context.Context) error) (err error) {
+func (m *gormTxManager) Wrap(ctx context.Context, fn func(context.Context) error) error {
 	if tx, ok := ctx.Value(txKey{}).(*gorm.DB); ok {
 		return tx.Transaction(func(nestedTx *gorm.DB) error {
 			txCtx := context.WithValue(ctx, txKey{}, nestedTx)
@@ -48,4 +48,21 @@ func (m *gormTxManager) Wrap(ctx context.Context, fn func(context.Context) error
 		txCtx := context.WithValue(ctx, txKey{}, tx)
 		return fn(txCtx)
 	})
+}
+
+func Transaction[T any](
+	ctx context.Context,
+	txm TxManager,
+	fn func(context.Context) (T, error),
+) (T, error) {
+	var result T
+
+	err := txm.Wrap(ctx, func(ctx context.Context) error {
+		var err error
+
+		result, err = fn(ctx)
+		return err
+	})
+
+	return result, err
 }
