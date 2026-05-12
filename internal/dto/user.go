@@ -9,6 +9,7 @@ import (
 type UserLoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
+	Code     string `json:"code" validate:"omitempty,required"`
 }
 
 type UserRegisterRequest struct {
@@ -27,8 +28,7 @@ type UserResponse struct {
 
 type UserTokenResponse struct {
 	*TokenResponse
-	User        *UserResponse `json:"user,omitempty"`
-	Requires2FA bool          `json:"requires_2fa,omitempty"`
+	User *UserResponse `json:"user,omitempty"`
 }
 
 type Setup2FAResponse struct {

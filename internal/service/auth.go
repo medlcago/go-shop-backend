@@ -66,12 +66,18 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 	}
 
 	if user.TwoFAEnabled {
-		partialToken, err := a.createPartialToken(user)
+		if req.Code == "" {
+			return nil, apperror.Wrap(op, apperror.Err2FACodeRequired)
+		}
+
+		decryptedKey, err := a.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
 		if err != nil {
 			return nil, apperror.Wrap(op, err)
 		}
 
-		return buildUserTokenResponse(user, partialToken, true), nil
+		if !a.totpManager.ValidateCode(decryptedKey, req.Code) {
+			return nil, apperror.Wrap(op, apperror.ErrInvalid2FACode)
+		}
 	}
 
 	tokens, err := a.createTokens(user)
@@ -79,7 +85,7 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, apperror.Wrap(op, err)
 	}
 
-	return buildUserTokenResponse(user, tokens, false), nil
+	return buildUserTokenResponse(user, tokens), nil
 }
 
 func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error) {
@@ -114,7 +120,7 @@ func (a *authService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, apperror.Wrap(op, err)
 	}
 
-	return buildUserTokenResponse(user, tokens, false), nil
+	return buildUserTokenResponse(user, tokens), nil
 }
 
 func (a *authService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error) {
@@ -226,49 +232,6 @@ func (a *authService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.
 	return nil
 }
 
-func (a *authService) Verify2FA(ctx context.Context, req dto.Verify2FARequest) (*dto.UserTokenResponse, error) {
-	const op = "authService.Verify2FA"
-
-	claims, err := a.tokenManager.ValidateToken(req.Token)
-	if err != nil {
-		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
-	}
-
-	if claims.TokenType != token.PartialTokenType {
-		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
-	}
-
-	uid, err := uuid.Parse(claims.UserID)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	user, err := a.userRepo.GetByID(ctx, uid)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	if !user.TwoFAEnabled {
-		return nil, apperror.Wrap(op, apperror.Err2FANotEnabled)
-	}
-
-	decryptedKey, err := a.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	if !a.totpManager.ValidateCode(decryptedKey, req.Code) {
-		return nil, apperror.Wrap(op, apperror.ErrInvalid2FACode)
-	}
-
-	tokens, err := a.createTokens(user)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	return buildUserTokenResponse(user, tokens, false), nil
-}
-
 func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error) {
 	const (
 		op        = "authService.createTokens"
@@ -299,24 +262,6 @@ func (a *authService) createTokens(user *models.User) (*dto.TokenResponse, error
 	}, nil
 }
 
-func (a *authService) createPartialToken(user *models.User) (*dto.TokenResponse, error) {
-	const op = "authService.createPartialToken"
-
-	partialToken, err := a.tokenManager.GeneratePartialToken(token.Payload{
-		UserID:         user.ID.String(),
-		UserRole:       string(user.Role),
-		TwoFAEnabled:   user.TwoFAEnabled,
-		EmailConfirmed: user.EmailConfirmed(),
-	})
-	if err != nil {
-		return nil, apperror.Wrap(op, fmt.Errorf("failed to generate partial token: %w", err))
-	}
-
-	return &dto.TokenResponse{
-		PartialToken: partialToken,
-	}, nil
-}
-
 func (a *authService) verifyPassword(password, passwordHash string) error {
 	const op = "authService.verifyPassword"
 
@@ -332,21 +277,18 @@ func (a *authService) verifyPassword(password, passwordHash string) error {
 	return nil
 }
 
-func buildUserTokenResponse(user *models.User, token *dto.TokenResponse, requires2FA bool) *dto.UserTokenResponse {
+func buildUserTokenResponse(user *models.User, token *dto.TokenResponse) *dto.UserTokenResponse {
 	response := &dto.UserTokenResponse{
 		TokenResponse: token,
-		Requires2FA:   requires2FA,
 	}
 
-	if !requires2FA {
-		response.User = &dto.UserResponse{
-			ID:             user.ID,
-			Email:          user.Email,
-			CreatedAt:      user.CreatedAt,
-			Role:           string(user.Role),
-			TwoFAEnabled:   user.TwoFAEnabled,
-			EmailConfirmed: user.EmailConfirmed(),
-		}
+	response.User = &dto.UserResponse{
+		ID:             user.ID,
+		Email:          user.Email,
+		CreatedAt:      user.CreatedAt,
+		Role:           string(user.Role),
+		TwoFAEnabled:   user.TwoFAEnabled,
+		EmailConfirmed: user.EmailConfirmed(),
 	}
 
 	return response

@@ -14,7 +14,6 @@ type AuthService interface {
 	Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error)
 	Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error
 	Disable2FA(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error
-	Verify2FA(ctx context.Context, req dto.Verify2FARequest) (*dto.UserTokenResponse, error)
 }
 
 type UserService interface {

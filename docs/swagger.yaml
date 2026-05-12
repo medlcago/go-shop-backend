@@ -221,11 +221,14 @@ definitions:
     type: object
   go-shop-backend_internal_dto.UserLoginRequest:
     properties:
+      code:
+        type: string
       email:
         type: string
       password:
         type: string
     required:
+    - code
     - email
     - password
     type: object
@@ -260,26 +263,12 @@ definitions:
     properties:
       access_token:
         type: string
-      partial_token:
-        type: string
       refresh_token:
         type: string
-      requires_2fa:
-        type: boolean
       token_type:
         type: string
       user:
         $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
-    type: object
-  go-shop-backend_internal_dto.Verify2FARequest:
-    properties:
-      code:
-        type: string
-      token:
-        type: string
-    required:
-    - code
-    - token
     type: object
   go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse:
     properties:
@@ -547,40 +536,6 @@ paths:
           schema:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       summary: Login
-      tags:
-      - auth
-  /auth/login/2fa:
-    post:
-      consumes:
-      - application/json
-      description: Authenticate user with two-factor authentication code
-      parameters:
-      - description: Request body with 2FA code
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.Verify2FARequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Login with 2FA
       tags:
       - auth
   /auth/register:

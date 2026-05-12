@@ -187,6 +187,7 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Success() {
 	req := dto.UserLoginRequest{
 		Email:    "test@example.com",
 		Password: "test123",
+		Code:     "123456",
 	}
 
 	user := &models.User{
@@ -205,63 +206,95 @@ func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Success() {
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
 		Return(true, nil).Once()
 
+	suite.encryptionManager.EXPECT().Decrypt(suite.ctx, *user.TwoFASecret).
+		Return("decrypted_secret", nil).Once()
+
+	suite.totpManager.EXPECT().ValidateCode("decrypted_secret", req.Code).
+		Return(true).Once()
+
 	payload := token.Payload{
 		UserID:       user.ID.String(),
 		UserRole:     string(user.Role),
 		TwoFAEnabled: user.TwoFAEnabled,
 	}
 
-	suite.tokenManager.EXPECT().GeneratePartialToken(payload).
-		Return("partial_token", nil).Once()
+	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
+		Return("test_access_token", nil).Once()
+
+	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
+		Return("test_refresh_token", nil).Once()
 
 	response, err := suite.authService.Login(suite.ctx, req)
 
 	suite.NoError(err)
 	suite.NotNil(response)
-	suite.Nil(response.User)
-	suite.True(response.Requires2FA)
-	suite.Equal("partial_token", response.PartialToken)
-	suite.Empty(response.AccessToken)
-	suite.Empty(response.RefreshToken)
-	suite.Empty(response.TokenResponse.TokenType)
+	suite.NotNil(response.User)
+	suite.Equal(response.User.ID, user.ID)
+	suite.Equal(response.User.Email, user.Email)
+	suite.NotNil(response.TokenResponse)
+	suite.Equal(response.AccessToken, "test_access_token")
+	suite.Equal(response.RefreshToken, "test_refresh_token")
+	suite.Equal("Bearer", response.TokenResponse.TokenType)
 }
 
-func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_PartialTokenError() {
-	req := dto.UserLoginRequest{
-		Email:    "test@example.com",
-		Password: "test123",
+func (suite *AuthServiceTestSuite) TestLogin_2FAEnabled_Invalid2FACode() {
+	tests := []struct {
+		name string
+		req  dto.UserLoginRequest
+		err  error
+	}{
+		{
+			name: "empty 2fa code",
+			req: dto.UserLoginRequest{
+				Email:    "test@example.com",
+				Password: "test123",
+			},
+			err: apperror.Err2FACodeRequired,
+		},
+		{
+			name: "invalid 2fa code",
+			req: dto.UserLoginRequest{
+				Email:    "test@example.com",
+				Password: "test123",
+				Code:     "123456",
+			},
+			err: apperror.ErrInvalid2FACode,
+		},
 	}
 
-	user := &models.User{
-		ID:               suite.userID,
-		Email:            req.Email,
-		PasswordHash:     "hashed_password",
-		Role:             models.UserRoleCustomer,
-		TwoFAEnabled:     true,
-		TwoFASecret:      new("encrypted_secret"),
-		TwoFAConfirmedAt: new(time.Now().UTC()),
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			user := &models.User{
+				ID:               suite.userID,
+				Email:            tt.req.Email,
+				PasswordHash:     "hashed_password",
+				Role:             models.UserRoleCustomer,
+				TwoFAEnabled:     true,
+				TwoFASecret:      new("encrypted_secret"),
+				TwoFAConfirmedAt: new(time.Now().UTC()),
+			}
+
+			suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, tt.req.Email).
+				Return(user, nil).Once()
+
+			suite.hasher.EXPECT().Verify(tt.req.Password, user.PasswordHash).
+				Return(true, nil).Once()
+
+			if tt.req.Code != "" {
+				suite.encryptionManager.EXPECT().Decrypt(suite.ctx, *user.TwoFASecret).
+					Return("decrypted_secret", nil).Once()
+
+				suite.totpManager.EXPECT().ValidateCode("decrypted_secret", tt.req.Code).
+					Return(false).Once()
+			}
+
+			response, err := suite.authService.Login(suite.ctx, tt.req)
+
+			suite.Nil(response)
+			suite.ErrorIs(err, tt.err)
+			suite.ErrorContains(err, "authService.Login")
+		})
 	}
-
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
-		Return(user, nil).Once()
-
-	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
-		Return(true, nil).Once()
-
-	payload := token.Payload{
-		UserID:       user.ID.String(),
-		UserRole:     string(user.Role),
-		TwoFAEnabled: user.TwoFAEnabled,
-	}
-
-	tokenErr := errors.New("token generation failed")
-	suite.tokenManager.EXPECT().GeneratePartialToken(payload).
-		Return("", tokenErr).Once()
-
-	response, err := suite.authService.Login(suite.ctx, req)
-
-	suite.Nil(response)
-	suite.ErrorContains(err, tokenErr.Error())
 }
 
 // ==================== Register Tests ====================
@@ -674,152 +707,4 @@ func (suite *AuthServiceTestSuite) TestDisable2FA_InvalidCode() {
 
 	err := suite.authService.Disable2FA(suite.ctx, suite.userID, req)
 	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
-}
-
-// ==================== Verify2FA Tests ====================
-
-func (suite *AuthServiceTestSuite) TestVerify2FA_Success() {
-	user := &models.User{
-		ID:               suite.userID,
-		TwoFAEnabled:     true,
-		TwoFASecret:      new("secret"),
-		TwoFAConfirmedAt: new(time.Now().UTC()),
-		Role:             models.UserRoleCustomer,
-	}
-
-	req := dto.Verify2FARequest{
-		Token: "partial",
-		Code:  "123456",
-	}
-
-	claims := &token.UserClaims{
-		UserID:       user.ID.String(),
-		UserRole:     string(user.Role),
-		TwoFAEnabled: true,
-		TokenType:    token.PartialTokenType,
-	}
-
-	suite.tokenManager.EXPECT().
-		ValidateToken(req.Token).
-		Return(claims, nil).Once()
-
-	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
-		Return(user, nil).Once()
-
-	suite.encryptionManager.EXPECT().
-		Decrypt(suite.ctx, "secret").
-		Return("real", nil).Once()
-
-	suite.totpManager.EXPECT().
-		ValidateCode("real", req.Code).
-		Return(true).Once()
-
-	suite.tokenManager.EXPECT().
-		GenerateAccessToken(mock.Anything).
-		Return("access", nil).Once()
-
-	suite.tokenManager.EXPECT().
-		GenerateRefreshToken(mock.Anything).
-		Return("refresh", nil).Once()
-
-	response, err := suite.authService.Verify2FA(suite.ctx, req)
-
-	suite.NoError(err)
-	suite.NotNil(response)
-	suite.False(response.Requires2FA)
-	suite.NotNil(response.User)
-	suite.Equal(user.ID, response.User.ID)
-	suite.Equal("access", response.AccessToken)
-	suite.Equal("refresh", response.RefreshToken)
-	suite.Equal("Bearer", response.TokenType)
-	suite.Empty(response.PartialToken)
-}
-
-func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidTokenType() {
-	req := dto.Verify2FARequest{Token: "bad"}
-
-	claims := &token.UserClaims{
-		TokenType: token.AccessTokenType,
-	}
-
-	suite.tokenManager.EXPECT().
-		ValidateToken(req.Token).
-		Return(claims, nil).Once()
-
-	response, err := suite.authService.Verify2FA(suite.ctx, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.ErrInvalidToken)
-}
-
-func (suite *AuthServiceTestSuite) TestVerify2FA_InvalidCode() {
-	user := &models.User{
-		ID:               suite.userID,
-		TwoFAEnabled:     true,
-		TwoFASecret:      new("secret"),
-		TwoFAConfirmedAt: new(time.Now().UTC()),
-	}
-
-	req := dto.Verify2FARequest{
-		Token: "partial",
-		Code:  "000000",
-	}
-
-	claims := &token.UserClaims{
-		UserID:       user.ID.String(),
-		UserRole:     string(user.Role),
-		TwoFAEnabled: true,
-		TokenType:    token.PartialTokenType,
-	}
-
-	suite.tokenManager.EXPECT().
-		ValidateToken(req.Token).
-		Return(claims, nil).Once()
-
-	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
-		Return(user, nil).Once()
-
-	suite.encryptionManager.EXPECT().
-		Decrypt(suite.ctx, "secret").
-		Return("real", nil).Once()
-
-	suite.totpManager.EXPECT().
-		ValidateCode("real", req.Code).
-		Return(false).Once()
-
-	response, err := suite.authService.Verify2FA(suite.ctx, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
-}
-
-func (suite *AuthServiceTestSuite) TestVerify2FA_2FANotEnabled() {
-	user := &models.User{
-		ID:           suite.userID,
-		PasswordHash: "password_hash",
-	}
-
-	req := dto.Verify2FARequest{
-		Token: "partial",
-	}
-
-	claims := &token.UserClaims{
-		UserID:    user.ID.String(),
-		TokenType: token.PartialTokenType,
-	}
-
-	suite.tokenManager.EXPECT().
-		ValidateToken(req.Token).
-		Return(claims, nil).Once()
-
-	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
-		Return(user, nil).Once()
-
-	response, err := suite.authService.Verify2FA(suite.ctx, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.Err2FANotEnabled)
 }

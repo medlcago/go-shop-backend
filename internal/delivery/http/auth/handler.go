@@ -47,33 +47,6 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
-// LoginWith2FA godoc
-//
-//	@Summary		Login with 2FA
-//	@Description	Authenticate user with two-factor authentication code
-//	@Tags			auth
-//	@Accept			json
-//	@Produce		json
-//	@Param			request	body		dto.Verify2FARequest	true	"Request body with 2FA code"
-//	@Success		200		{object}	response.Response[dto.UserTokenResponse]
-//	@Failure		400		{object}	response.Response[any]
-//	@Failure		401		{object}	response.Response[any]
-//	@Failure		500		{object}	response.Response[any]
-//	@Router			/auth/login/2fa [post]
-func (h *Handler) LoginWith2FA(ctx fiber.Ctx) error {
-	var req dto.Verify2FARequest
-	if err := ctx.Bind().JSON(&req); err != nil {
-		return err
-	}
-
-	resp, err := h.authService.Verify2FA(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	return response.JSON(ctx, fiber.StatusOK, resp)
-}
-
 // Register godoc
 //
 //	@Summary		Register
