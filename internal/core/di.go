@@ -68,6 +68,7 @@ type Container struct {
 	orderService        service.OrderService
 	wishlistService     service.WishlistService
 	notificationService service.NotificationService
+	inventoryService    service.InventoryService
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -414,6 +415,17 @@ func (c *Container) CategoryService() service.CategoryService {
 	return c.categoryService
 }
 
+func (c *Container) InventoryService() service.InventoryService {
+	if c.inventoryService == nil {
+		c.inventoryService = service.NewInventoryService(
+			c.ProductRepo(),
+			c.TxManager(),
+		)
+	}
+
+	return c.inventoryService
+}
+
 func (c *Container) OrderService() service.OrderService {
 	if c.orderService == nil {
 		c.orderService = service.NewOrderService(
@@ -426,6 +438,7 @@ func (c *Container) OrderService() service.OrderService {
 			c.Config().OrderCancelDelay,
 			c.Config().OrderCheckoutTimeout,
 			c.UploadManager(),
+			c.InventoryService(),
 		)
 	}
 

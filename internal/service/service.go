@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"go-shop-backend/internal/dto"
+	"go-shop-backend/internal/models"
 	"go-shop-backend/pkg/notification"
 
 	"github.com/google/uuid"
@@ -63,4 +64,11 @@ type WishlistService interface {
 
 type NotificationService interface {
 	SendEmailConfirmationCode(ctx context.Context, to string, code string, channel notification.Channel) error
+}
+
+type InventoryService interface {
+	CheckProduct(ctx context.Context, productID uuid.UUID, quantity int) (*models.Product, error)
+	ReserveItems(ctx context.Context, items []dto.InventoryItem) error
+	ReleaseItems(ctx context.Context, items []dto.InventoryItem) error
+	DeductItems(ctx context.Context, items []dto.InventoryItem) error
 }

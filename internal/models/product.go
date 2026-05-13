@@ -30,18 +30,6 @@ type Product struct {
 	Images     []*Upload   `gorm:"polymorphic:Entity;polymorphicId:EntityID;polymorphicValue:products"`
 }
 
-func (p *Product) CanBeAdded(qty int) error {
-	if !p.IsActive {
-		return apperror.ErrProductNotActive
-	}
-
-	if p.Available() < qty {
-		return apperror.ErrInsufficientStock
-	}
-
-	return nil
-}
-
 func (p *Product) Available() int {
 	return p.Stock - p.Reserved
 }

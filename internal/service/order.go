@@ -27,6 +27,7 @@ type orderService struct {
 	orderCancelDelay     time.Duration
 	orderCheckoutTimeout time.Duration
 	uploadManager        upload.Manager
+	inventoryService     InventoryService
 }
 
 func NewOrderService(
@@ -39,6 +40,7 @@ func NewOrderService(
 	orderCancelDelay time.Duration,
 	orderCheckoutTimeout time.Duration,
 	uploadManager upload.Manager,
+	inventoryService InventoryService,
 ) *orderService {
 	return &orderService{
 		orderRepo:            orderRepo,
@@ -50,6 +52,7 @@ func NewOrderService(
 		orderCancelDelay:     orderCancelDelay,
 		orderCheckoutTimeout: orderCheckoutTimeout,
 		uploadManager:        uploadManager,
+		inventoryService:     inventoryService,
 	}
 }
 
@@ -143,7 +146,7 @@ func (o *orderService) AddItem(
 			return nil, apperror.ErrInvalidOrderStatus
 		}
 
-		product, err := o.getProductForOrder(ctx, req.ProductID, req.Quantity)
+		product, err := o.inventoryService.CheckProduct(ctx, req.ProductID, req.Quantity)
 		if err != nil {
 			return nil, err
 		}
@@ -409,7 +412,8 @@ func (o *orderService) checkoutOrder(ctx context.Context, order *models.Order, u
 		return apperror.Wrap(op, err)
 	}
 
-	if err := o.reserveItems(ctx, order.Items); err != nil {
+	items := o.mapOrderItemsToInventoryItems(order.Items)
+	if err := o.inventoryService.ReserveItems(ctx, items); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
@@ -427,7 +431,8 @@ func (o *orderService) payOrder(ctx context.Context, order *models.Order, userID
 		return apperror.Wrap(op, err)
 	}
 
-	if err := o.deductItems(ctx, order.Items); err != nil {
+	items := o.mapOrderItemsToInventoryItems(order.Items)
+	if err := o.inventoryService.DeductItems(ctx, items); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
@@ -445,7 +450,8 @@ func (o *orderService) cancelOrder(ctx context.Context, order *models.Order, use
 		return apperror.Wrap(op, err)
 	}
 
-	if err := o.releaseItems(ctx, order.Items); err != nil {
+	items := o.mapOrderItemsToInventoryItems(order.Items)
+	if err := o.inventoryService.ReleaseItems(ctx, items); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
@@ -528,29 +534,6 @@ func (o *orderService) createPayment(
 	return payment, nil
 }
 
-func (o *orderService) getProductForOrder(
-	ctx context.Context,
-	productID uuid.UUID,
-	quantity int,
-) (*models.Product, error) {
-	const op = "orderService.getProductForOrder"
-
-	product, err := o.productRepo.GetByID(ctx, productID, false)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, apperror.Wrap(op, apperror.ErrProductNotFound)
-		}
-
-		return nil, apperror.Wrap(op, err)
-	}
-
-	if err := product.CanBeAdded(quantity); err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	return product, nil
-}
-
 func (o *orderService) checkAccess(order *models.Order, userID uuid.UUID) error {
 	if !order.IsOwnedBy(userID) {
 		return apperror.ErrForbidden
@@ -591,112 +574,16 @@ func (o *orderService) mapOrders(orders []*models.Order) ([]*dto.OrderResponse, 
 	return response, nil
 }
 
-func (o *orderService) reserveItems(ctx context.Context, items []models.OrderItem) error {
-	const op = "orderService.reserveItems"
+func (o *orderService) mapOrderItemsToInventoryItems(orderItems []models.OrderItem) []dto.InventoryItem {
+	inventoryItems := make([]dto.InventoryItem, 0, len(orderItems))
 
-	err := o.applyOnProducts(ctx, items, "reserve",
-		func(p *models.Product, qty int) error {
-			return p.Reserve(qty)
-		},
-	)
-
-	if err != nil {
-		return apperror.Wrap(op, err)
+	for _, item := range orderItems {
+		inventoryItems = append(inventoryItems, dto.InventoryItem{
+			ItemID:    item.ID,
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+		})
 	}
 
-	return nil
-}
-
-func (o *orderService) releaseItems(ctx context.Context, items []models.OrderItem) error {
-	const op = "orderService.releaseItems"
-
-	err := o.applyOnProducts(ctx, items, "release",
-		func(p *models.Product, qty int) error {
-			return p.Release(qty)
-		},
-	)
-
-	if err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	return nil
-}
-
-func (o *orderService) deductItems(ctx context.Context, items []models.OrderItem) error {
-	const op = "orderService.deductItems"
-
-	err := o.applyOnProducts(ctx, items, "deduct",
-		func(p *models.Product, qty int) error {
-			return p.Deduct(qty)
-		},
-	)
-
-	if err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	return nil
-}
-
-func (o *orderService) applyOnProducts(
-	ctx context.Context,
-	items []models.OrderItem,
-	actionName string,
-	action func(p *models.Product, qty int) error,
-) error {
-	const op = "orderService.applyOnProducts"
-
-	productIDs := make([]uuid.UUID, 0, len(items))
-	for _, item := range items {
-		productIDs = append(productIDs, item.ProductID)
-	}
-
-	products, err := o.productRepo.GetByIDsForUpdate(ctx, productIDs)
-	if err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	productMap := make(map[uuid.UUID]*models.Product, len(products))
-	for _, p := range products {
-		productMap[p.ID] = p
-	}
-
-	var unavailableItems []apperror.UnavailableItem
-
-	for _, item := range items {
-		product := productMap[item.ProductID]
-		if product == nil {
-			unavailableItems = append(unavailableItems, apperror.UnavailableItem{
-				ID:           item.ID,
-				ProductID:    item.ProductID,
-				RequestedQty: item.Quantity,
-				Action:       actionName,
-				Reason:       "PRODUCT_NOT_FOUND",
-			})
-			continue
-		}
-
-		if err := action(product, item.Quantity); err != nil {
-			unavailableItems = append(unavailableItems, apperror.UnavailableItem{
-				ID:           item.ID,
-				ProductID:    product.ID,
-				RequestedQty: item.Quantity,
-				AvailableQty: product.Available(),
-				Action:       actionName,
-				Reason:       err.Error(),
-			})
-			continue
-		}
-	}
-
-	if len(unavailableItems) > 0 {
-		return apperror.Wrap(op, apperror.UnavailableItemsError(unavailableItems))
-	}
-
-	if err := o.productRepo.BulkUpsert(ctx, products); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	return nil
+	return inventoryItems
 }
