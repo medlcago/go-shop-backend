@@ -8,12 +8,6 @@ import (
 
 func RegisterRoutes(r fiber.Router, orderHandler *Handler) {
 	orderGroup := r.Group("/orders")
-	orderGroup.Post(
-		"/webhook/yookassa",
-		middleware.YookassaIPWhitelist(),
-		orderHandler.YookassaWebhook,
-	)
-
 	orderGroup.Use(middleware.RequireSessionID())
 	{
 		orderGroup.Post("/", orderHandler.CreateOrder)

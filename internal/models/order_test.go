@@ -291,17 +291,255 @@ func TestOrder_Cancel(t *testing.T) {
 func TestOrder_SetPaymentInfo(t *testing.T) {
 	paymentID := "pay_123456"
 	providerName := "stripe"
-	expiresAt := time.Now().Add(24 * time.Hour)
 
 	order := &Order{}
-	order.SetPaymentInfo(paymentID, providerName, expiresAt)
+	order.SetPaymentInfo(paymentID, providerName)
 
 	assert.NotNil(t, order.PaymentID)
 	assert.Equal(t, paymentID, *order.PaymentID)
 
 	assert.NotNil(t, order.ProviderName)
 	assert.Equal(t, providerName, *order.ProviderName)
+}
 
-	assert.NotNil(t, order.ExpiresAt)
-	assert.Equal(t, expiresAt, *order.ExpiresAt)
+func TestOrderStatus_IsValid(t *testing.T) {
+	tests := []struct {
+		name     string
+		status   OrderStatus
+		expected bool
+	}{
+		{
+			name:     "valid status: draft",
+			status:   OrderStatusDraft,
+			expected: true,
+		},
+		{
+			name:     "valid status: pending",
+			status:   OrderStatusPending,
+			expected: true,
+		},
+		{
+			name:     "valid status: paid",
+			status:   OrderStatusPaid,
+			expected: true,
+		},
+		{
+			name:     "valid status: canceled",
+			status:   OrderStatusCanceled,
+			expected: true,
+		},
+		{
+			name:     "valid status: completed",
+			status:   OrderStatusCompleted,
+			expected: true,
+		},
+		{
+			name:     "invalid status: empty string",
+			status:   OrderStatus(""),
+			expected: false,
+		},
+		{
+			name:     "invalid status: unknown value",
+			status:   OrderStatus("unknown"),
+			expected: false,
+		},
+		{
+			name:     "invalid status: random string",
+			status:   OrderStatus("some_random_value"),
+			expected: false,
+		},
+		{
+			name:     "invalid status: uppercase value",
+			status:   OrderStatus("DRAFT"),
+			expected: false,
+		},
+		{
+			name:     "invalid status: partial value",
+			status:   OrderStatus("pend"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.status.IsValid())
+		})
+	}
+}
+
+func TestOrderStatus_CanTransitionTo(t *testing.T) {
+	tests := []struct {
+		name     string
+		current  OrderStatus
+		next     OrderStatus
+		expected bool
+	}{
+		// Valid transitions
+		{
+			name:     "draft -> pending",
+			current:  OrderStatusDraft,
+			next:     OrderStatusPending,
+			expected: true,
+		},
+		{
+			name:     "pending -> paid",
+			current:  OrderStatusPending,
+			next:     OrderStatusPaid,
+			expected: true,
+		},
+		{
+			name:     "pending -> canceled",
+			current:  OrderStatusPending,
+			next:     OrderStatusCanceled,
+			expected: true,
+		},
+		{
+			name:     "paid -> completed",
+			current:  OrderStatusPaid,
+			next:     OrderStatusCompleted,
+			expected: true,
+		},
+
+		// Same status transitions (allowed)
+		{
+			name:     "draft -> draft",
+			current:  OrderStatusDraft,
+			next:     OrderStatusDraft,
+			expected: true,
+		},
+		{
+			name:     "pending -> pending",
+			current:  OrderStatusPending,
+			next:     OrderStatusPending,
+			expected: true,
+		},
+		{
+			name:     "paid -> paid",
+			current:  OrderStatusPaid,
+			next:     OrderStatusPaid,
+			expected: true,
+		},
+		{
+			name:     "canceled -> canceled",
+			current:  OrderStatusCanceled,
+			next:     OrderStatusCanceled,
+			expected: true,
+		},
+		{
+			name:     "completed -> completed",
+			current:  OrderStatusCompleted,
+			next:     OrderStatusCompleted,
+			expected: true,
+		},
+
+		// Invalid transitions
+		{
+			name:     "draft -> paid (skip pending)",
+			current:  OrderStatusDraft,
+			next:     OrderStatusPaid,
+			expected: false,
+		},
+		{
+			name:     "draft -> canceled",
+			current:  OrderStatusDraft,
+			next:     OrderStatusCanceled,
+			expected: false,
+		},
+		{
+			name:     "draft -> completed",
+			current:  OrderStatusDraft,
+			next:     OrderStatusCompleted,
+			expected: false,
+		},
+		{
+			name:     "pending -> completed (skip paid)",
+			current:  OrderStatusPending,
+			next:     OrderStatusCompleted,
+			expected: false,
+		},
+		{
+			name:     "paid -> canceled",
+			current:  OrderStatusPaid,
+			next:     OrderStatusCanceled,
+			expected: false,
+		},
+		{
+			name:     "paid -> pending (backwards)",
+			current:  OrderStatusPaid,
+			next:     OrderStatusPending,
+			expected: false,
+		},
+		{
+			name:     "paid -> draft (backwards)",
+			current:  OrderStatusPaid,
+			next:     OrderStatusDraft,
+			expected: false,
+		},
+		{
+			name:     "canceled -> any status",
+			current:  OrderStatusCanceled,
+			next:     OrderStatusPending,
+			expected: false,
+		},
+		{
+			name:     "canceled -> paid",
+			current:  OrderStatusCanceled,
+			next:     OrderStatusPaid,
+			expected: false,
+		},
+		{
+			name:     "completed -> any status",
+			current:  OrderStatusCompleted,
+			next:     OrderStatusPending,
+			expected: false,
+		},
+		{
+			name:     "completed -> paid",
+			current:  OrderStatusCompleted,
+			next:     OrderStatusPaid,
+			expected: false,
+		},
+
+		// Invalid current status
+		{
+			name:     "invalid current status (empty) -> pending",
+			current:  OrderStatus(""),
+			next:     OrderStatusPending,
+			expected: false,
+		},
+		{
+			name:     "invalid current status (unknown) -> pending",
+			current:  OrderStatus("unknown"),
+			next:     OrderStatusPending,
+			expected: false,
+		},
+
+		// Invalid next status
+		{
+			name:     "pending -> invalid next status (empty)",
+			current:  OrderStatusPending,
+			next:     OrderStatus(""),
+			expected: false,
+		},
+		{
+			name:     "pending -> invalid next status (unknown)",
+			current:  OrderStatusPending,
+			next:     OrderStatus("unknown"),
+			expected: false,
+		},
+
+		// Both invalid
+		{
+			name:     "both invalid",
+			current:  OrderStatus("invalid1"),
+			next:     OrderStatus("invalid2"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.current.CanTransitionTo(tt.next))
+		})
+	}
 }

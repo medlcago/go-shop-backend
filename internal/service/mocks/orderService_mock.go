@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 	"go-shop-backend/internal/dto"
+	"go-shop-backend/internal/models"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -189,23 +190,23 @@ func (_c *MockOrderService_CancelOrder_Call) RunAndReturn(run func(ctx context.C
 }
 
 // Checkout provides a mock function for the type MockOrderService
-func (_mock *MockOrderService) Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error) {
+func (_mock *MockOrderService) Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error) {
 	ret := _mock.Called(ctx, userID, sessionID, orderID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Checkout")
 	}
 
-	var r0 *dto.OrderCheckoutResponse
+	var r0 *dto.OrderResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (*dto.OrderCheckoutResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (*dto.OrderResponse, error)); ok {
 		return returnFunc(ctx, userID, sessionID, orderID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) *dto.OrderCheckoutResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) *dto.OrderResponse); ok {
 		r0 = returnFunc(ctx, userID, sessionID, orderID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.OrderCheckoutResponse)
+			r0 = ret.Get(0).(*dto.OrderResponse)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error); ok {
@@ -258,12 +259,12 @@ func (_c *MockOrderService_Checkout_Call) Run(run func(ctx context.Context, user
 	return _c
 }
 
-func (_c *MockOrderService_Checkout_Call) Return(orderCheckoutResponse *dto.OrderCheckoutResponse, err error) *MockOrderService_Checkout_Call {
-	_c.Call.Return(orderCheckoutResponse, err)
+func (_c *MockOrderService_Checkout_Call) Return(orderResponse *dto.OrderResponse, err error) *MockOrderService_Checkout_Call {
+	_c.Call.Return(orderResponse, err)
 	return _c
 }
 
-func (_c *MockOrderService_Checkout_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error)) *MockOrderService_Checkout_Call {
+func (_c *MockOrderService_Checkout_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)) *MockOrderService_Checkout_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -588,63 +589,6 @@ func (_c *MockOrderService_GetOrders_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
-// HandlePaymentWebhook provides a mock function for the type MockOrderService
-func (_mock *MockOrderService) HandlePaymentWebhook(ctx context.Context, body []byte) error {
-	ret := _mock.Called(ctx, body)
-
-	if len(ret) == 0 {
-		panic("no return value specified for HandlePaymentWebhook")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []byte) error); ok {
-		r0 = returnFunc(ctx, body)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockOrderService_HandlePaymentWebhook_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandlePaymentWebhook'
-type MockOrderService_HandlePaymentWebhook_Call struct {
-	*mock.Call
-}
-
-// HandlePaymentWebhook is a helper method to define mock.On call
-//   - ctx context.Context
-//   - body []byte
-func (_e *MockOrderService_Expecter) HandlePaymentWebhook(ctx interface{}, body interface{}) *MockOrderService_HandlePaymentWebhook_Call {
-	return &MockOrderService_HandlePaymentWebhook_Call{Call: _e.mock.On("HandlePaymentWebhook", ctx, body)}
-}
-
-func (_c *MockOrderService_HandlePaymentWebhook_Call) Run(run func(ctx context.Context, body []byte)) *MockOrderService_HandlePaymentWebhook_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []byte
-		if args[1] != nil {
-			arg1 = args[1].([]byte)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrderService_HandlePaymentWebhook_Call) Return(err error) *MockOrderService_HandlePaymentWebhook_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockOrderService_HandlePaymentWebhook_Call) RunAndReturn(run func(ctx context.Context, body []byte) error) *MockOrderService_HandlePaymentWebhook_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RemoveItem provides a mock function for the type MockOrderService
 func (_mock *MockOrderService) RemoveItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error) {
 	ret := _mock.Called(ctx, userID, sessionID, orderID, itemID)
@@ -727,6 +671,69 @@ func (_c *MockOrderService_RemoveItem_Call) Return(orderResponse *dto.OrderRespo
 }
 
 func (_c *MockOrderService_RemoveItem_Call) RunAndReturn(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error)) *MockOrderService_RemoveItem_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateOrderStatus provides a mock function for the type MockOrderService
+func (_mock *MockOrderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status models.OrderStatus) error {
+	ret := _mock.Called(ctx, orderID, status)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateOrderStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, models.OrderStatus) error); ok {
+		r0 = returnFunc(ctx, orderID, status)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockOrderService_UpdateOrderStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateOrderStatus'
+type MockOrderService_UpdateOrderStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateOrderStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - orderID uuid.UUID
+//   - status models.OrderStatus
+func (_e *MockOrderService_Expecter) UpdateOrderStatus(ctx interface{}, orderID interface{}, status interface{}) *MockOrderService_UpdateOrderStatus_Call {
+	return &MockOrderService_UpdateOrderStatus_Call{Call: _e.mock.On("UpdateOrderStatus", ctx, orderID, status)}
+}
+
+func (_c *MockOrderService_UpdateOrderStatus_Call) Run(run func(ctx context.Context, orderID uuid.UUID, status models.OrderStatus)) *MockOrderService_UpdateOrderStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 models.OrderStatus
+		if args[2] != nil {
+			arg2 = args[2].(models.OrderStatus)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderService_UpdateOrderStatus_Call) Return(err error) *MockOrderService_UpdateOrderStatus_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockOrderService_UpdateOrderStatus_Call) RunAndReturn(run func(ctx context.Context, orderID uuid.UUID, status models.OrderStatus) error) *MockOrderService_UpdateOrderStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

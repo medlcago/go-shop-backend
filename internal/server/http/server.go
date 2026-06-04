@@ -7,6 +7,7 @@ import (
 	authHttp "go-shop-backend/internal/delivery/http/auth"
 	categoryHttp "go-shop-backend/internal/delivery/http/category"
 	orderHttp "go-shop-backend/internal/delivery/http/order"
+	paymentHttp "go-shop-backend/internal/delivery/http/payment"
 	productHttp "go-shop-backend/internal/delivery/http/product"
 	userHttp "go-shop-backend/internal/delivery/http/user"
 	wishlistHttp "go-shop-backend/internal/delivery/http/wishlist"
@@ -101,4 +102,7 @@ func (s *Server) Init() {
 
 	wishlistHandler := wishlistHttp.NewHandler(s.container.WishlistService())
 	wishlistHttp.RegisterRoutes(v1, wishlistHandler)
+
+	paymentHandler := paymentHttp.NewHandler(s.container.PaymentService())
+	paymentHttp.RegisterRoutes(v1, paymentHandler)
 }

@@ -44,11 +44,6 @@ type OrderResponse struct {
 	IsGuestOrder bool                `json:"is_guest_order"`
 }
 
-type OrderCheckoutResponse struct {
-	OrderID         uuid.UUID `json:"order_id"`
-	ConfirmationURL string    `json:"confirmation_url"`
-}
-
 type ListOrderRequest struct {
 	Limit  int    `query:"limit"`
 	Offset int    `query:"offset"`

@@ -12,7 +12,6 @@ import (
 	uploadMocks "go-shop-backend/internal/upload/mocks"
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/database"
-	"go-shop-backend/pkg/paymentprovider"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 	"testing"
 	"time"
@@ -30,44 +29,39 @@ type OrderServiceTestSuite struct {
 	txManager        *database.NoopTxManager
 	paymentProvider  *paymentproviderMocks.MockProvider
 	orderTask        *tasksMocks.MockOrderTask
-	uploadManager    *uploadMocks.MockManager
+	publicURLBuilder *uploadMocks.MockPublicURLBuilder
 	inventoryService *serviceMocks.MockInventoryService
 	orderService     *orderService
 
-	ctx                  context.Context
-	userID               uuid.UUID
-	sessionID            uuid.UUID
-	orderID              uuid.UUID
-	productID            uuid.UUID
-	itemID               uuid.UUID
-	paymentID            string
-	providerName         string
-	orderCancelDelay     time.Duration
-	orderCheckoutTimeout time.Duration
+	ctx              context.Context
+	userID           uuid.UUID
+	sessionID        uuid.UUID
+	orderID          uuid.UUID
+	productID        uuid.UUID
+	itemID           uuid.UUID
+	paymentID        string
+	providerName     string
+	orderCancelDelay time.Duration
 }
 
 func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.orderCancelDelay = 10 * time.Minute
-	suite.orderCheckoutTimeout = 5 * time.Second
 
 	suite.orderRepo = repoMocks.NewMockOrderRepository(suite.T())
 	suite.orderItemRepo = repoMocks.NewMockOrderItemRepository(suite.T())
 	suite.productRepo = repoMocks.NewMockProductRepository(suite.T())
 	suite.txManager = database.NewNoopTxManager()
-	suite.paymentProvider = paymentproviderMocks.NewMockProvider(suite.T())
 	suite.orderTask = tasksMocks.NewMockOrderTask(suite.T())
-	suite.uploadManager = uploadMocks.NewMockManager(suite.T())
+	suite.publicURLBuilder = uploadMocks.NewMockPublicURLBuilder(suite.T())
 	suite.inventoryService = serviceMocks.NewMockInventoryService(suite.T())
 	suite.orderService = NewOrderService(
 		suite.orderRepo,
 		suite.orderItemRepo,
 		suite.productRepo,
-		suite.paymentProvider,
 		suite.orderTask,
 		suite.txManager,
 		suite.orderCancelDelay,
-		suite.orderCheckoutTimeout,
-		suite.uploadManager,
+		suite.publicURLBuilder,
 		suite.inventoryService,
 	)
 
@@ -154,7 +148,7 @@ func (suite *OrderServiceTestSuite) TestGetOrder_Success() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	suite.uploadManager.EXPECT().PublicURL(mock.AnythingOfType("string")).
+	suite.publicURLBuilder.EXPECT().PublicURL(mock.AnythingOfType("string")).
 		Return("key").Times(2)
 
 	response, err := suite.orderService.GetOrder(suite.ctx, &suite.userID, suite.sessionID, suite.orderID)
@@ -220,7 +214,7 @@ func (suite *OrderServiceTestSuite) TestGetOrders_Success() {
 	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, req).
 		Return(orders, int64(5), nil).Once()
 
-	suite.uploadManager.EXPECT().PublicURL(mock.AnythingOfType("string")).
+	suite.publicURLBuilder.EXPECT().PublicURL(mock.AnythingOfType("string")).
 		Return("key").Once()
 
 	response, total, err := suite.orderService.GetOrders(suite.ctx, &suite.userID, suite.sessionID, req)
@@ -321,7 +315,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(nil).Once()
 
-	suite.uploadManager.EXPECT().PublicURL(mock.AnythingOfType("string")).
+	suite.publicURLBuilder.EXPECT().PublicURL(mock.AnythingOfType("string")).
 		Return("key").Times(2)
 
 	response, err := suite.orderService.AddItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, req)
@@ -494,7 +488,7 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_Success() {
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Return(nil).Once()
 
-	suite.uploadManager.EXPECT().PublicURL(mock.AnythingOfType("string")).
+	suite.publicURLBuilder.EXPECT().PublicURL(mock.AnythingOfType("string")).
 		Return("key").Once()
 
 	response, err := suite.orderService.RemoveItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.itemID)
@@ -687,39 +681,23 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 		},
 	}
 
-	confirmationURL := "https://test.com"
-
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	suite.inventoryService.EXPECT().ReserveItems(mock.Anything, mock.Anything).
+	suite.inventoryService.EXPECT().ReserveItems(suite.ctx, mock.Anything).
 		Return(nil).Once()
 
-	suite.paymentProvider.EXPECT().CreatePayment(mock.Anything, mock.MatchedBy(func(req *paymentprovider.CreatePaymentRequest) bool {
-		return req.Metadata.OrderID == suite.orderID &&
-			req.Metadata.UserID == *&suite.userID &&
-			req.Amount > 0 &&
-			req.Amount == order.TotalAmount
-	})).
-		Return(&paymentprovider.Payment{
-			ID:              suite.paymentID,
-			ConfirmationURL: confirmationURL,
-		}, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().
-		Return(suite.providerName).Once()
-
-	suite.orderRepo.EXPECT().Update(mock.Anything, mock.AnythingOfType("*models.Order")).
+	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Run(func(ctx context.Context, o *models.Order) {
 			suite.Equal(*&suite.userID, *o.UserID)
 			suite.Equal(order.TotalAmount, o.TotalAmount)
 			suite.Equal(models.OrderStatusPending, o.Status)
-			suite.Equal(suite.paymentID, *o.PaymentID)
-			suite.Equal(suite.providerName, *o.ProviderName)
+			suite.Nil(o.PaymentID)
+			suite.Nil(o.ProviderName)
 			suite.NotNil(o.ExpiresAt)
 		}).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *&suite.userID, suite.orderID, suite.orderCancelDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(suite.ctx, *&suite.userID, suite.orderID, suite.orderCancelDelay).
 		Return(nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID)
@@ -727,8 +705,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 	suite.NoError(err)
 	suite.NotNil(response)
 
-	suite.Equal(suite.orderID, response.OrderID)
-	suite.Equal(confirmationURL, response.ConfirmationURL)
+	suite.Equal(suite.orderID, response.ID)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
@@ -748,28 +725,17 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 		},
 	}
 
-	confirmationURL := "https://test.com"
-
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	suite.inventoryService.EXPECT().ReserveItems(mock.Anything, mock.Anything).
+	suite.inventoryService.EXPECT().ReserveItems(suite.ctx, mock.Anything).
 		Return(nil).Once()
 
-	suite.paymentProvider.EXPECT().CreatePayment(mock.Anything, mock.Anything).
-		Return(&paymentprovider.Payment{
-			ID:              suite.paymentID,
-			ConfirmationURL: confirmationURL,
-		}, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().
-		Return(suite.providerName).Once()
-
-	suite.orderRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(o *models.Order) bool {
+	suite.orderRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(o *models.Order) bool {
 		return o.UserID != nil && *o.UserID == *&suite.userID
 	})).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(mock.Anything, *&suite.userID, suite.orderID, suite.orderCancelDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(suite.ctx, *&suite.userID, suite.orderID, suite.orderCancelDelay).
 		Return(nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID)
@@ -779,8 +745,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 
 	suite.NotNil(order.UserID)
 	suite.Equal(*&suite.userID, *order.UserID)
-	suite.Equal(order.ID, response.OrderID)
-	suite.Equal(confirmationURL, response.ConfirmationURL)
+	suite.Equal(suite.orderID, response.ID)
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
@@ -800,13 +765,14 @@ func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 		},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
+	suite.ErrorContains(err, "orderService.Checkout")
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
@@ -818,13 +784,14 @@ func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
 		TotalAmount: 4000,
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrEmptyOrder)
+	suite.ErrorContains(err, "orderService.Checkout")
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_UnavailableItemError() {
@@ -855,10 +822,10 @@ func (suite *OrderServiceTestSuite) TestCheckout_UnavailableItemError() {
 		},
 	}
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	suite.inventoryService.EXPECT().ReserveItems(mock.Anything, mock.Anything).
+	suite.inventoryService.EXPECT().ReserveItems(suite.ctx, mock.Anything).
 		Return(apperror.UnavailableItemsError(unavailableItems)).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
@@ -874,16 +841,18 @@ func (suite *OrderServiceTestSuite) TestCheckout_UnavailableItemError() {
 	suite.Equal(5, items[0].AvailableQty)
 	suite.Equal("reserve", items[0].Action)
 	suite.Equal(apperror.ErrInsufficientStock.Error(), items[0].Reason)
+	suite.ErrorContains(err, "orderService.Checkout")
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
+	suite.ErrorContains(err, "orderService.Checkout")
 }
 
 func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
@@ -905,248 +874,14 @@ func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 
 	dbError := errors.New("db error")
 
-	suite.orderRepo.EXPECT().GetByOwner(mock.Anything, suite.orderID, &suite.userID, suite.sessionID, true).
+	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(nil, dbError).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbError)
-}
-
-// ==================== HandlePaymentWebhook Tests ====================
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_Success_PayOrder() {
-	webhookEvent := &paymentprovider.WebhookEvent{
-		PaymentID: suite.paymentID,
-		Status:    paymentprovider.PaymentStatusSucceeded,
-		Metadata: paymentprovider.Metadata{
-			UserID:  suite.userID,
-			OrderID: suite.orderID,
-		},
-	}
-
-	order := &models.Order{
-		ID:          suite.orderID,
-		UserID:      &suite.userID,
-		SessionID:   suite.sessionID,
-		Status:      models.OrderStatusPending,
-		TotalAmount: 2500,
-		Items: []models.OrderItem{
-			{ProductID: uuid.New(), Quantity: 2, UnitPrice: 1000},
-			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
-		},
-	}
-
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(webhookEvent, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
-
-	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
-		Return(order, nil).Once()
-
-	suite.inventoryService.EXPECT().DeductItems(suite.ctx, mock.Anything).
-		Return(nil).Once()
-
-	suite.orderRepo.EXPECT().Update(suite.ctx, order).Return(nil).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-
-	suite.NoError(err)
-	suite.Equal(models.OrderStatusPaid, order.Status)
-}
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_Success_CancelOrder() {
-	webhookEvent := &paymentprovider.WebhookEvent{
-		PaymentID: suite.paymentID,
-		Status:    paymentprovider.PaymentStatusCanceled,
-		Metadata: paymentprovider.Metadata{
-			UserID:  suite.userID,
-			OrderID: suite.orderID,
-		},
-	}
-
-	order := &models.Order{
-		ID:          suite.orderID,
-		UserID:      &suite.userID,
-		SessionID:   suite.sessionID,
-		Status:      models.OrderStatusPending,
-		TotalAmount: 2500,
-		Items: []models.OrderItem{
-			{ProductID: uuid.New(), Quantity: 2, UnitPrice: 1000},
-			{ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
-		},
-	}
-
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(webhookEvent, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
-
-	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
-		Return(order, nil).Once()
-
-	suite.inventoryService.EXPECT().ReleaseItems(suite.ctx, mock.Anything).
-		Return(nil).Once()
-
-	suite.orderRepo.EXPECT().Update(suite.ctx, order).Return(nil).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-
-	suite.NoError(err)
-	suite.Equal(models.OrderStatusCanceled, order.Status)
-}
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_OrderNotFound_ReturnsNil() {
-	webhookEvent := &paymentprovider.WebhookEvent{
-		PaymentID: suite.paymentID,
-		Status:    paymentprovider.PaymentStatusSucceeded,
-	}
-
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(webhookEvent, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
-
-	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
-		Return(nil, repository.ErrRecordNotFound).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-	suite.NoError(err)
-}
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_OrderAlreadyProcessed_ShouldSkip() {
-	webhookEvent := &paymentprovider.WebhookEvent{
-		PaymentID: suite.paymentID,
-		Status:    paymentprovider.PaymentStatusSucceeded,
-	}
-
-	order := &models.Order{
-		Status: models.OrderStatusCanceled,
-	}
-
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(webhookEvent, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
-
-	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
-		Return(order, nil).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-	suite.NoError(err)
-}
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_UnknownEventStatus_ShouldSkip() {
-	webhookEvent := &paymentprovider.WebhookEvent{
-		PaymentID: suite.paymentID,
-		Status:    "unknown_status",
-	}
-
-	order := &models.Order{
-		Status: models.OrderStatusPending,
-	}
-
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(webhookEvent, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().
-		Return("yookassa").Once()
-
-	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
-		Return(order, nil).Once()
-
-	suite.orderRepo.EXPECT().Update(suite.ctx, order).
-		Return(nil).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-	suite.NoError(err)
-}
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_ParseError_ReturnsError() {
-	parseErr := errors.New("parse error")
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(nil, parseErr).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-
-	suite.ErrorContains(err, "orderService.HandlePaymentWebhook")
-	suite.ErrorIs(err, parseErr)
-}
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_GetOrderError_ReturnsError() {
-	webhookEvent := &paymentprovider.WebhookEvent{
-		PaymentID: suite.paymentID,
-		Status:    paymentprovider.PaymentStatusSucceeded,
-	}
-
-	dbErr := errors.New("database error")
-
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(webhookEvent, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
-
-	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
-		Return(nil, dbErr).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-
-	suite.ErrorContains(err, "orderService.HandlePaymentWebhook")
-	suite.ErrorIs(err, dbErr)
-}
-
-func (suite *OrderServiceTestSuite) TestHandlePaymentWebhook_PayOrderFails_ReturnsItemsUnavailableError() {
-	webhookEvent := &paymentprovider.WebhookEvent{
-		PaymentID: suite.paymentID,
-		Status:    paymentprovider.PaymentStatusSucceeded,
-		Metadata: paymentprovider.Metadata{
-			UserID:  suite.userID,
-			OrderID: suite.orderID,
-		},
-	}
-
-	order := &models.Order{
-		ID:          suite.orderID,
-		UserID:      &suite.userID,
-		SessionID:   suite.sessionID,
-		Status:      models.OrderStatusPending,
-		TotalAmount: 2500,
-		Items: []models.OrderItem{
-			{ID: suite.itemID, ProductID: uuid.New(), Quantity: 10, UnitPrice: 1000},
-			{ID: suite.itemID, ProductID: uuid.New(), Quantity: 1, UnitPrice: 500},
-		},
-	}
-
-	unavailableItems := []apperror.UnavailableItem{
-		{
-			ID:           order.Items[0].ID,
-			ProductID:    order.Items[0].ProductID,
-			RequestedQty: order.Items[0].Quantity,
-			Action:       "deduct",
-		},
-	}
-
-	suite.paymentProvider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
-		Return(webhookEvent, nil).Once()
-
-	suite.paymentProvider.EXPECT().GetName().Return("yookassa").Once()
-
-	suite.orderRepo.EXPECT().GetByPayment(suite.ctx, "yookassa", suite.paymentID, true).
-		Return(order, nil).Once()
-
-	suite.inventoryService.EXPECT().DeductItems(suite.ctx, mock.Anything).
-		Return(apperror.UnavailableItemsError(unavailableItems)).Once()
-
-	err := suite.orderService.HandlePaymentWebhook(suite.ctx, []byte("data"))
-
-	items, ok := apperror.GetUnavailableItemsFromError(err)
-	suite.True(ok)
-	suite.Len(items, 1)
-	suite.Equal(items[0].ID, order.Items[0].ID)
-	suite.Equal(items[0].ProductID, order.Items[0].ProductID)
-	suite.Equal(items[0].Action, "deduct")
+	suite.ErrorContains(err, "orderService.Checkout")
 }
 
 // ==================== CancelOrder Tests ====================

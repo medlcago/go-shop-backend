@@ -69,6 +69,7 @@ type Container struct {
 	wishlistService     service.WishlistService
 	notificationService service.NotificationService
 	inventoryService    service.InventoryService
+	paymentService      service.PaymentService
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -432,11 +433,9 @@ func (c *Container) OrderService() service.OrderService {
 			c.OrderRepo(),
 			c.OrderItemRepo(),
 			c.ProductRepo(),
-			c.PaymentProvider(),
 			c.TaskFactory().Orders(),
 			c.TxManager(),
 			c.Config().OrderCancelDelay,
-			c.Config().OrderCheckoutTimeout,
 			c.UploadManager(),
 			c.InventoryService(),
 		)
@@ -466,6 +465,19 @@ func (c *Container) NotificationService() service.NotificationService {
 	}
 
 	return c.notificationService
+}
+
+func (c *Container) PaymentService() service.PaymentService {
+	if c.paymentService == nil {
+		c.paymentService = service.NewPaymentService(
+			c.PaymentProvider(),
+			c.OrderRepo(),
+			c.OrderService(),
+			c.TxManager(),
+		)
+	}
+
+	return c.paymentService
 }
 
 func (c *Container) Close() error {

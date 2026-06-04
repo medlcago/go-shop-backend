@@ -44,8 +44,8 @@ type OrderService interface {
 	AddItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, req dto.AddOrderItemRequest) (*dto.OrderResponse, error)
 	RemoveItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error)
 	Clear(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)
-	Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderCheckoutResponse, error)
-	HandlePaymentWebhook(ctx context.Context, body []byte) error
+	Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)
+	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status models.OrderStatus) error
 	CancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error
 }
 
@@ -71,4 +71,9 @@ type InventoryService interface {
 	ReserveItems(ctx context.Context, items []dto.InventoryItem) error
 	ReleaseItems(ctx context.Context, items []dto.InventoryItem) error
 	DeductItems(ctx context.Context, items []dto.InventoryItem) error
+}
+
+type PaymentService interface {
+	CreatePayment(ctx context.Context, userID uuid.UUID, req dto.CreatePaymentRequest) (*dto.PaymentResponse, error)
+	HandleWebhook(ctx context.Context, body []byte) error
 }

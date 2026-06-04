@@ -17,6 +17,46 @@ const (
 	OrderStatusCompleted OrderStatus = "completed"
 )
 
+var (
+	orderStatusTransitions = map[OrderStatus][]OrderStatus{
+		OrderStatusDraft:     {OrderStatusPending},
+		OrderStatusPending:   {OrderStatusPaid, OrderStatusCanceled},
+		OrderStatusPaid:      {OrderStatusCompleted},
+		OrderStatusCanceled:  {},
+		OrderStatusCompleted: {},
+	}
+)
+
+func (s OrderStatus) IsValid() bool {
+	switch s {
+	case OrderStatusDraft, OrderStatusPending, OrderStatusPaid, OrderStatusCanceled, OrderStatusCompleted:
+		return true
+	}
+	return false
+}
+
+func (s OrderStatus) CanTransitionTo(next OrderStatus) bool {
+	if !s.IsValid() || !next.IsValid() {
+		return false
+	}
+
+	if s == next {
+		return true
+	}
+
+	allowed, ok := orderStatusTransitions[s]
+	if !ok {
+		return false
+	}
+
+	for _, allowedNext := range allowed {
+		if next == allowedNext {
+			return true
+		}
+	}
+	return false
+}
+
 type Order struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 
@@ -96,8 +136,7 @@ func (o *Order) Recalculate() {
 	o.TotalAmount = total
 }
 
-func (o *Order) SetPaymentInfo(paymentID string, providerName string, expiresAt time.Time) {
+func (o *Order) SetPaymentInfo(paymentID string, providerName string) {
 	o.PaymentID = &paymentID
 	o.ProviderName = &providerName
-	o.ExpiresAt = &expiresAt
 }

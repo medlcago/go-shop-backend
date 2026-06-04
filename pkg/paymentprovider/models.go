@@ -7,9 +7,17 @@ import (
 type PaymentStatus string
 
 const (
-	PaymentStatusPending   PaymentStatus = "pending"
-	PaymentStatusSucceeded PaymentStatus = "succeeded"
-	PaymentStatusCanceled  PaymentStatus = "canceled"
+	PaymentStatusPending           PaymentStatus = "pending"
+	PaymentStatusWaitingForCapture PaymentStatus = "waiting_for_capture"
+	PaymentStatusSucceeded         PaymentStatus = "succeeded"
+	PaymentStatusCanceled          PaymentStatus = "canceled"
+)
+
+type PaymentType string
+
+const (
+	PaymentTypeRedirect PaymentType = "redirect"
+	PaymentTypeEmbedded PaymentType = "embedded"
 )
 
 type Amount struct {
@@ -26,26 +34,19 @@ type CreatePaymentRequest struct {
 	Metadata `json:"metadata"`
 
 	// Amount in the smallest currency unit (e.g., cents for USD, kopeks for RUB)
-	Amount int64 `json:"amount"`
-}
-
-func NewCreatePaymentRequest(userID uuid.UUID, orderID uuid.UUID, amount int64) *CreatePaymentRequest {
-	return &CreatePaymentRequest{
-		Metadata: Metadata{
-			UserID:  userID,
-			OrderID: orderID,
-		},
-		Amount: amount,
-	}
+	Amount  int64       `json:"amount"`
+	Type    PaymentType `json:"type"`
+	Capture bool        `json:"capture"`
 }
 
 type Payment struct {
-	ID              string        `json:"id"`
-	Metadata        Metadata      `json:"metadata"`
-	Status          PaymentStatus `json:"status"`
-	Amount          Amount        `json:"amount"`
-	Description     string        `json:"description"`
-	ConfirmationURL string        `json:"confirmation_url"`
+	ID                string        `json:"id"`
+	Metadata          Metadata      `json:"metadata"`
+	Status            PaymentStatus `json:"status"`
+	Amount            Amount        `json:"amount"`
+	Description       string        `json:"description"`
+	ConfirmationURL   string        `json:"confirmation_url,omitempty"`
+	ConfirmationToken string        `json:"confirmation_token,omitempty"`
 }
 
 type WebhookEvent struct {

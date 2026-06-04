@@ -5,24 +5,29 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go-shop-backend/internal/service"
+	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/tasks"
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/logger"
 	"log/slog"
 	"slices"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )
 
+type OrderStatusUpdater interface {
+	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status models.OrderStatus) error
+}
+
 type OrderTaskHandler struct {
-	orderService service.OrderService
-	logger       *slog.Logger
+	orderStatusUpdater OrderStatusUpdater
+	logger             *slog.Logger
 
 	nonRetryableErrors []error
 }
 
-func NewOrderTaskHandler(orderService service.OrderService, logger *slog.Logger) *OrderTaskHandler {
+func NewOrderTaskHandler(orderStatusUpdater OrderStatusUpdater, logger *slog.Logger) *OrderTaskHandler {
 	logger = logger.With(
 		slog.String("handler", "OrderTaskHandler"),
 	)
@@ -34,7 +39,7 @@ func NewOrderTaskHandler(orderService service.OrderService, logger *slog.Logger)
 	}
 
 	return &OrderTaskHandler{
-		orderService:       orderService,
+		orderStatusUpdater: orderStatusUpdater,
 		logger:             logger,
 		nonRetryableErrors: nonRetryableErrors,
 	}
@@ -46,7 +51,7 @@ func (h *OrderTaskHandler) CancelOrder(ctx context.Context, task *asynq.Task) er
 		return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
 	}
 
-	if err := h.orderService.CancelOrder(ctx, payload.UserID, payload.OrderID); err != nil {
+	if err := h.orderStatusUpdater.UpdateOrderStatus(ctx, payload.OrderID, models.OrderStatusCanceled); err != nil {
 		h.logger.Error(
 			"failed to cancel order",
 			slog.String("order_id", payload.OrderID.String()),
@@ -56,7 +61,7 @@ func (h *OrderTaskHandler) CancelOrder(ctx context.Context, task *asynq.Task) er
 		if slices.ContainsFunc(h.nonRetryableErrors, func(e error) bool {
 			return errors.Is(err, e)
 		}) {
-			return fmt.Errorf("orderService.CancelOrder failed: %v: %w", err, asynq.SkipRetry)
+			return fmt.Errorf("orderService.UpdateOrderStatus failed: %v: %w", err, asynq.SkipRetry)
 		}
 
 		return err

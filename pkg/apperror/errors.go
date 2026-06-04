@@ -35,9 +35,12 @@ var (
 	ErrInvalidQuantity    = New(http.StatusBadRequest, "quantity must be greater than zero")
 	ErrInsufficientStock  = New(http.StatusBadRequest, "insufficient product stock")
 	ErrInconsistentStock  = New(http.StatusBadRequest, "inconsistent product stock")
-	ErrInvalidOrderStatus = New(http.StatusConflict, "order status does not allow modifications")
+	ErrInvalidOrderStatus = New(http.StatusConflict, "order status does not allow this action")
 	ErrEmptyOrder         = New(http.StatusBadRequest, "order is empty")
 	ErrOrderNotFound      = New(http.StatusNotFound, "order not found")
+	ErrOrderExpired       = New(http.StatusForbidden, "order is expired")
+
+	ErrPaymentAlreadyCreated = New(http.StatusConflict, "payment already created for this order")
 
 	ErrInvalidToken      = New(http.StatusUnauthorized, "invalid or expired token")
 	Err2FAAlreadyEnabled = New(http.StatusConflict, "2FA is already enabled; disable it first to reconfigure")

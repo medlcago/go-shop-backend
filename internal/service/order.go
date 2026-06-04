@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -11,48 +12,41 @@ import (
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/mapper"
-	"go-shop-backend/pkg/paymentprovider"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type orderService struct {
-	orderRepo            repository.OrderRepository
-	orderItemRepo        repository.OrderItemRepository
-	productRepo          repository.ProductRepository
-	paymentProvider      paymentprovider.Provider
-	orderTask            tasks.OrderTask
-	txManager            database.TxManager
-	orderCancelDelay     time.Duration
-	orderCheckoutTimeout time.Duration
-	uploadManager        upload.Manager
-	inventoryService     InventoryService
+	orderRepo        repository.OrderRepository
+	orderItemRepo    repository.OrderItemRepository
+	productRepo      repository.ProductRepository
+	orderTask        tasks.OrderTask
+	txManager        database.TxManager
+	orderCancelDelay time.Duration
+	publicURLBuilder upload.PublicURLBuilder
+	inventoryService InventoryService
 }
 
 func NewOrderService(
 	orderRepo repository.OrderRepository,
 	orderItemRepo repository.OrderItemRepository,
 	productRepo repository.ProductRepository,
-	paymentProvider paymentprovider.Provider,
 	orderTask tasks.OrderTask,
 	txManager database.TxManager,
 	orderCancelDelay time.Duration,
-	orderCheckoutTimeout time.Duration,
-	uploadManager upload.Manager,
+	publicURLBuilder upload.PublicURLBuilder,
 	inventoryService InventoryService,
 ) *orderService {
 	return &orderService{
-		orderRepo:            orderRepo,
-		orderItemRepo:        orderItemRepo,
-		productRepo:          productRepo,
-		paymentProvider:      paymentProvider,
-		orderTask:            orderTask,
-		txManager:            txManager,
-		orderCancelDelay:     orderCancelDelay,
-		orderCheckoutTimeout: orderCheckoutTimeout,
-		uploadManager:        uploadManager,
-		inventoryService:     inventoryService,
+		orderRepo:        orderRepo,
+		orderItemRepo:    orderItemRepo,
+		productRepo:      productRepo,
+		orderTask:        orderTask,
+		txManager:        txManager,
+		orderCancelDelay: orderCancelDelay,
+		publicURLBuilder: publicURLBuilder,
+		inventoryService: inventoryService,
 	}
 }
 
@@ -263,83 +257,90 @@ func (o *orderService) Checkout(
 	userID uuid.UUID,
 	sessionID uuid.UUID,
 	orderID uuid.UUID,
-) (*dto.OrderCheckoutResponse, error) {
+) (*dto.OrderResponse, error) {
 	const op = "orderService.Checkout"
 
-	ctx, cancel := context.WithTimeout(ctx, o.orderCheckoutTimeout)
-	defer cancel()
-
-	confirmationURL, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (string, error) {
+	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
 		order, err := o.getOrderByOwner(ctx, orderID, &userID, sessionID, true)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		if err := o.checkoutOrder(ctx, order, userID); err != nil {
-			return "", err
+		// If the order does not have a user, we link the order to the user
+		if order.UserID == nil {
+			order.UserID = &userID
 		}
 
-		payment, err := o.createPayment(ctx, userID, orderID, order.TotalAmount)
-		if err != nil {
-			return "", err
+		if !order.IsOwnedBy(userID) {
+			return nil, apperror.ErrForbidden
 		}
 
-		expiresAt := time.Now().UTC().Add(o.orderCancelDelay)
-		order.SetPaymentInfo(payment.ID, o.paymentProvider.GetName(), expiresAt)
+		if err := order.Checkout(); err != nil {
+			return nil, err
+		}
 
+		if err := o.inventoryService.ReserveItems(ctx, o.mapOrderItemsToInventoryItems(order.Items)); err != nil {
+			return nil, err
+		}
+
+		order.ExpiresAt = new(time.Now().UTC().Add(o.orderCancelDelay))
 		if err := o.orderRepo.Update(ctx, order); err != nil {
-			return "", err
+			return nil, err
 		}
 
 		if err := o.orderTask.EnqueueCancelOrder(ctx, userID, orderID, o.orderCancelDelay); err != nil {
-			return "", err
+			return nil, err
 		}
 
-		if payment.ConfirmationURL == "" {
-			return "", errors.New("internal error: ConfirmationURL is empty")
-		}
-
-		return payment.ConfirmationURL, nil
+		return order, nil
 	})
 
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, apperror.Wrap(op, apperror.ErrGatewayTimeout)
-		}
-
 		return nil, apperror.Wrap(op, err)
 	}
 
-	return &dto.OrderCheckoutResponse{
-		OrderID:         orderID,
-		ConfirmationURL: confirmationURL,
-	}, nil
-}
-
-func (o *orderService) HandlePaymentWebhook(ctx context.Context, body []byte) error {
-	const op = "orderService.HandlePaymentWebhook"
-
-	event, err := o.paymentProvider.ParseWebhook(body)
+	response, err := o.mapOrder(order)
 	if err != nil {
-		return apperror.Wrap(op, err)
+		return nil, apperror.Wrap(op, err)
 	}
 
-	err = o.txManager.Wrap(ctx, func(ctx context.Context) error {
-		order, err := o.orderRepo.GetByPayment(ctx, o.paymentProvider.GetName(), event.PaymentID, true)
+	return response, nil
+}
+
+func (o *orderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status models.OrderStatus) error {
+	const op = "orderService.UpdateOrderStatus"
+
+	err := o.txManager.Wrap(ctx, func(ctx context.Context) error {
+		order, err := o.getOrderByID(ctx, orderID, true)
 		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				return nil
+			return err
+		}
+
+		if !status.IsValid() {
+			return apperror.ErrInvalidOrderStatus
+		}
+
+		if !order.Status.CanTransitionTo(status) {
+			return apperror.ErrInvalidOrderStatus
+		}
+
+		switch status {
+		case models.OrderStatusPaid:
+			if err := order.Pay(); err != nil {
+				return err
 			}
-
-			return err
-		}
-
-		if order.Status != models.OrderStatusPending {
-			return nil
-		}
-
-		if err := o.processWebhookEvent(ctx, event, order); err != nil {
-			return err
+			if err := o.inventoryService.DeductItems(ctx, o.mapOrderItemsToInventoryItems(order.Items)); err != nil {
+				return err
+			}
+		case models.OrderStatusCanceled:
+			if err := order.Cancel(); err != nil {
+				return err
+			}
+			if err := o.inventoryService.ReleaseItems(ctx, o.mapOrderItemsToInventoryItems(order.Items)); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unsupported status: %s", status)
 		}
 
 		return o.orderRepo.Update(ctx, order)
@@ -361,7 +362,15 @@ func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderI
 			return err
 		}
 
-		if err := o.cancelOrder(ctx, order, userID); err != nil {
+		if !order.IsOwnedBy(userID) {
+			return apperror.ErrForbidden
+		}
+
+		if err := order.Cancel(); err != nil {
+			return err
+		}
+
+		if err := o.inventoryService.ReleaseItems(ctx, o.mapOrderItemsToInventoryItems(order.Items)); err != nil {
 			return err
 		}
 
@@ -369,89 +378,6 @@ func (o *orderService) CancelOrder(ctx context.Context, userID uuid.UUID, orderI
 	})
 
 	if err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	return nil
-}
-
-func (o *orderService) processWebhookEvent(ctx context.Context, event *paymentprovider.WebhookEvent, order *models.Order) error {
-	const op = "orderService.processWebhookEvent"
-
-	var err error
-
-	switch event.Status {
-	case paymentprovider.PaymentStatusSucceeded:
-		err = o.payOrder(ctx, order, event.Metadata.UserID)
-	case paymentprovider.PaymentStatusCanceled:
-		err = o.cancelOrder(ctx, order, event.Metadata.UserID)
-	default:
-		return nil
-	}
-
-	if err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	return nil
-}
-
-func (o *orderService) checkoutOrder(ctx context.Context, order *models.Order, userID uuid.UUID) error {
-	const op = "orderService.checkoutOrder"
-
-	// If the order does not have a user, we link the order to the user
-	if order.UserID == nil {
-		order.UserID = &userID
-	}
-
-	if err := o.checkAccess(order, userID); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	if err := order.Checkout(); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	items := o.mapOrderItemsToInventoryItems(order.Items)
-	if err := o.inventoryService.ReserveItems(ctx, items); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	return nil
-}
-
-func (o *orderService) payOrder(ctx context.Context, order *models.Order, userID uuid.UUID) error {
-	const op = "orderService.payOrder"
-
-	if err := o.checkAccess(order, userID); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	if err := order.Pay(); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	items := o.mapOrderItemsToInventoryItems(order.Items)
-	if err := o.inventoryService.DeductItems(ctx, items); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	return nil
-}
-
-func (o *orderService) cancelOrder(ctx context.Context, order *models.Order, userID uuid.UUID) error {
-	const op = "orderService.cancelOrder"
-
-	if err := o.checkAccess(order, userID); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	if err := order.Cancel(); err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	items := o.mapOrderItemsToInventoryItems(order.Items)
-	if err := o.inventoryService.ReleaseItems(ctx, items); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
@@ -518,35 +444,11 @@ func (o *orderService) getOrderByID(
 	return order, nil
 }
 
-func (o *orderService) createPayment(
-	ctx context.Context,
-	userID, orderID uuid.UUID,
-	amount int64,
-) (*paymentprovider.Payment, error) {
-	const op = "orderService.createPayment"
-
-	req := paymentprovider.NewCreatePaymentRequest(userID, orderID, amount)
-	payment, err := o.paymentProvider.CreatePayment(ctx, req)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	return payment, nil
-}
-
-func (o *orderService) checkAccess(order *models.Order, userID uuid.UUID) error {
-	if !order.IsOwnedBy(userID) {
-		return apperror.ErrForbidden
-	}
-
-	return nil
-}
-
 func (o *orderService) mapOrder(order *models.Order) (*dto.OrderResponse, error) {
 	const op = "orderService.mapOrder"
 
 	for _, item := range order.Items {
-		upload.AssignPublicURLs(item.Product.Images, o.uploadManager)
+		upload.AssignPublicURLs(item.Product.Images, o.publicURLBuilder)
 	}
 
 	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
@@ -562,7 +464,7 @@ func (o *orderService) mapOrders(orders []*models.Order) ([]*dto.OrderResponse, 
 
 	for _, order := range orders {
 		for _, item := range order.Items {
-			upload.AssignPublicURLs(item.Product.Images, o.uploadManager)
+			upload.AssignPublicURLs(item.Product.Images, o.publicURLBuilder)
 		}
 	}
 

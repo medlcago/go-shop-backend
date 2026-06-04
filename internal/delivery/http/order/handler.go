@@ -262,14 +262,3 @@ func (h *Handler) CancelOrder(ctx fiber.Ctx) error {
 
 	return response.JSON(ctx, fiber.StatusOK, "OK")
 }
-
-// YookassaWebhook handles payment callbacks from Yookassa gateway
-// Not exposed in Swagger - internal endpoint for payment provider notifications only
-func (h *Handler) YookassaWebhook(ctx fiber.Ctx) error {
-	err := h.orderService.HandlePaymentWebhook(ctx, ctx.Body())
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	return ctx.SendStatus(fiber.StatusOK)
-}
