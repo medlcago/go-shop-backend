@@ -17,7 +17,6 @@ var (
 	ErrInvalidSessionID   = New(http.StatusUnauthorized, "invalid or missing session id")
 	ErrNotFound           = New(http.StatusNotFound, "not found")
 	ErrForbidden          = New(http.StatusForbidden, "forbidden")
-	ErrGatewayTimeout     = New(http.StatusGatewayTimeout, "gateway timeout")
 
 	ErrInvalidFileType     = New(http.StatusBadRequest, "invalid file type")
 	ErrContentTypeMismatch = New(http.StatusBadRequest, "ext is not allowed for that content type")
@@ -42,7 +41,6 @@ var (
 
 	ErrPaymentAlreadyCreated = New(http.StatusConflict, "payment already created for this order")
 
-	ErrInvalidToken      = New(http.StatusUnauthorized, "invalid or expired token")
 	Err2FAAlreadyEnabled = New(http.StatusConflict, "2FA is already enabled; disable it first to reconfigure")
 	Err2FANotEnabled     = New(http.StatusBadRequest, "2FA is not enabled")
 	Err2FANotInitialized = New(http.StatusBadRequest, "2FA is not initialized")

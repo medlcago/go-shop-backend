@@ -19,7 +19,7 @@ type CancelOrderPayload struct {
 }
 
 type SendEmailConfirmationCodePayload struct {
-	Email string `json:"to"`
+	Email string `json:"email"`
 	Code  string `json:"code"`
 }
 

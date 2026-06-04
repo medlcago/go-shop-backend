@@ -110,7 +110,7 @@ func (i *inventoryService) applyOnProducts(
 	actionName string,
 	action func(p *models.Product, qty int) error,
 ) error {
-	const op = "orderService.applyOnProducts"
+	const op = "inventoryService.applyOnProducts"
 
 	productIDs := make([]uuid.UUID, 0, len(items))
 	for _, item := range items {

@@ -41,11 +41,6 @@ type Confirm2FARequest struct {
 	Code     string `json:"code" validate:"required"`
 }
 
-type Verify2FARequest struct {
-	Token string `json:"token" validate:"required"`
-	Code  string `json:"code" validate:"required"`
-}
-
 type Disable2FARequest struct {
 	Password string `json:"password" validate:"required"`
 	Code     string `json:"code" validate:"required"`
