@@ -174,6 +174,20 @@ func (suite *UserServiceTestSuite) TestEmailConfirmation_EmailAlreadyConfirmed()
 	suite.ErrorIs(err, apperror.ErrEmailAlreadyConfirmed)
 }
 
+func (suite *UserServiceTestSuite) TestEmailConfirmation_UserNotFound() {
+	suite.cache.EXPECT().Exists(suite.ctx, mock.AnythingOfType("string")).
+		Return(cache.ErrNotFound).Once()
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	response, err := suite.userService.EmailConfirmation(suite.ctx, suite.userID)
+
+	suite.Nil(response)
+	suite.ErrorContains(err, "userService.EmailConfirmation")
+	suite.ErrorIs(err, apperror.ErrUserNotFound)
+}
+
 func (suite *UserServiceTestSuite) TestEmailConfirmation_InternalError() {
 	cacheErr := errors.New("cache error")
 	suite.cache.EXPECT().Exists(suite.ctx, mock.AnythingOfType("string")).
@@ -286,4 +300,19 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_InvalidCode() {
 	suite.Nil(response)
 	suite.ErrorContains(err, "userService.ConfirmEmail")
 	suite.ErrorIs(err, apperror.ErrInvalidCode)
+}
+
+func (suite *UserServiceTestSuite) TestConfirmEmail_UserNotFound() {
+	req := dto.ConfirmEmailRequest{
+		Code: "123456",
+	}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	response, err := suite.userService.ConfirmEmail(suite.ctx, suite.userID, req)
+
+	suite.Nil(response)
+	suite.ErrorContains(err, "userService.ConfirmEmail")
+	suite.ErrorIs(err, apperror.ErrUserNotFound)
 }

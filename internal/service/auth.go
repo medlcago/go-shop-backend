@@ -61,11 +61,7 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if user.DeletedAt.Valid {
-		return nil, apperror.Wrap(op, apperror.ErrUserProfileDeleted)
-	}
-
-	if user.TwoFAEnabled {
+	if user.TwoFAEnabled && user.TwoFASecret != nil {
 		if req.Code == "" {
 			return nil, apperror.Wrap(op, apperror.Err2FACodeRequired)
 		}
@@ -78,6 +74,10 @@ func (a *authService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		if !a.totpManager.ValidateCode(decryptedKey, req.Code) {
 			return nil, apperror.Wrap(op, apperror.ErrInvalid2FACode)
 		}
+	}
+
+	if user.DeletedAt.Valid {
+		return nil, apperror.Wrap(op, apperror.ErrUserProfileDeleted)
 	}
 
 	tokens, err := a.createTokens(user)

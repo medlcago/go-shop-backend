@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type JWT struct {
@@ -65,13 +66,11 @@ func (j JWT) ValidateToken(tokenString string) (*UserClaims, error) {
 
 func (j JWT) generateToken(payload Payload, tokenType string, exp time.Time) (string, error) {
 	claims := UserClaims{
-		UserID:         payload.UserID,
-		UserRole:       payload.UserRole,
-		TokenType:      tokenType,
-		TwoFAEnabled:   payload.TwoFAEnabled,
-		EmailConfirmed: payload.EmailConfirmed,
+		Payload:   payload,
+		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
+			ID:        uuid.NewString(),
 		},
 	}
 

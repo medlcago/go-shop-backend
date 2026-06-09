@@ -132,11 +132,47 @@ func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted() {
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
-		Return(&models.User{DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
+	user := &models.User{
+		DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true}),
+	}
 
-	suite.hasher.EXPECT().Verify(req.Password, mock.Anything).
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+		Return(user, nil).Once()
+
+	suite.hasher.EXPECT().Verify(req.Password, mock.AnythingOfType("string")).
 		Return(true, nil).Once()
+
+	response, err := suite.authService.Login(suite.ctx, req)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
+}
+
+func (suite *AuthServiceTestSuite) TestLogin_ProfileDeleted_2FAEnabled() {
+	req := dto.UserLoginRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		Code:     "123456",
+	}
+
+	user := &models.User{
+		DeletedAt:        gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true}),
+		TwoFAEnabled:     true,
+		TwoFASecret:      new("secret"),
+		TwoFAConfirmedAt: new(time.Now()),
+	}
+
+	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+		Return(user, nil).Once()
+
+	suite.hasher.EXPECT().Verify(req.Password, mock.AnythingOfType("string")).
+		Return(true, nil).Once()
+
+	suite.encryptionManager.EXPECT().Decrypt(suite.ctx, *user.TwoFASecret).
+		Return("decryptedKey", nil).Once()
+
+	suite.totpManager.EXPECT().ValidateCode("decryptedKey", req.Code).
+		Return(true).Once()
 
 	response, err := suite.authService.Login(suite.ctx, req)
 

@@ -18,11 +18,8 @@ type Payload struct {
 }
 
 type UserClaims struct {
-	UserID         string `json:"user_id"`
-	UserRole       string `json:"user_role"`
-	TokenType      string `json:"token_type"`
-	TwoFAEnabled   bool   `json:"two_fa_enabled"`
-	EmailConfirmed bool   `json:"email_confirmed"`
+	Payload
+	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
 

@@ -73,7 +73,7 @@ func (u *userService) EmailConfirmation(ctx context.Context, userID uuid.UUID) (
 		return nil, apperror.Wrap(op, err)
 	}
 
-	user, err := u.userRepo.GetByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -103,7 +103,7 @@ func (u *userService) EmailConfirmation(ctx context.Context, userID uuid.UUID) (
 func (u *userService) ConfirmEmail(ctx context.Context, userID uuid.UUID, req dto.ConfirmEmailRequest) (*dto.ConfirmEmailResponse, error) {
 	const op = "userService.ConfirmEmail"
 
-	user, err := u.userRepo.GetByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -122,14 +122,27 @@ func (u *userService) ConfirmEmail(ctx context.Context, userID uuid.UUID, req dt
 	}
 
 	return &dto.ConfirmEmailResponse{OK: true}, nil
+}
 
+func (u *userService) getUserByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+	const op = "userService.getUserByID"
+
+	user, err := u.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
+		}
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return user, nil
 }
 
 func (u *userService) getUserByIDIncludingDeleted(ctx context.Context, userID uuid.UUID) (*models.User, error) {
 	const op = "userService.getUserByIDIncludingDeleted"
 
 	user, err := u.userRepo.GetByIDIncludingDeleted(ctx, userID)
-
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
