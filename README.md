@@ -1,7 +1,5 @@
 # Go Shop Backend
 
-upd
-
 ## API Reference
 
 ### Users
