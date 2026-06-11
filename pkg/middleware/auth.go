@@ -9,17 +9,17 @@ import (
 	"github.com/google/uuid"
 )
 
+type contextType string
+
 const (
-	ctxUserID    = "userID"
-	ctxUserRole  = "userRole"
-	ctxSessionID = "sessionID"
-	ctxIsAuth    = "isAuth"
+	ctxUserContext contextType = "userContext"
 )
 
-func Auth(manager token.Manager) fiber.Handler {
+func IdentityUser(manager token.Manager) fiber.Handler {
 	return func(ctx fiber.Ctx) error {
-		sid := getSessionID(ctx)
-		ctx.Locals(ctxSessionID, sid)
+		userCtx := UserContext{
+			SessionID: getSessionID(ctx),
+		}
 
 		authHeader := ctx.Get("Authorization")
 		if authHeader == "" {
@@ -42,13 +42,11 @@ func Auth(manager token.Manager) fiber.Handler {
 			return ctx.Next()
 		}
 
-		if claims.TokenType != token.AccessTokenType {
-			return ctx.Next()
-		}
+		userCtx.UserID = &uid
+		userCtx.Role = claims.UserRole
+		userCtx.TokenType = claims.TokenType
 
-		ctx.Locals(ctxUserID, uid)
-		ctx.Locals(ctxUserRole, claims.UserRole)
-		ctx.Locals(ctxIsAuth, true)
+		ctx.Locals(ctxUserContext, userCtx)
 
 		return ctx.Next()
 	}
@@ -58,8 +56,20 @@ func RequireAuth() fiber.Handler {
 	return func(ctx fiber.Ctx) error {
 		userCtx := GetUserContext(ctx)
 
-		if !userCtx.IsAuth || userCtx.UserID == nil {
+		if userCtx.UserID == nil {
 			return apperror.ErrInvalidCredentials
+		}
+
+		return ctx.Next()
+	}
+}
+
+func RequireTokenType(tokenType string) fiber.Handler {
+	return func(ctx fiber.Ctx) error {
+		userCtx := GetUserContext(ctx)
+
+		if userCtx.TokenType != tokenType {
+			return apperror.ErrInvalidTokenType
 		}
 
 		return ctx.Next()
@@ -91,33 +101,15 @@ type UserContext struct {
 	UserID    *uuid.UUID
 	SessionID *uuid.UUID
 	Role      string
-	IsAuth    bool
+	TokenType string
 }
 
 func GetUserContext(ctx fiber.Ctx) UserContext {
 	var userCtx UserContext
 
-	if v := ctx.Locals(ctxUserID); v != nil {
-		if id, ok := v.(uuid.UUID); ok {
-			userCtx.UserID = &id
-		}
-	}
-
-	if v := ctx.Locals(ctxSessionID); v != nil {
-		if id, ok := v.(*uuid.UUID); ok {
-			userCtx.SessionID = id
-		}
-	}
-
-	if v := ctx.Locals(ctxUserRole); v != nil {
-		if role, ok := v.(string); ok {
-			userCtx.Role = role
-		}
-	}
-
-	if v := ctx.Locals(ctxIsAuth); v != nil {
-		if isAuth, ok := v.(bool); ok {
-			userCtx.IsAuth = isAuth
+	if v := ctx.Locals(ctxUserContext); v != nil {
+		if userContext, ok := v.(UserContext); ok {
+			userCtx = userContext
 		}
 	}
 

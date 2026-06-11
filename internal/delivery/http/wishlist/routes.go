@@ -2,6 +2,7 @@ package wishlist
 
 import (
 	"go-shop-backend/pkg/middleware"
+	"go-shop-backend/pkg/token"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -15,7 +16,11 @@ func RegisterRoutes(r fiber.Router, wishlistHandler *Handler) {
 		)
 	}
 
-	protectedWishlistGroup := wishlistGroup.Group("/", middleware.RequireAuth())
+	protectedWishlistGroup := wishlistGroup.Group(
+		"/",
+		middleware.RequireAuth(),
+		middleware.RequireTokenType(token.AccessTokenType),
+	)
 	{
 		protectedWishlistGroup.Post(
 			"/",

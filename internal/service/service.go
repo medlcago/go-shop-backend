@@ -9,17 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type AuthService interface {
+type UserService interface {
 	Login(ctx context.Context, req dto.UserLoginRequest) (*dto.UserTokenResponse, error)
 	Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error)
 	Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error)
 	Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error
 	Disable2FA(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error
-}
-
-type UserService interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error)
-	EmailConfirmation(ctx context.Context, userID uuid.UUID) (*dto.EmailConfirmationResponse, error)
+	SendEmailConfirmationCode(ctx context.Context, userID uuid.UUID) (*dto.SendEmailConfirmationResponse, error)
 	ConfirmEmail(ctx context.Context, userID uuid.UUID, req dto.ConfirmEmailRequest) (*dto.ConfirmEmailResponse, error)
 }
 

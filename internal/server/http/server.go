@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"go-shop-backend/internal/core"
-	authHttp "go-shop-backend/internal/delivery/http/auth"
 	categoryHttp "go-shop-backend/internal/delivery/http/category"
 	orderHttp "go-shop-backend/internal/delivery/http/order"
 	paymentHttp "go-shop-backend/internal/delivery/http/payment"
@@ -77,16 +76,13 @@ func (s *Server) Name() string {
 }
 
 func (s *Server) Init() {
-	s.app.Use(middleware.Auth(s.container.TokenManager()))
+	s.app.Use(middleware.IdentityUser(s.container.TokenManager()))
 
 	if s.IsDevMode() {
 		s.app.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
 	}
 
 	v1 := s.app.Group("/api/v1")
-
-	authHandler := authHttp.NewHandler(s.container.AuthService())
-	authHttp.RegisterRoutes(v1, authHandler)
 
 	userHandler := userHttp.NewHandler(s.container.UserService())
 	userHttp.RegisterRoutes(v1, userHandler)

@@ -46,7 +46,7 @@ type Disable2FARequest struct {
 	Code     string `json:"code" validate:"required"`
 }
 
-type EmailConfirmationResponse struct {
+type SendEmailConfirmationResponse struct {
 	ExpiresIn int `json:"expires_in"` // seconds
 }
 
@@ -55,5 +55,6 @@ type ConfirmEmailRequest struct {
 }
 
 type ConfirmEmailResponse struct {
-	OK bool `json:"ok"`
+	OK               bool   `json:"ok"`
+	EmailConfirmedAt string `json:"email_confirmed_at"` // ISO 8601
 }

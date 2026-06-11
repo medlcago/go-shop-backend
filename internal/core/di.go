@@ -61,7 +61,6 @@ type Container struct {
 	wishlistItemRepository repository.WishlistItemRepository
 
 	// services
-	authService         service.AuthService
 	userService         service.UserService
 	productService      service.ProductService
 	categoryService     service.CategoryService
@@ -371,29 +370,20 @@ func (c *Container) WishlistItemRepo() repository.WishlistItemRepository {
 	return c.wishlistItemRepository
 }
 
-func (c *Container) AuthService() service.AuthService {
-	if c.authService == nil {
-		c.authService = service.NewAuthService(
+func (c *Container) UserService() service.UserService {
+	if c.userService == nil {
+		c.userService = service.NewUserService(
 			c.UserRepo(),
 			c.TokenManager(),
 			c.PasswordHasher(),
 			c.TOTPManager(),
 			c.EncryptionManager(),
-			c.TxManager(),
-		)
-	}
-
-	return c.authService
-}
-
-func (c *Container) UserService() service.UserService {
-	if c.userService == nil {
-		c.userService = service.NewUserService(
-			c.UserRepo(),
 			c.TaskFactory().Notifications(),
 			c.Cache(),
-			c.Config().Email.ConfirmationCodeLength,
-			c.Config().Email.ConfirmationCodeTTL,
+			&service.UserEmailConfig{
+				EmailConfirmationCodeLength: c.Config().Email.ConfirmationCodeLength,
+				EmailConfirmationCodeTTL:    c.Config().Email.ConfirmationCodeTTL,
+			},
 		)
 	}
 

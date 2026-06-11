@@ -39,6 +39,69 @@ func (_m *MockUserService) EXPECT() *MockUserService_Expecter {
 	return &MockUserService_Expecter{mock: &_m.Mock}
 }
 
+// Confirm2FA provides a mock function for the type MockUserService
+func (_mock *MockUserService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error {
+	ret := _mock.Called(ctx, userID, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Confirm2FA")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.Confirm2FARequest) error); ok {
+		r0 = returnFunc(ctx, userID, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserService_Confirm2FA_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Confirm2FA'
+type MockUserService_Confirm2FA_Call struct {
+	*mock.Call
+}
+
+// Confirm2FA is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - req dto.Confirm2FARequest
+func (_e *MockUserService_Expecter) Confirm2FA(ctx interface{}, userID interface{}, req interface{}) *MockUserService_Confirm2FA_Call {
+	return &MockUserService_Confirm2FA_Call{Call: _e.mock.On("Confirm2FA", ctx, userID, req)}
+}
+
+func (_c *MockUserService_Confirm2FA_Call) Run(run func(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest)) *MockUserService_Confirm2FA_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dto.Confirm2FARequest
+		if args[2] != nil {
+			arg2 = args[2].(dto.Confirm2FARequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_Confirm2FA_Call) Return(err error) *MockUserService_Confirm2FA_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUserService_Confirm2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error) *MockUserService_Confirm2FA_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ConfirmEmail provides a mock function for the type MockUserService
 func (_mock *MockUserService) ConfirmEmail(ctx context.Context, userID uuid.UUID, req dto.ConfirmEmailRequest) (*dto.ConfirmEmailResponse, error) {
 	ret := _mock.Called(ctx, userID, req)
@@ -113,47 +176,37 @@ func (_c *MockUserService_ConfirmEmail_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
-// EmailConfirmation provides a mock function for the type MockUserService
-func (_mock *MockUserService) EmailConfirmation(ctx context.Context, userID uuid.UUID) (*dto.EmailConfirmationResponse, error) {
-	ret := _mock.Called(ctx, userID)
+// Disable2FA provides a mock function for the type MockUserService
+func (_mock *MockUserService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error {
+	ret := _mock.Called(ctx, userID, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for EmailConfirmation")
+		panic("no return value specified for Disable2FA")
 	}
 
-	var r0 *dto.EmailConfirmationResponse
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*dto.EmailConfirmationResponse, error)); ok {
-		return returnFunc(ctx, userID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *dto.EmailConfirmationResponse); ok {
-		r0 = returnFunc(ctx, userID)
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.Disable2FARequest) error); ok {
+		r0 = returnFunc(ctx, userID, req)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.EmailConfirmationResponse)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
-// MockUserService_EmailConfirmation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EmailConfirmation'
-type MockUserService_EmailConfirmation_Call struct {
+// MockUserService_Disable2FA_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Disable2FA'
+type MockUserService_Disable2FA_Call struct {
 	*mock.Call
 }
 
-// EmailConfirmation is a helper method to define mock.On call
+// Disable2FA is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockUserService_Expecter) EmailConfirmation(ctx interface{}, userID interface{}) *MockUserService_EmailConfirmation_Call {
-	return &MockUserService_EmailConfirmation_Call{Call: _e.mock.On("EmailConfirmation", ctx, userID)}
+//   - req dto.Disable2FARequest
+func (_e *MockUserService_Expecter) Disable2FA(ctx interface{}, userID interface{}, req interface{}) *MockUserService_Disable2FA_Call {
+	return &MockUserService_Disable2FA_Call{Call: _e.mock.On("Disable2FA", ctx, userID, req)}
 }
 
-func (_c *MockUserService_EmailConfirmation_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *MockUserService_EmailConfirmation_Call {
+func (_c *MockUserService_Disable2FA_Call) Run(run func(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest)) *MockUserService_Disable2FA_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -163,20 +216,25 @@ func (_c *MockUserService_EmailConfirmation_Call) Run(run func(ctx context.Conte
 		if args[1] != nil {
 			arg1 = args[1].(uuid.UUID)
 		}
+		var arg2 dto.Disable2FARequest
+		if args[2] != nil {
+			arg2 = args[2].(dto.Disable2FARequest)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockUserService_EmailConfirmation_Call) Return(emailConfirmationResponse *dto.EmailConfirmationResponse, err error) *MockUserService_EmailConfirmation_Call {
-	_c.Call.Return(emailConfirmationResponse, err)
+func (_c *MockUserService_Disable2FA_Call) Return(err error) *MockUserService_Disable2FA_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockUserService_EmailConfirmation_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.EmailConfirmationResponse, error)) *MockUserService_EmailConfirmation_Call {
+func (_c *MockUserService_Disable2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error) *MockUserService_Disable2FA_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -245,6 +303,278 @@ func (_c *MockUserService_GetUserByID_Call) Return(userResponse *dto.UserRespons
 }
 
 func (_c *MockUserService_GetUserByID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error)) *MockUserService_GetUserByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Login provides a mock function for the type MockUserService
+func (_mock *MockUserService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto.UserTokenResponse, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Login")
+	}
+
+	var r0 *dto.UserTokenResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UserLoginRequest) (*dto.UserTokenResponse, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UserLoginRequest) *dto.UserTokenResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.UserTokenResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.UserLoginRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_Login_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Login'
+type MockUserService_Login_Call struct {
+	*mock.Call
+}
+
+// Login is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req dto.UserLoginRequest
+func (_e *MockUserService_Expecter) Login(ctx interface{}, req interface{}) *MockUserService_Login_Call {
+	return &MockUserService_Login_Call{Call: _e.mock.On("Login", ctx, req)}
+}
+
+func (_c *MockUserService_Login_Call) Run(run func(ctx context.Context, req dto.UserLoginRequest)) *MockUserService_Login_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dto.UserLoginRequest
+		if args[1] != nil {
+			arg1 = args[1].(dto.UserLoginRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_Login_Call) Return(userTokenResponse *dto.UserTokenResponse, err error) *MockUserService_Login_Call {
+	_c.Call.Return(userTokenResponse, err)
+	return _c
+}
+
+func (_c *MockUserService_Login_Call) RunAndReturn(run func(ctx context.Context, req dto.UserLoginRequest) (*dto.UserTokenResponse, error)) *MockUserService_Login_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Register provides a mock function for the type MockUserService
+func (_mock *MockUserService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Register")
+	}
+
+	var r0 *dto.UserTokenResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UserRegisterRequest) (*dto.UserTokenResponse, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UserRegisterRequest) *dto.UserTokenResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.UserTokenResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.UserRegisterRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_Register_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Register'
+type MockUserService_Register_Call struct {
+	*mock.Call
+}
+
+// Register is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req dto.UserRegisterRequest
+func (_e *MockUserService_Expecter) Register(ctx interface{}, req interface{}) *MockUserService_Register_Call {
+	return &MockUserService_Register_Call{Call: _e.mock.On("Register", ctx, req)}
+}
+
+func (_c *MockUserService_Register_Call) Run(run func(ctx context.Context, req dto.UserRegisterRequest)) *MockUserService_Register_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 dto.UserRegisterRequest
+		if args[1] != nil {
+			arg1 = args[1].(dto.UserRegisterRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_Register_Call) Return(userTokenResponse *dto.UserTokenResponse, err error) *MockUserService_Register_Call {
+	_c.Call.Return(userTokenResponse, err)
+	return _c
+}
+
+func (_c *MockUserService_Register_Call) RunAndReturn(run func(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error)) *MockUserService_Register_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SendEmailConfirmationCode provides a mock function for the type MockUserService
+func (_mock *MockUserService) SendEmailConfirmationCode(ctx context.Context, userID uuid.UUID) (*dto.SendEmailConfirmationResponse, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendEmailConfirmationCode")
+	}
+
+	var r0 *dto.SendEmailConfirmationResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*dto.SendEmailConfirmationResponse, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *dto.SendEmailConfirmationResponse); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.SendEmailConfirmationResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_SendEmailConfirmationCode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendEmailConfirmationCode'
+type MockUserService_SendEmailConfirmationCode_Call struct {
+	*mock.Call
+}
+
+// SendEmailConfirmationCode is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *MockUserService_Expecter) SendEmailConfirmationCode(ctx interface{}, userID interface{}) *MockUserService_SendEmailConfirmationCode_Call {
+	return &MockUserService_SendEmailConfirmationCode_Call{Call: _e.mock.On("SendEmailConfirmationCode", ctx, userID)}
+}
+
+func (_c *MockUserService_SendEmailConfirmationCode_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *MockUserService_SendEmailConfirmationCode_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_SendEmailConfirmationCode_Call) Return(sendEmailConfirmationResponse *dto.SendEmailConfirmationResponse, err error) *MockUserService_SendEmailConfirmationCode_Call {
+	_c.Call.Return(sendEmailConfirmationResponse, err)
+	return _c
+}
+
+func (_c *MockUserService_SendEmailConfirmationCode_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.SendEmailConfirmationResponse, error)) *MockUserService_SendEmailConfirmationCode_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Setup2FA provides a mock function for the type MockUserService
+func (_mock *MockUserService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Setup2FA")
+	}
+
+	var r0 *dto.Setup2FAResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*dto.Setup2FAResponse, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *dto.Setup2FAResponse); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.Setup2FAResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_Setup2FA_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Setup2FA'
+type MockUserService_Setup2FA_Call struct {
+	*mock.Call
+}
+
+// Setup2FA is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *MockUserService_Expecter) Setup2FA(ctx interface{}, userID interface{}) *MockUserService_Setup2FA_Call {
+	return &MockUserService_Setup2FA_Call{Call: _e.mock.On("Setup2FA", ctx, userID)}
+}
+
+func (_c *MockUserService_Setup2FA_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *MockUserService_Setup2FA_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_Setup2FA_Call) Return(setup2FAResponse *dto.Setup2FAResponse, err error) *MockUserService_Setup2FA_Call {
+	_c.Call.Return(setup2FAResponse, err)
+	return _c
+}
+
+func (_c *MockUserService_Setup2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error)) *MockUserService_Setup2FA_Call {
 	_c.Call.Return(run)
 	return _c
 }
