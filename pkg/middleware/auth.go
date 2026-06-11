@@ -21,6 +21,8 @@ func IdentityUser(manager token.Manager) fiber.Handler {
 			SessionID: getSessionID(ctx),
 		}
 
+		ctx.Locals(ctxUserContext, userCtx)
+
 		authHeader := ctx.Get("Authorization")
 		if authHeader == "" {
 			return ctx.Next()
