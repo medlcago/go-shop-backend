@@ -88,7 +88,7 @@ func (h *Handler) GetOrder(ctx fiber.Ctx) error {
 //	@Param			offset			query		int		false	"Number of items to skip"			minimum(0)	default(0)
 //	@Param			X-Session-ID	header		string	true	"Session ID"						Format(uuid)
 //	@Param			status			query		string	false	"Order status"						Enums(draft, pending, paid, canceled, completed)
-//	@Success		200				{object}	response.PaginatedResponse[[]dto.OrderResponse]
+//	@Success		200				{object}	response.Response[response.PaginatedResponse[[]dto.OrderResponse]]
 //	@Failure		401				{object}	response.Response[any]
 //	@Failure		500				{object}	response.Response[any]
 //	@Router			/orders [get]
@@ -224,7 +224,7 @@ func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 //	@Produce		json
 //	@Param			id				path		string	true	"Order ID"		Format(uuid)
 //	@Param			X-Session-ID	header		string	true	"Session ID"	Format(uuid)
-//	@Success		200				{object}	response.Response[dto.OrderCheckoutResponse]
+//	@Success		200				{object}	response.Response[dto.OrderResponse]
 //	@Failure		400				{object}	response.Response[any]
 //	@Failure		401				{object}	response.Response[any]
 //	@Failure		403				{object}	response.Response[any]
@@ -247,6 +247,22 @@ func (h *Handler) Checkout(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// CancelOrder godoc
+//
+//	@Summary		Cancel order
+//	@Description	Cancel order (changes status to canceled). Only orders in pending status can be canceled.
+//	@Tags			Orders
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id				path		string						true	"Order ID"		Format(uuid)
+//	@Param			X-Session-ID	header		string						true	"Session ID"	Format(uuid)
+//	@Success		200				{object}	response.Response[string]	"Returns 'OK' on success"
+//	@Failure		400				{object}	response.Response[any]
+//	@Failure		401				{object}	response.Response[any]
+//	@Failure		403				{object}	response.Response[any]
+//	@Failure		409				{object}	response.Response[any]
+//	@Failure		500				{object}	response.Response[any]
+//	@Router			/orders/{id}/cancel [post]
 func (h *Handler) CancelOrder(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {

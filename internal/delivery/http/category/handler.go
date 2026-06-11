@@ -23,7 +23,7 @@ func NewHandler(categoryService service.CategoryService) *Handler {
 //
 //	@Summary		List categories or subcategories
 //	@Description	Get a paginated list of all categories or subcategories of a specific category. If ID is provided in the path, returns subcategories of that category. Otherwise returns all root categories.
-//	@Tags			categories
+//	@Tags			Categories
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		string	false	"Parent category ID. If provided, returns subcategories of this category. If omitted, returns all root categories."	Format(uuid)

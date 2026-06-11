@@ -24,7 +24,7 @@ func NewHandler(userService service.UserService) *Handler {
 //
 //	@Summary		Login
 //	@Description	Login
-//	@Tags			users
+//	@Tags			Users
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.UserLoginRequest	true	"Request body for login"
@@ -51,7 +51,7 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 //
 //	@Summary		Register
 //	@Description	Register
-//	@Tags			users
+//	@Tags			Users
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.UserRegisterRequest	true	"Request body for registration"
@@ -78,7 +78,7 @@ func (h *Handler) Register(ctx fiber.Ctx) error {
 //
 //	@Summary		Setup 2FA
 //	@Description	Initialize two-factor authentication setup for the authenticated user
-//	@Tags			users
+//	@Tags			Users
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
@@ -106,7 +106,7 @@ func (h *Handler) Setup2FA(ctx fiber.Ctx) error {
 //
 //	@Summary		Confirm 2FA
 //	@Description	Confirm and enable two-factor authentication with the provided code
-//	@Tags			users
+//	@Tags			Users
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
@@ -139,7 +139,7 @@ func (h *Handler) Confirm2FA(ctx fiber.Ctx) error {
 //
 //	@Summary		Disable 2FA
 //	@Description	Disable two-factor authentication for the authenticated user
-//	@Tags			users
+//	@Tags			Users
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
@@ -172,7 +172,7 @@ func (h *Handler) Disable2FA(ctx fiber.Ctx) error {
 //
 //	@Summary		Get Me
 //	@Description	Get Me
-//	@Tags			users
+//	@Tags			Users
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
@@ -195,6 +195,20 @@ func (h *Handler) GetMe(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// SendEmailConfirmationCode godoc
+//
+//	@Summary		Send email confirmation code
+//	@Description	Send a confirmation code to the user's email address for verification
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.Response[dto.SendEmailConfirmationResponse]
+//	@Failure		400	{object}	response.Response[any]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		429	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/users/me/send-email-confirmation [post]
 func (h *Handler) SendEmailConfirmationCode(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -209,6 +223,22 @@ func (h *Handler) SendEmailConfirmationCode(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// ConfirmEmail godoc
+//
+//	@Summary		Confirm email address
+//	@Description	Confirm user's email address using the confirmation code sent to their email
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		dto.ConfirmEmailRequest	true	"Request body with confirmation code"
+//	@Success		200		{object}	response.Response[dto.ConfirmEmailResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		409		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]	"Internal server error"
+//	@Router			/users/me/confirm-email [post]
 func (h *Handler) ConfirmEmail(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {

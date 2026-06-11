@@ -20,6 +20,23 @@ func NewHandler(paymentService service.PaymentService) *Handler {
 	}
 }
 
+// CreatePayment godoc
+//
+//	@Summary		Create payment
+//	@Description	Create a new payment for an order
+//	@Tags			Payments
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.CreatePaymentRequest	true	"Request to Create a Payment"
+//	@Success		201		{object}	response.Response[dto.PaymentResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		403		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		409		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/payments [post]
 func (h *Handler) CreatePayment(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {

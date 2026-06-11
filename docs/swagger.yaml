@@ -10,6 +10,21 @@ definitions:
     - product_id
     - quantity
     type: object
+  go-shop-backend_internal_dto.AddWishlistItemRequest:
+    properties:
+      note:
+        maxLength: 128
+        type: string
+      priority:
+        maximum: 2
+        minimum: 0
+        type: integer
+      product_id:
+        type: string
+    required:
+    - priority
+    - product_id
+    type: object
   go-shop-backend_internal_dto.CategoryResponse:
     properties:
       description:
@@ -41,6 +56,49 @@ definitions:
     - code
     - password
     type: object
+  go-shop-backend_internal_dto.ConfirmEmailRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  go-shop-backend_internal_dto.ConfirmEmailResponse:
+    properties:
+      email_confirmed_at:
+        description: ISO 8601
+        type: string
+      ok:
+        type: boolean
+    type: object
+  go-shop-backend_internal_dto.ConfirmUploadProductImageRequest:
+    properties:
+      object_key:
+        type: string
+      upload_id:
+        type: string
+    required:
+    - object_key
+    - upload_id
+    type: object
+  go-shop-backend_internal_dto.CreatePaymentRequest:
+    properties:
+      order_id:
+        type: string
+    required:
+    - order_id
+    type: object
+  go-shop-backend_internal_dto.CreateWishlistRequest:
+    properties:
+      is_public:
+        type: boolean
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - title
+    type: object
   go-shop-backend_internal_dto.Disable2FARequest:
     properties:
       code:
@@ -50,13 +108,6 @@ definitions:
     required:
     - code
     - password
-    type: object
-  go-shop-backend_internal_dto.OrderCheckoutResponse:
-    properties:
-      confirmation_url:
-        type: string
-      order_id:
-        type: string
     type: object
   go-shop-backend_internal_dto.OrderItemProductResponse:
     properties:
@@ -114,6 +165,13 @@ definitions:
       total_amount:
         type: integer
       updated_at:
+        type: string
+    type: object
+  go-shop-backend_internal_dto.PaymentResponse:
+    properties:
+      confirmation_token:
+        type: string
+      confirmation_url:
         type: string
     type: object
   go-shop-backend_internal_dto.ProductCategoryResponse:
@@ -197,12 +255,67 @@ definitions:
         minimum: 0
         type: integer
     type: object
+  go-shop-backend_internal_dto.SendEmailConfirmationResponse:
+    properties:
+      expires_in:
+        description: seconds
+        type: integer
+    type: object
   go-shop-backend_internal_dto.Setup2FAResponse:
     properties:
       qr_code:
         type: string
       secret:
         type: string
+    type: object
+  go-shop-backend_internal_dto.SignURLResponse:
+    properties:
+      content_type:
+        type: string
+      expire_date:
+        type: string
+      filename:
+        type: string
+      form_data:
+        additionalProperties:
+          type: string
+        type: object
+      upload_id:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  go-shop-backend_internal_dto.UpdateWishlistItemRequest:
+    properties:
+      note:
+        maxLength: 128
+        type: string
+      priority:
+        maximum: 2
+        minimum: 0
+        type: integer
+    type: object
+  go-shop-backend_internal_dto.UpdateWishlistRequest:
+    properties:
+      is_public:
+        type: boolean
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+    type: object
+  go-shop-backend_internal_dto.UploadProductImageRequest:
+    properties:
+      content_type:
+        type: string
+      ext:
+        enum:
+        - jpg
+        - png
+        type: string
+    required:
+    - content_type
+    - ext
     type: object
   go-shop-backend_internal_dto.UploadResponse:
     properties:
@@ -270,6 +383,60 @@ definitions:
       user:
         $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
     type: object
+  go-shop-backend_internal_dto.WishlistItemResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      note:
+        type: string
+      priority:
+        type: integer
+      product:
+        $ref: '#/definitions/go-shop-backend_internal_dto.WishlistProductResponse'
+      product_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  go-shop-backend_internal_dto.WishlistProductResponse:
+    properties:
+      available:
+        type: integer
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      price:
+        type: integer
+    type: object
+  go-shop-backend_internal_dto.WishlistResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      is_public:
+        type: boolean
+      items:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.WishlistItemResponse'
+        type: array
+      share_token:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  go-shop-backend_internal_dto.WishlistShareTokenResponse:
+    properties:
+      share_token:
+        type: string
+    type: object
   go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse:
     properties:
       data:
@@ -297,6 +464,15 @@ definitions:
       total:
         type: integer
     type: object
+  go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.WishlistResponse'
+        type: array
+      total:
+        type: integer
+    type: object
   go-shop-backend_pkg_response.Response-any:
     properties:
       details: {}
@@ -304,13 +480,13 @@ definitions:
         type: string
       result: {}
     type: object
-  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderCheckoutResponse:
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ConfirmEmailResponse:
     properties:
       details: {}
       error:
         type: string
       result:
-        $ref: '#/definitions/go-shop-backend_internal_dto.OrderCheckoutResponse'
+        $ref: '#/definitions/go-shop-backend_internal_dto.ConfirmEmailResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse:
     properties:
@@ -320,6 +496,14 @@ definitions:
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.OrderResponse'
     type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_PaymentResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.PaymentResponse'
+    type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse:
     properties:
       details: {}
@@ -327,6 +511,14 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.ProductResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SendEmailConfirmationResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.SendEmailConfirmationResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse:
     properties:
@@ -336,6 +528,22 @@ definitions:
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.Setup2FAResponse'
     type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.SignURLResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.UploadResponse'
+    type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
       details: {}
@@ -343,6 +551,22 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.UserTokenResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.WishlistResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistShareTokenResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.WishlistShareTokenResponse'
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse
   : properties:
@@ -352,6 +576,14 @@ definitions:
       result:
         $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse'
     type: object
+  ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse
+  : properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse'
+    type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse
   : properties:
       details: {}
@@ -359,6 +591,14 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse'
+    type: object
+  ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse
+  : properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse'
     type: object
   go-shop-backend_pkg_response.Response-internal_dto_UserResponse:
     properties:
@@ -397,181 +637,6 @@ info:
   title: Go Shop Backend API
   version: "1.0"
 paths:
-  /auth/2fa/confirm:
-    post:
-      consumes:
-      - application/json
-      description: Confirm and enable two-factor authentication with the provided
-        code
-      parameters:
-      - description: Request body with 2FA confirmation code
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.Confirm2FARequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 2FA successfully enabled
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Confirm 2FA
-      tags:
-      - auth
-  /auth/2fa/disable:
-    post:
-      consumes:
-      - application/json
-      description: Disable two-factor authentication for the authenticated user
-      parameters:
-      - description: Request body with password confirmation
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.Disable2FARequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 2FA successfully disabled
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Disable 2FA
-      tags:
-      - auth
-  /auth/2fa/setup:
-    post:
-      consumes:
-      - application/json
-      description: Initialize two-factor authentication setup for the authenticated
-        user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Setup 2FA
-      tags:
-      - auth
-  /auth/login:
-    post:
-      consumes:
-      - application/json
-      description: Login
-      parameters:
-      - description: Request body for login
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.UserLoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Login
-      tags:
-      - auth
-  /auth/register:
-    post:
-      consumes:
-      - application/json
-      description: Register
-      parameters:
-      - description: Request body for registration
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.UserRegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "409":
-          description: The user already exists
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Register
-      tags:
-      - auth
   /categories/:
     get:
       consumes:
@@ -613,7 +678,7 @@ paths:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       summary: List categories or subcategories
       tags:
-      - categories
+      - Categories
   /categories/{id}:
     get:
       consumes:
@@ -661,7 +726,7 @@ paths:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       summary: List categories or subcategories
       tags:
-      - categories
+      - Categories
   /orders:
     get:
       description: Get paginated list of orders
@@ -700,7 +765,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse'
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse'
         "401":
           description: Unauthorized
           schema:
@@ -783,6 +848,55 @@ paths:
       summary: Get order by ID
       tags:
       - Orders
+  /orders/{id}/cancel:
+    post:
+      description: Cancel order (changes status to canceled). Only orders in pending
+        status can be canceled.
+      parameters:
+      - description: Order ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Session ID
+        format: uuid
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns 'OK' on success
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Cancel order
+      tags:
+      - Orders
   /orders/{id}/checkout:
     post:
       description: Checkout order (changes status from draft to pending)
@@ -805,7 +919,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderCheckoutResponse'
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse'
         "400":
           description: Bad Request
           schema:
@@ -984,6 +1098,54 @@ paths:
       summary: Remove item from order
       tags:
       - Orders
+  /payments:
+    post:
+      consumes:
+      - application/json
+      description: Create a new payment for an order
+      parameters:
+      - description: Request to Create a Payment
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.CreatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_PaymentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Create payment
+      tags:
+      - Payments
   /products:
     post:
       consumes:
@@ -1040,7 +1202,7 @@ paths:
       - BearerAuth: []
       summary: Create a new product
       tags:
-      - products
+      - Products
   /products/:
     get:
       consumes:
@@ -1095,7 +1257,7 @@ paths:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       summary: List products with filtering and pagination
       tags:
-      - products
+      - Products
   /products/{id}:
     get:
       consumes:
@@ -1129,7 +1291,7 @@ paths:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       summary: Get product by ID
       tags:
-      - products
+      - Products
     patch:
       consumes:
       - application/json
@@ -1179,7 +1341,113 @@ paths:
       - BearerAuth: []
       summary: Update an existing product
       tags:
-      - products
+      - Products
+  /products/{id}/images/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirm successful image upload and attach the image to the product.
+        After uploading to the presigned URL, call this endpoint to finalize the process.
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image confirmation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ConfirmUploadProductImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Confirm image upload
+      tags:
+      - Products
+  /products/{id}/images/upload-url:
+    post:
+      consumes:
+      - application/json
+      description: Initiate image upload for a product. Returns a presigned URL for
+        uploading the image to cloud storage.
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image upload request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UploadProductImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Upload product image
+      tags:
+      - Products
   /products/search:
     get:
       consumes:
@@ -1220,7 +1488,41 @@ paths:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       summary: Search products
       tags:
-      - products
+      - Products
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      parameters:
+      - description: Request body for login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Login
+      tags:
+      - Users
   /users/me:
     get:
       consumes:
@@ -1249,7 +1551,634 @@ paths:
       - BearerAuth: []
       summary: Get Me
       tags:
-      - users
+      - Users
+  /users/me/confirm-2fa:
+    post:
+      consumes:
+      - application/json
+      description: Confirm and enable two-factor authentication with the provided
+        code
+      parameters:
+      - description: Request body with 2FA confirmation code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.Confirm2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 2FA successfully enabled
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Confirm 2FA
+      tags:
+      - Users
+  /users/me/confirm-email:
+    post:
+      consumes:
+      - application/json
+      description: Confirm user's email address using the confirmation code sent to
+        their email
+      parameters:
+      - description: Request body with confirmation code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ConfirmEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ConfirmEmailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Confirm email address
+      tags:
+      - Users
+  /users/me/disable-2fa:
+    post:
+      consumes:
+      - application/json
+      description: Disable two-factor authentication for the authenticated user
+      parameters:
+      - description: Request body with password confirmation
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.Disable2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 2FA successfully disabled
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Disable 2FA
+      tags:
+      - Users
+  /users/me/send-email-confirmation:
+    post:
+      consumes:
+      - application/json
+      description: Send a confirmation code to the user's email address for verification
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SendEmailConfirmationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Send email confirmation code
+      tags:
+      - Users
+  /users/me/setup-2fa:
+    post:
+      consumes:
+      - application/json
+      description: Initialize two-factor authentication setup for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Setup 2FA
+      tags:
+      - Users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Register
+      parameters:
+      - description: Request body for registration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UserRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: The user already exists
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Register
+      tags:
+      - Users
+  /wishlists:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of wishlists for the authenticated user
+      parameters:
+      - default: 50
+        description: Maximum number of items to return
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of items to skip
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get user's wishlists
+      tags:
+      - Wishlists
+    post:
+      consumes:
+      - application/json
+      description: Creates a new wishlist for the authenticated user
+      parameters:
+      - description: Wishlist creation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.CreateWishlistRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Create a new wishlist
+      tags:
+      - Wishlists
+  /wishlists/{wishlistID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific wishlist by its ID for the authenticated user
+      parameters:
+      - description: Wishlist ID
+        format: uuid
+        in: path
+        name: wishlistID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get wishlist by ID
+      tags:
+      - Wishlists
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing wishlist
+      parameters:
+      - description: Wishlist ID
+        format: uuid
+        in: path
+        name: wishlistID
+        required: true
+        type: string
+      - description: Wishlist update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UpdateWishlistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Update wishlist
+      tags:
+      - Wishlists
+  /wishlists/{wishlistID}/items:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new item (product) to the wishlist
+      parameters:
+      - description: Wishlist ID
+        format: uuid
+        in: path
+        name: wishlistID
+        required: true
+        type: string
+      - description: Item details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.AddWishlistItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Add item to wishlist
+      tags:
+      - Wishlists
+  /wishlists/{wishlistID}/items/{itemID}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes an item from a wishlist
+      parameters:
+      - description: Wishlist ID
+        format: uuid
+        in: path
+        name: wishlistID
+        required: true
+        type: string
+      - description: Item ID
+        format: uuid
+        in: path
+        name: itemID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Remove item from wishlist
+      tags:
+      - Wishlists
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing item in a wishlist
+      parameters:
+      - description: Wishlist ID
+        format: uuid
+        in: path
+        name: wishlistID
+        required: true
+        type: string
+      - description: Item ID
+        format: uuid
+        in: path
+        name: itemID
+        required: true
+        type: string
+      - description: Item update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UpdateWishlistItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Update wishlist item
+      tags:
+      - Wishlists
+  /wishlists/{wishlistID}/regenerate-token:
+    post:
+      consumes:
+      - application/json
+      description: Generates a new share token for a wishlist (invalidates the old
+        one)
+      parameters:
+      - description: Wishlist ID
+        format: uuid
+        in: path
+        name: wishlistID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistShareTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Regenerate share token
+      tags:
+      - Wishlists
+  /wishlists/shared/{token}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a publicly shared wishlist using its share token (no
+        authentication required)
+      parameters:
+      - description: Wishlist share token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Get shared wishlist by token
+      tags:
+      - Wishlists
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token. "Bearer {token}"

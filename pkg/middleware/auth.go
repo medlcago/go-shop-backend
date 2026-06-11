@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type contextType string
+type AuthContextType string
 
 const (
-	ctxUserContext contextType = "userContext"
+	CtxUserContext AuthContextType = "_userContext"
 )
 
 func IdentityUser(manager token.Manager) fiber.Handler {
@@ -21,7 +21,7 @@ func IdentityUser(manager token.Manager) fiber.Handler {
 			SessionID: getSessionID(ctx),
 		}
 
-		ctx.Locals(ctxUserContext, userCtx)
+		ctx.Locals(CtxUserContext, userCtx)
 
 		authHeader := ctx.Get("Authorization")
 		if authHeader == "" {
@@ -48,7 +48,7 @@ func IdentityUser(manager token.Manager) fiber.Handler {
 		userCtx.Role = claims.UserRole
 		userCtx.TokenType = claims.TokenType
 
-		ctx.Locals(ctxUserContext, userCtx)
+		ctx.Locals(CtxUserContext, userCtx)
 
 		return ctx.Next()
 	}
@@ -109,7 +109,7 @@ type UserContext struct {
 func GetUserContext(ctx fiber.Ctx) UserContext {
 	var userCtx UserContext
 
-	if v := ctx.Locals(ctxUserContext); v != nil {
+	if v := ctx.Locals(CtxUserContext); v != nil {
 		if userContext, ok := v.(UserContext); ok {
 			userCtx = userContext
 		}
