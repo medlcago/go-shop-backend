@@ -5,6 +5,7 @@ import (
 	"go-shop-backend/internal/dto"
 	serviceMocks "go-shop-backend/internal/service/mocks"
 	"go-shop-backend/pkg/apperror"
+	"go-shop-backend/pkg/middleware"
 	"go-shop-backend/pkg/response"
 	"go-shop-backend/pkg/testutils"
 	"net/http"
@@ -310,7 +311,9 @@ func TestUserHandler_GetMe(t *testing.T) {
 
 			app.Get("/", func(c fiber.Ctx) error {
 				if tt.userID != nil {
-					c.Locals("userID", *tt.userID)
+					c.Locals(middleware.CtxUserContext, middleware.UserContext{
+						UserID: tt.userID,
+					})
 				}
 
 				return userHandler.GetMe(c)

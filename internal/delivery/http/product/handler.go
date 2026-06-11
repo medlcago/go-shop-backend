@@ -25,7 +25,7 @@ func NewHandler(productService service.ProductService) *Handler {
 //
 //	@Summary		Get product by ID
 //	@Description	Get detailed information about a specific product by its UUID
-//	@Tags			products
+//	@Tags			Products
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		string	true	"Product ID"	Format(uuid)
@@ -49,7 +49,7 @@ func (h *Handler) GetProductByID(ctx fiber.Ctx) error {
 //
 //	@Summary		List products with filtering and pagination
 //	@Description	Get a paginated list of products with optional filtering by category and sorting
-//	@Tags			products
+//	@Tags			Products
 //	@Accept			json
 //	@Produce		json
 //	@Param			limit		query		int		false	"Maximum number of items to return"	minimum(1)	default(50)
@@ -80,7 +80,7 @@ func (h *Handler) ListProducts(ctx fiber.Ctx) error {
 //
 //	@Summary		Create a new product
 //	@Description	Create a new product with the provided details including categories
-//	@Tags			products
+//	@Tags			Products
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.ProductCreateRequest	true	"Product creation data"
@@ -129,7 +129,7 @@ func (h *Handler) CreateProduct(ctx fiber.Ctx) error {
 //
 //	@Summary		Update an existing product
 //	@Description	Partially update a product's information. Only provided fields will be updated.
-//	@Tags			products
+//	@Tags			Products
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		string						true	"Product ID"	Format(uuid)
@@ -163,7 +163,7 @@ func (h *Handler) UpdateProduct(ctx fiber.Ctx) error {
 //
 //	@Summary		Search products
 //	@Description	Search products with full-text search capability on name and description
-//	@Tags			products
+//	@Tags			Products
 //	@Accept			json
 //	@Produce		json
 //	@Param			q		query		string	true	"Search query for full-text search on name and description fields"
@@ -188,6 +188,23 @@ func (h *Handler) Search(ctx fiber.Ctx) error {
 	return response.PaginatedJSON(ctx, fiber.StatusOK, resp, total)
 }
 
+// UploadImage godoc
+//
+//	@Summary		Upload product image
+//	@Description	Initiate image upload for a product. Returns a presigned URL for uploading the image to cloud storage.
+//	@Tags			Products
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string							true	"Product ID"	Format(uuid)
+//	@Param			request	body		dto.UploadProductImageRequest	true	"Image upload request"
+//	@Success		200		{object}	response.Response[dto.SignURLResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		403		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/products/{id}/images/upload-url [post]
 func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -209,6 +226,24 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// ConfirmUploadImage godoc
+//
+//	@Summary		Confirm image upload
+//	@Description	Confirm successful image upload and attach the image to the product. After uploading to the presigned URL, call this endpoint to finalize the process.
+//	@Tags			Products
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string									true	"Product ID"	Format(uuid)
+//	@Param			request	body		dto.ConfirmUploadProductImageRequest	true	"Image confirmation request"
+//	@Success		200		{object}	response.Response[dto.UploadResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		403		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		409		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/products/{id}/images/confirm [post]
 func (h *Handler) ConfirmUploadImage(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
