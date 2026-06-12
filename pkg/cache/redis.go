@@ -9,11 +9,11 @@ import (
 )
 
 type redisCache struct {
-	rdb     *redis.Client
+	rdb     redis.UniversalClient
 	keyFunc func(key string) string
 }
 
-func NewRedisCache(rdb *redis.Client, prefix string) *redisCache {
+func NewRedisCache(rdb redis.UniversalClient, prefix string) *redisCache {
 	return &redisCache{
 		rdb: rdb,
 		keyFunc: func(key string) string {
@@ -30,7 +30,6 @@ func (c *redisCache) Set(ctx context.Context, key string, value string, ttl time
 func (c *redisCache) Get(ctx context.Context, key string) (string, error) {
 	key = c.keyFunc(key)
 	value, err := c.rdb.Get(ctx, key).Result()
-
 	if err != nil {
 		return "", HandleError(err)
 	}

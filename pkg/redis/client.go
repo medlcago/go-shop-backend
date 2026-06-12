@@ -9,7 +9,7 @@ import (
 )
 
 type Client struct {
-	rdb *redis.Client
+	rdb redis.UniversalClient
 }
 
 func New(addr, password string, opts ...Option) (*Client, error) {
@@ -38,7 +38,7 @@ func New(addr, password string, opts ...Option) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) RDB() *redis.Client {
+func (c *Client) RDB() redis.UniversalClient {
 	return c.rdb
 }
 
