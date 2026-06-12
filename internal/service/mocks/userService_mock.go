@@ -39,6 +39,69 @@ func (_m *MockUserService) EXPECT() *MockUserService_Expecter {
 	return &MockUserService_Expecter{mock: &_m.Mock}
 }
 
+// ChangePassword provides a mock function for the type MockUserService
+func (_mock *MockUserService) ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error {
+	ret := _mock.Called(ctx, userID, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ChangePassword")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.ChangePasswordRequest) error); ok {
+		r0 = returnFunc(ctx, userID, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserService_ChangePassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ChangePassword'
+type MockUserService_ChangePassword_Call struct {
+	*mock.Call
+}
+
+// ChangePassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - req dto.ChangePasswordRequest
+func (_e *MockUserService_Expecter) ChangePassword(ctx interface{}, userID interface{}, req interface{}) *MockUserService_ChangePassword_Call {
+	return &MockUserService_ChangePassword_Call{Call: _e.mock.On("ChangePassword", ctx, userID, req)}
+}
+
+func (_c *MockUserService_ChangePassword_Call) Run(run func(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest)) *MockUserService_ChangePassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dto.ChangePasswordRequest
+		if args[2] != nil {
+			arg2 = args[2].(dto.ChangePasswordRequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_ChangePassword_Call) Return(err error) *MockUserService_ChangePassword_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUserService_ChangePassword_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error) *MockUserService_ChangePassword_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Confirm2FA provides a mock function for the type MockUserService
 func (_mock *MockUserService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error {
 	ret := _mock.Called(ctx, userID, req)

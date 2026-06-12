@@ -80,17 +80,8 @@ func (u *userService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 	}
 
 	if user.TwoFAEnabled && user.TwoFASecret != nil {
-		if req.Code == "" {
-			return nil, apperror.Wrap(op, apperror.Err2FACodeRequired)
-		}
-
-		decryptedKey, err := u.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
-		if err != nil {
+		if err := u.verify2FACode(ctx, *user.TwoFASecret, req.Code); err != nil {
 			return nil, apperror.Wrap(op, err)
-		}
-
-		if !u.totpManager.ValidateCode(decryptedKey, req.Code) {
-			return nil, apperror.Wrap(op, apperror.ErrInvalid2FACode)
 		}
 	}
 
@@ -195,13 +186,8 @@ func (u *userService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.
 		return apperror.Wrap(op, apperror.Err2FAAlreadyEnabled)
 	}
 
-	decryptedKey, err := u.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
-	if err != nil {
+	if err := u.verify2FACode(ctx, *user.TwoFASecret, req.Code); err != nil {
 		return apperror.Wrap(op, err)
-	}
-
-	if !u.totpManager.ValidateCode(decryptedKey, req.Code) {
-		return apperror.Wrap(op, apperror.ErrInvalid2FACode)
 	}
 
 	user.TwoFAEnabled = true
@@ -226,17 +212,12 @@ func (u *userService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.
 		return apperror.Wrap(op, err)
 	}
 
-	if !user.TwoFAEnabled {
+	if !user.TwoFAEnabled || user.TwoFASecret == nil {
 		return apperror.Wrap(op, apperror.Err2FANotEnabled)
 	}
 
-	decryptedKey, err := u.encryptionManager.Decrypt(ctx, *user.TwoFASecret)
-	if err != nil {
+	if err := u.verify2FACode(ctx, *user.TwoFASecret, req.Code); err != nil {
 		return apperror.Wrap(op, err)
-	}
-
-	if !u.totpManager.ValidateCode(decryptedKey, req.Code) {
-		return apperror.Wrap(op, apperror.ErrInvalid2FACode)
 	}
 
 	user.TwoFAEnabled = false
@@ -337,6 +318,37 @@ func (u *userService) ConfirmEmail(ctx context.Context, userID uuid.UUID, req dt
 	}, nil
 }
 
+func (u *userService) ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error {
+	const op = "userService.ChangePassword"
+
+	user, err := u.getUserByID(ctx, userID)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if err := u.verifyPassword(req.Password, user.PasswordHash); err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if user.TwoFAEnabled && user.TwoFASecret != nil {
+		if err := u.verify2FACode(ctx, *user.TwoFASecret, req.Code); err != nil {
+			return apperror.Wrap(op, err)
+		}
+	}
+
+	passwordHash, err := u.hasher.Hash(req.NewPassword)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	user.PasswordHash = passwordHash
+	if err := u.userRepo.Update(ctx, user); err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	return nil
+}
+
 func (u *userService) createTokens(user *models.User) (*dto.TokenResponse, error) {
 	const (
 		op        = "userService.createTokens"
@@ -400,6 +412,25 @@ func (u *userService) verifyEmailCode(ctx context.Context, userID uuid.UUID, inp
 	}
 
 	_ = u.cache.Delete(ctx, cacheKey)
+
+	return nil
+}
+
+func (u *userService) verify2FACode(ctx context.Context, secret string, code string) error {
+	const op = "userService.verify2FACode"
+
+	if code == "" {
+		return apperror.Wrap(op, apperror.Err2FACodeRequired)
+	}
+
+	decryptedKey, err := u.encryptionManager.Decrypt(ctx, secret)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if !u.totpManager.ValidateCode(decryptedKey, code) {
+		return apperror.Wrap(op, apperror.ErrInvalid2FACode)
+	}
 
 	return nil
 }

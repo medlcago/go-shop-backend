@@ -46,6 +46,21 @@ definitions:
       sort_order:
         type: integer
     type: object
+  go-shop-backend_internal_dto.ChangePasswordRequest:
+    properties:
+      code:
+        type: string
+      new_password:
+        maxLength: 60
+        minLength: 6
+        type: string
+      password:
+        type: string
+    required:
+    - code
+    - new_password
+    - password
+    type: object
   go-shop-backend_internal_dto.Confirm2FARequest:
     properties:
       code:
@@ -1550,6 +1565,46 @@ paths:
       security:
       - BearerAuth: []
       summary: Get Me
+      tags:
+      - Users
+  /users/me/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Change user password
+      parameters:
+      - description: Request body with current and new password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Change password
       tags:
       - Users
   /users/me/confirm-2fa:

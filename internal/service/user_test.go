@@ -1079,3 +1079,140 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_UserNotFound() {
 	suite.ErrorIs(err, apperror.ErrUserNotFound)
 	suite.ErrorContains(err, "userService.ConfirmEmail")
 }
+
+// ==================== ChangePassword Tests ====================
+
+func (suite *UserServiceTestSuite) TestChangePassword_Success() {
+	req := dto.ChangePasswordRequest{
+		Password:    "oldPassword123",
+		NewPassword: "newPassword123",
+	}
+
+	user := &models.User{
+		ID:           suite.userID,
+		PasswordHash: "passwordHash",
+	}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
+		Return(true, nil).Once()
+
+	suite.hasher.EXPECT().Hash(req.NewPassword).
+		Return("newPasswordHash", nil).Once()
+
+	suite.userRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(user *models.User) bool {
+		return user.PasswordHash == "newPasswordHash"
+	})).Return(nil).Once()
+
+	err := suite.userService.ChangePassword(suite.ctx, suite.userID, req)
+	suite.NoError(err)
+}
+
+func (suite *UserServiceTestSuite) TestChangePassword_UserNotFound() {
+	req := dto.ChangePasswordRequest{
+		Password:    "oldPassword123",
+		NewPassword: "newPassword123",
+	}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	err := suite.userService.ChangePassword(suite.ctx, suite.userID, req)
+
+	suite.ErrorIs(err, apperror.ErrUserNotFound)
+	suite.ErrorContains(err, "userService.ChangePassword")
+}
+
+func (suite *UserServiceTestSuite) TestChangePassword_InvalidCurrentPassword() {
+	req := dto.ChangePasswordRequest{
+		Password:    "oldPassword123",
+		NewPassword: "newPassword123",
+	}
+
+	user := &models.User{
+		ID:           suite.userID,
+		PasswordHash: "passwordHash",
+	}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
+		Return(false, nil).Once()
+
+	err := suite.userService.ChangePassword(suite.ctx, suite.userID, req)
+
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
+	suite.ErrorContains(err, "userService.ChangePassword")
+}
+
+func (suite *UserServiceTestSuite) TestChangePassword_2FAEnabled_Success() {
+	req := dto.ChangePasswordRequest{
+		Password:    "oldPassword123",
+		NewPassword: "newPassword123",
+		Code:        "123456",
+	}
+
+	user := &models.User{
+		ID:           suite.userID,
+		PasswordHash: "passwordHash",
+		TwoFAEnabled: true,
+		TwoFASecret:  new("secret"),
+	}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
+		Return(true, nil).Once()
+
+	suite.encryptionManager.EXPECT().Decrypt(suite.ctx, *user.TwoFASecret).
+		Return("decryptedSecret", nil).Once()
+
+	suite.totpManager.EXPECT().ValidateCode("decryptedSecret", req.Code).
+		Return(true).Once()
+
+	suite.hasher.EXPECT().Hash(req.NewPassword).
+		Return("newPasswordHash", nil).Once()
+
+	suite.userRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(user *models.User) bool {
+		return user.PasswordHash == "newPasswordHash"
+	})).Return(nil).Once()
+
+	err := suite.userService.ChangePassword(suite.ctx, suite.userID, req)
+	suite.NoError(err)
+}
+
+func (suite *UserServiceTestSuite) TestChangePassword_2FAEnabled_InvalidCode() {
+	req := dto.ChangePasswordRequest{
+		Password:    "oldPassword123",
+		NewPassword: "newPassword123",
+		Code:        "123456",
+	}
+
+	user := &models.User{
+		ID:           suite.userID,
+		PasswordHash: "passwordHash",
+		TwoFAEnabled: true,
+		TwoFASecret:  new("secret"),
+	}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
+		Return(true, nil).Once()
+
+	suite.encryptionManager.EXPECT().Decrypt(suite.ctx, *user.TwoFASecret).
+		Return("decryptedSecret", nil).Once()
+
+	suite.totpManager.EXPECT().ValidateCode("decryptedSecret", req.Code).
+		Return(false).Once()
+
+	err := suite.userService.ChangePassword(suite.ctx, suite.userID, req)
+
+	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
+	suite.ErrorContains(err, "userService.ChangePassword")
+}

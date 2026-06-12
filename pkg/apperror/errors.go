@@ -45,7 +45,7 @@ var (
 	Err2FAAlreadyEnabled = New(http.StatusConflict, "2FA is already enabled; disable it first to reconfigure")
 	Err2FANotEnabled     = New(http.StatusBadRequest, "2FA is not enabled")
 	Err2FANotInitialized = New(http.StatusBadRequest, "2FA is not initialized")
-	ErrInvalid2FACode    = New(http.StatusBadRequest, "invalid 2FA code")
+	ErrInvalid2FACode    = New(http.StatusUnauthorized, "invalid 2FA code")
 	Err2FACodeRequired   = New(http.StatusUnauthorized, "2FA code is required")
 
 	ErrWishlistNotFound         = New(http.StatusNotFound, "wishlist not found or is private")

@@ -58,3 +58,9 @@ type ConfirmEmailResponse struct {
 	OK               bool   `json:"ok"`
 	EmailConfirmedAt string `json:"email_confirmed_at"` // ISO 8601
 }
+
+type ChangePasswordRequest struct {
+	Password    string `json:"password" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=6,max=60"`
+	Code        string `json:"code" validate:"omitempty,required"`
+}

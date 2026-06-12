@@ -26,5 +26,6 @@ func RegisterRoutes(r fiber.Router, userHandler *Handler) {
 		protectedUserGroup.Post("/me/disable-2fa", userHandler.Disable2FA)
 		protectedUserGroup.Post("/me/send-email-confirmation", userHandler.SendEmailConfirmationCode)
 		protectedUserGroup.Post("/me/confirm-email", userHandler.ConfirmEmail)
+		protectedUserGroup.Post("/me/change-password", userHandler.ChangePassword)
 	}
 }

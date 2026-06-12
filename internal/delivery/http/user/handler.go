@@ -257,3 +257,37 @@ func (h *Handler) ConfirmEmail(ctx fiber.Ctx) error {
 
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
+
+// ChangePassword godoc
+//
+//	@Summary		Change password
+//	@Description	Change user password
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		dto.ChangePasswordRequest	true	"Request body with current and new password"
+//	@Success		200		{object}	response.Response[string]	"OK"
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/users/me/change-password [post]
+func (h *Handler) ChangePassword(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	var req dto.ChangePasswordRequest
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return err
+	}
+
+	err := h.userService.ChangePassword(ctx, *userCtx.UserID, req)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, "OK")
+}
