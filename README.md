@@ -14,6 +14,7 @@
 | POST   | `/api/v1/users/me/disable-2fa`             | Disable 2FA (auth)                  |
 | POST   | `/api/v1/users/me/send-email-confirmation` | Send email confirmation code (auth) |
 | POST   | `/api/v1/users/me/confirm-email`           | Confirm email address (auth)        |
+| POST   | `/api/v1/users/me/change-password`         | Change password (auth)              |
 
 ### Products
 
@@ -33,7 +34,7 @@
 |--------|------------------------------------|-----------------------|
 | GET    | `/api/v1/orders`                   | List my orders        |
 | GET    | `/api/v1/orders/:id`               | Get order details     |
-| POST   | `/api/v1/orders`                   | Create order (auth)   |
+| POST   | `/api/v1/orders`                   | Create order          |
 | POST   | `/api/v1/orders/:id/items`         | Add item              |
 | DELETE | `/api/v1/orders/:id/items/:itemID` | Remove item           |
 | DELETE | `/api/v1/orders/:id/items`         | Clear Items           |
