@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -882,7 +883,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_Success() {
 	cacheKey := fmt.Sprintf("email_confirmation:%s", suite.userID)
 
 	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
-		Return(cache.ErrNotFound).Once()
+		Return(false, nil).Once()
 
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
 		Return(user, nil).Once()
@@ -904,7 +905,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_EmailConfirmati
 	cacheKey := fmt.Sprintf("email_confirmation:%s", suite.userID)
 
 	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
-		Return(nil).Once()
+		Return(true, nil).Once()
 
 	response, err := suite.userService.SendEmailConfirmationCode(suite.ctx, suite.userID)
 
@@ -923,7 +924,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_EmailAlreadyCon
 	cacheKey := fmt.Sprintf("email_confirmation:%s", suite.userID)
 
 	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
-		Return(cache.ErrNotFound).Once()
+		Return(false, nil).Once()
 
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
 		Return(user, nil).Once()
@@ -937,7 +938,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_EmailAlreadyCon
 
 func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_UserNotFound() {
 	suite.cache.EXPECT().Exists(suite.ctx, mock.AnythingOfType("string")).
-		Return(cache.ErrNotFound).Once()
+		Return(false, nil).Once()
 
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
 		Return(nil, repository.ErrRecordNotFound).Once()
@@ -952,7 +953,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_UserNotFound() 
 func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_InternalError() {
 	cacheErr := errors.New("cache error")
 	suite.cache.EXPECT().Exists(suite.ctx, mock.AnythingOfType("string")).
-		Return(cacheErr).Once()
+		Return(false, cacheErr).Once()
 
 	response, err := suite.userService.SendEmailConfirmationCode(suite.ctx, suite.userID)
 
@@ -1215,4 +1216,221 @@ func (suite *UserServiceTestSuite) TestChangePassword_2FAEnabled_InvalidCode() {
 
 	suite.ErrorIs(err, apperror.ErrInvalid2FACode)
 	suite.ErrorContains(err, "userService.ChangePassword")
+}
+
+// ==================== RefreshToken Tests ====================
+
+func (suite *UserServiceTestSuite) TestRefreshToken_Success() {
+	tokenString := "refresh-token"
+
+	user := &models.User{
+		ID:        suite.userID,
+		Email:     "user@example.com",
+		CreatedAt: time.Now(),
+		Role:      models.UserRoleCustomer,
+	}
+
+	payload := token.Payload{
+		UserID:         user.ID.String(),
+		UserRole:       string(user.Role),
+		TwoFAEnabled:   user.TwoFAEnabled,
+		EmailConfirmed: user.EmailConfirmed(),
+	}
+
+	claims := &token.UserClaims{
+		Payload:   payload,
+		TokenType: token.RefreshTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+	}
+
+	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+
+	suite.tokenManager.EXPECT().ValidateToken(tokenString).
+		Return(claims, nil).Once()
+
+	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+		Return(true, nil).Once()
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
+		Return("access-token", nil).Once()
+
+	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
+		Return("refresh-token", nil).Once()
+
+	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
+
+	suite.NoError(err)
+	suite.NotNil(response)
+	suite.NotNil(response.TokenResponse)
+	suite.Equal(response.TokenResponse.AccessToken, "access-token")
+	suite.Equal(response.TokenResponse.RefreshToken, "refresh-token")
+	suite.Equal(response.TokenResponse.TokenType, "Bearer")
+	suite.NotNil(response.User)
+	suite.Equal(response.User.ID, user.ID)
+}
+
+func (suite *UserServiceTestSuite) TestRefreshToken_InvalidToken() {
+	tokenString := "invalid-token"
+
+	suite.tokenManager.EXPECT().ValidateToken(tokenString).
+		Return(nil, &token.ErrTokenError{}).Once()
+
+	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
+
+	suite.Error(err)
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrInvalidToken)
+	suite.ErrorContains(err, "userService.RefreshToken")
+}
+
+func (suite *UserServiceTestSuite) TestRefreshToken_InvalidTokenType() {
+	tokenString := "access-token"
+
+	claims := &token.UserClaims{
+		TokenType: token.AccessTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID: uuid.NewString(),
+		},
+	}
+
+	suite.tokenManager.EXPECT().ValidateToken(tokenString).
+		Return(claims, nil).Once()
+
+	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
+
+	suite.Error(err)
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrInvalidTokenType)
+	suite.ErrorContains(err, "userService.RefreshToken")
+}
+
+func (suite *UserServiceTestSuite) TestRefreshToken_InvalidUserID() {
+	tokenString := "refresh-token"
+
+	claims := &token.UserClaims{
+		Payload: token.Payload{
+			UserID: "invalid-uuid",
+		},
+		TokenType: token.RefreshTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID: uuid.NewString(),
+		},
+	}
+
+	suite.tokenManager.EXPECT().ValidateToken(tokenString).
+		Return(claims, nil).Once()
+
+	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
+
+	suite.Error(err)
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrInvalidToken)
+	suite.ErrorContains(err, "userService.RefreshToken")
+}
+
+func (suite *UserServiceTestSuite) TestRefreshToken_TokenAlreadyRevoked() {
+	tokenString := "refresh-token"
+
+	claims := &token.UserClaims{
+		Payload: token.Payload{
+			UserID: suite.userID.String(),
+		},
+		TokenType: token.RefreshTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+	}
+
+	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+
+	suite.tokenManager.EXPECT().ValidateToken(tokenString).
+		Return(claims, nil).Once()
+
+	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+		Return(false, nil).Once()
+
+	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
+
+	suite.Error(err)
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrInvalidToken)
+	suite.ErrorContains(err, "userService.RefreshToken")
+}
+
+func (suite *UserServiceTestSuite) TestRefreshToken_UserNotFound() {
+	tokenString := "refresh-token"
+
+	claims := &token.UserClaims{
+		Payload: token.Payload{
+			UserID: suite.userID.String(),
+		},
+		TokenType: token.RefreshTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+	}
+
+	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+
+	suite.tokenManager.EXPECT().ValidateToken(tokenString).
+		Return(claims, nil).Once()
+
+	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+		Return(true, nil).Once()
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
+
+	suite.Error(err)
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrUserNotFound)
+	suite.ErrorContains(err, "userService.RefreshToken")
+}
+
+func (suite *UserServiceTestSuite) TestRefreshToken_UserProfileDeleted() {
+	tokenString := "refresh-token"
+
+	claims := &token.UserClaims{
+		Payload: token.Payload{
+			UserID: suite.userID.String(),
+		},
+		TokenType: token.RefreshTokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+	}
+
+	user := &models.User{
+		ID:        suite.userID,
+		DeletedAt: gorm.DeletedAt{Time: time.Now(), Valid: true},
+	}
+
+	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+
+	suite.tokenManager.EXPECT().ValidateToken(tokenString).
+		Return(claims, nil).Once()
+
+	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+		Return(true, nil).Once()
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
+
+	suite.Error(err)
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
+	suite.ErrorContains(err, "userService.RefreshToken")
 }

@@ -8,6 +8,316 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
+        "/auth/confirm-2fa": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Confirm and enable two-factor authentication with the provided code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Confirm 2FA",
+                "parameters": [
+                    {
+                        "description": "Request body with 2FA confirmation code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.Confirm2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "2FA successfully enabled",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/disable-2fa": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Disable two-factor authentication for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Disable 2FA",
+                "parameters": [
+                    {
+                        "description": "Request body with password confirmation",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.Disable2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "2FA successfully disabled",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Login",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Request body for login",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.UserLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Refresh Token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh Token",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Register",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register",
+                "parameters": [
+                    {
+                        "description": "Request body for registration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.UserRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "409": {
+                        "description": "The user already exists",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/setup-2fa": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Initialize two-factor authentication setup for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Setup 2FA",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/categories/": {
             "get": {
                 "description": "Get a paginated list of all categories or subcategories of a specific category. If ID is provided in the path, returns subcategories of that category. Otherwise returns all root categories.",
@@ -1254,58 +1564,6 @@
                 }
             }
         },
-        "/users/login": {
-            "post": {
-                "description": "Login",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Login",
-                "parameters": [
-                    {
-                        "description": "Request body for login",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.UserLoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    }
-                }
-            }
-        },
         "/users/me": {
             "get": {
                 "security": [
@@ -1415,63 +1673,6 @@
                 }
             }
         },
-        "/users/me/confirm-2fa": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Confirm and enable two-factor authentication with the provided code",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Confirm 2FA",
-                "parameters": [
-                    {
-                        "description": "Request body with 2FA confirmation code",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.Confirm2FARequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "2FA successfully enabled",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    }
-                }
-            }
-        },
         "/users/me/confirm-email": {
             "post": {
                 "security": [
@@ -1541,63 +1742,6 @@
                 }
             }
         },
-        "/users/me/disable-2fa": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Disable two-factor authentication for the authenticated user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Disable 2FA",
-                "parameters": [
-                    {
-                        "description": "Request body with password confirmation",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.Disable2FARequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "2FA successfully disabled",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    }
-                }
-            }
-        },
         "/users/me/send-email-confirmation": {
             "post": {
                 "security": [
@@ -1637,110 +1781,6 @@
                     },
                     "429": {
                         "description": "Too Many Requests",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/me/setup-2fa": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Initialize two-factor authentication setup for the authenticated user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Setup 2FA",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/register": {
-            "post": {
-                "description": "Register",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Register",
-                "parameters": [
-                    {
-                        "description": "Request body for registration",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.UserRegisterRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
-                        }
-                    },
-                    "409": {
-                        "description": "The user already exists",
                         "schema": {
                             "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
                         }

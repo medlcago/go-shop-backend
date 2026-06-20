@@ -17,6 +17,7 @@ var (
 	ErrInvalidSessionID   = New(http.StatusUnauthorized, "invalid or missing session id")
 	ErrNotFound           = New(http.StatusNotFound, "not found")
 	ErrForbidden          = New(http.StatusForbidden, "forbidden")
+	ErrInvalidToken       = New(http.StatusUnauthorized, "invalid token")
 	ErrInvalidTokenType   = New(http.StatusUnauthorized, "invalid token type")
 
 	ErrInvalidFileType     = New(http.StatusBadRequest, "invalid file type")

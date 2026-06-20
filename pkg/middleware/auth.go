@@ -1,11 +1,12 @@
 package middleware
 
 import (
+	"errors"
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/token"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/extractors"
 	"github.com/google/uuid"
 )
 
@@ -23,16 +24,10 @@ func IdentityUser(manager token.Manager) fiber.Handler {
 
 		ctx.Locals(CtxUserContext, userCtx)
 
-		authHeader := ctx.Get("Authorization")
-		if authHeader == "" {
+		tokenString, err := ExtractBearer(ctx)
+		if err != nil {
 			return ctx.Next()
 		}
-
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			return ctx.Next()
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 		claims, err := manager.ValidateToken(tokenString)
 		if err != nil {
@@ -46,6 +41,7 @@ func IdentityUser(manager token.Manager) fiber.Handler {
 
 		userCtx.UserID = &uid
 		userCtx.Role = claims.UserRole
+		userCtx.Token = tokenString
 		userCtx.TokenType = claims.TokenType
 
 		ctx.Locals(CtxUserContext, userCtx)
@@ -103,6 +99,7 @@ type UserContext struct {
 	UserID    *uuid.UUID
 	SessionID *uuid.UUID
 	Role      string
+	Token     string
 	TokenType string
 }
 
@@ -116,4 +113,18 @@ func GetUserContext(ctx fiber.Ctx) UserContext {
 	}
 
 	return userCtx
+}
+
+func ExtractBearer(ctx fiber.Ctx) (string, error) {
+	extractor := extractors.FromAuthHeader("Bearer")
+	tokenString, err := extractor.Extract(ctx)
+	if err != nil {
+		if errors.Is(err, extractors.ErrNotFound) {
+			return "", apperror.ErrInvalidToken
+		}
+
+		return "", err
+	}
+
+	return tokenString, nil
 }

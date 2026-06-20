@@ -255,12 +255,13 @@ func (u *userService) SendEmailConfirmationCode(ctx context.Context, userID uuid
 	const op = "userService.SendEmailConfirmationCode"
 
 	cacheKey := fmt.Sprintf("email_confirmation:%s", userID)
-	err := u.cache.Exists(ctx, cacheKey)
-	if err == nil {
-		return nil, apperror.Wrap(op, apperror.ErrEmailConfirmationCodeAlreadySent)
-	}
-	if !errors.Is(err, cache.ErrNotFound) {
+	exists, err := u.cache.Exists(ctx, cacheKey)
+	if err != nil {
 		return nil, apperror.Wrap(op, err)
+	}
+
+	if exists {
+		return nil, apperror.Wrap(op, apperror.ErrEmailConfirmationCodeAlreadySent)
 	}
 
 	user, err := u.getUserByID(ctx, userID)
@@ -347,6 +348,56 @@ func (u *userService) ChangePassword(ctx context.Context, userID uuid.UUID, req 
 	}
 
 	return nil
+}
+
+func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dto.UserTokenResponse, error) {
+	const op = "userService.RefreshToken"
+
+	claims, err := u.tokenManager.ValidateToken(tokenString)
+	if err != nil {
+		if token.IsErrTokenError(err) {
+			return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
+		}
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	if claims.TokenType != token.RefreshTokenType {
+		return nil, apperror.Wrap(op, apperror.ErrInvalidTokenType)
+	}
+
+	userID, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
+	}
+
+	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+	ttl := time.Until(claims.ExpiresAt.Time)
+
+	ok, err := u.cache.Cache(ctx, key, "1", ttl)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	if !ok {
+		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
+	}
+
+	user, err := u.getUserByID(ctx, userID)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	if user.DeletedAt.Valid {
+		return nil, apperror.Wrap(op, apperror.ErrUserProfileDeleted)
+	}
+
+	tokens, err := u.createTokens(user)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return buildUserTokenResponse(user, tokens), nil
 }
 
 func (u *userService) createTokens(user *models.User) (*dto.TokenResponse, error) {

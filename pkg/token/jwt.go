@@ -49,16 +49,22 @@ func (j JWT) ValidateToken(tokenString string) (*UserClaims, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, &ErrTokenError{
+			Err: err,
+		}
 	}
 
 	if !token.Valid {
-		return nil, jwt.ErrInvalidKey
+		return nil, &ErrTokenError{
+			Err: jwt.ErrInvalidKey,
+		}
 	}
 
 	claims, ok := token.Claims.(*UserClaims)
 	if !ok {
-		return nil, jwt.ErrTokenInvalidClaims
+		return nil, &ErrTokenError{
+			Err: jwt.ErrTokenInvalidClaims,
+		}
 	}
 
 	return claims, nil
@@ -77,7 +83,9 @@ func (j JWT) generateToken(payload Payload, tokenType string, exp time.Time) (st
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, err := jwtToken.SignedString([]byte(j.secretKey))
 	if err != nil {
-		return "", err
+		return "", &ErrTokenError{
+			Err: err,
+		}
 	}
 
 	return token, nil

@@ -24,7 +24,7 @@ func NewHandler(userService service.UserService) *Handler {
 //
 //	@Summary		Login
 //	@Description	Login
-//	@Tags			Users
+//	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.UserLoginRequest	true	"Request body for login"
@@ -32,7 +32,7 @@ func NewHandler(userService service.UserService) *Handler {
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		401		{object}	response.Response[any]
 //	@Failure		500		{object}	response.Response[any]
-//	@Router			/users/login [post]
+//	@Router			/auth/login [post]
 func (h *Handler) Login(ctx fiber.Ctx) error {
 	var req dto.UserLoginRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
@@ -51,7 +51,7 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 //
 //	@Summary		Register
 //	@Description	Register
-//	@Tags			Users
+//	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.UserRegisterRequest	true	"Request body for registration"
@@ -59,7 +59,7 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		409		{object}	response.Response[any]	"The user already exists"
 //	@Failure		500		{object}	response.Response[any]
-//	@Router			/users/register [post]
+//	@Router			/auth/register [post]
 func (h *Handler) Register(ctx fiber.Ctx) error {
 	var req dto.UserRegisterRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
@@ -78,7 +78,7 @@ func (h *Handler) Register(ctx fiber.Ctx) error {
 //
 //	@Summary		Setup 2FA
 //	@Description	Initialize two-factor authentication setup for the authenticated user
-//	@Tags			Users
+//	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
@@ -87,7 +87,7 @@ func (h *Handler) Register(ctx fiber.Ctx) error {
 //	@Failure		401	{object}	response.Response[any]
 //	@Failure		409	{object}	response.Response[any]
 //	@Failure		500	{object}	response.Response[any]
-//	@Router			/users/me/setup-2fa [post]
+//	@Router			/auth/setup-2fa [post]
 func (h *Handler) Setup2FA(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -106,7 +106,7 @@ func (h *Handler) Setup2FA(ctx fiber.Ctx) error {
 //
 //	@Summary		Confirm 2FA
 //	@Description	Confirm and enable two-factor authentication with the provided code
-//	@Tags			Users
+//	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
@@ -115,7 +115,7 @@ func (h *Handler) Setup2FA(ctx fiber.Ctx) error {
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		401		{object}	response.Response[any]
 //	@Failure		500		{object}	response.Response[any]
-//	@Router			/users/me/confirm-2fa [post]
+//	@Router			/auth/confirm-2fa [post]
 func (h *Handler) Confirm2FA(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -139,7 +139,7 @@ func (h *Handler) Confirm2FA(ctx fiber.Ctx) error {
 //
 //	@Summary		Disable 2FA
 //	@Description	Disable two-factor authentication for the authenticated user
-//	@Tags			Users
+//	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
@@ -148,7 +148,7 @@ func (h *Handler) Confirm2FA(ctx fiber.Ctx) error {
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		401		{object}	response.Response[any]
 //	@Failure		500		{object}	response.Response[any]
-//	@Router			/users/me/disable-2fa [post]
+//	@Router			/auth/disable-2fa [post]
 func (h *Handler) Disable2FA(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -166,6 +166,29 @@ func (h *Handler) Disable2FA(ctx fiber.Ctx) error {
 	}
 
 	return response.JSON(ctx, fiber.StatusOK, "OK")
+}
+
+// RefreshToken godoc
+//
+//	@Summary		Refresh Token
+//	@Description	Refresh Token
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.Response[dto.UserTokenResponse]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/auth/refresh [post]
+func (h *Handler) RefreshToken(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+
+	resp, err := h.userService.RefreshToken(ctx, userCtx.Token)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
 // GetMe godoc

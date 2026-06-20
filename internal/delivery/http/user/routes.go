@@ -8,22 +8,37 @@ import (
 )
 
 func RegisterRoutes(r fiber.Router, userHandler *Handler) {
-	userGroup := r.Group("/users")
+	// auth
+	authGroup := r.Group("/auth")
 	{
-		userGroup.Post("/login", userHandler.Login)
-		userGroup.Post("/register", userHandler.Register)
+		authGroup.Post("/login", userHandler.Login)
+		authGroup.Post("/register", userHandler.Register)
+		authGroup.Post(
+			"/refresh",
+			middleware.RequireTokenType(token.RefreshTokenType),
+			userHandler.RefreshToken,
+		)
 	}
 
-	protectedUserGroup := userGroup.Group(
+	protectedAuthGroup := authGroup.Group(
 		"/",
 		middleware.RequireAuth(),
 		middleware.RequireTokenType(token.AccessTokenType),
 	)
 	{
+		protectedAuthGroup.Post("/setup-2fa", userHandler.Setup2FA)
+		protectedAuthGroup.Post("/confirm-2fa", userHandler.Confirm2FA)
+		protectedAuthGroup.Post("/disable-2fa", userHandler.Disable2FA)
+	}
+
+	// users
+	protectedUserGroup := r.Group(
+		"/users",
+		middleware.RequireAuth(),
+		middleware.RequireTokenType(token.AccessTokenType),
+	)
+	{
 		protectedUserGroup.Get("/me", userHandler.GetMe)
-		protectedUserGroup.Post("/me/setup-2fa", userHandler.Setup2FA)
-		protectedUserGroup.Post("/me/confirm-2fa", userHandler.Confirm2FA)
-		protectedUserGroup.Post("/me/disable-2fa", userHandler.Disable2FA)
 		protectedUserGroup.Post("/me/send-email-confirmation", userHandler.SendEmailConfirmationCode)
 		protectedUserGroup.Post("/me/confirm-email", userHandler.ConfirmEmail)
 		protectedUserGroup.Post("/me/change-password", userHandler.ChangePassword)

@@ -19,6 +19,7 @@ type UserService interface {
 	SendEmailConfirmationCode(ctx context.Context, userID uuid.UUID) (*dto.SendEmailConfirmationResponse, error)
 	ConfirmEmail(ctx context.Context, userID uuid.UUID, req dto.ConfirmEmailRequest) (*dto.ConfirmEmailResponse, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error
+	RefreshToken(ctx context.Context, tokenString string) (*dto.UserTokenResponse, error)
 }
 
 type ProductService interface {

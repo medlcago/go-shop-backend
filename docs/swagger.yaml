@@ -652,6 +652,206 @@ info:
   title: Go Shop Backend API
   version: "1.0"
 paths:
+  /auth/confirm-2fa:
+    post:
+      consumes:
+      - application/json
+      description: Confirm and enable two-factor authentication with the provided
+        code
+      parameters:
+      - description: Request body with 2FA confirmation code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.Confirm2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 2FA successfully enabled
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Confirm 2FA
+      tags:
+      - Auth
+  /auth/disable-2fa:
+    post:
+      consumes:
+      - application/json
+      description: Disable two-factor authentication for the authenticated user
+      parameters:
+      - description: Request body with password confirmation
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.Disable2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 2FA successfully disabled
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Disable 2FA
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      parameters:
+      - description: Request body for login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Login
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh Token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Refresh Token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register
+      parameters:
+      - description: Request body for registration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UserRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: The user already exists
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Register
+      tags:
+      - Auth
+  /auth/setup-2fa:
+    post:
+      consumes:
+      - application/json
+      description: Initialize two-factor authentication setup for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Setup 2FA
+      tags:
+      - Auth
   /categories/:
     get:
       consumes:
@@ -1504,40 +1704,6 @@ paths:
       summary: Search products
       tags:
       - Products
-  /users/login:
-    post:
-      consumes:
-      - application/json
-      description: Login
-      parameters:
-      - description: Request body for login
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.UserLoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Login
-      tags:
-      - Users
   /users/me:
     get:
       consumes:
@@ -1607,43 +1773,6 @@ paths:
       summary: Change password
       tags:
       - Users
-  /users/me/confirm-2fa:
-    post:
-      consumes:
-      - application/json
-      description: Confirm and enable two-factor authentication with the provided
-        code
-      parameters:
-      - description: Request body with 2FA confirmation code
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.Confirm2FARequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 2FA successfully enabled
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Confirm 2FA
-      tags:
-      - Users
   /users/me/confirm-email:
     post:
       consumes:
@@ -1689,42 +1818,6 @@ paths:
       summary: Confirm email address
       tags:
       - Users
-  /users/me/disable-2fa:
-    post:
-      consumes:
-      - application/json
-      description: Disable two-factor authentication for the authenticated user
-      parameters:
-      - description: Request body with password confirmation
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.Disable2FARequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 2FA successfully disabled
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Disable 2FA
-      tags:
-      - Users
   /users/me/send-email-confirmation:
     post:
       consumes:
@@ -1756,74 +1849,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Send email confirmation code
-      tags:
-      - Users
-  /users/me/setup-2fa:
-    post:
-      consumes:
-      - application/json
-      description: Initialize two-factor authentication setup for the authenticated
-        user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Setup 2FA
-      tags:
-      - Users
-  /users/register:
-    post:
-      consumes:
-      - application/json
-      description: Register
-      parameters:
-      - description: Request body for registration
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.UserRegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "409":
-          description: The user already exists
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      summary: Register
       tags:
       - Users
   /wishlists:
