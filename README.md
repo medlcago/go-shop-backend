@@ -2,16 +2,22 @@
 
 ## API Reference
 
+### Auth
+
+| Method | Endpoint                   | Description        |
+|--------|----------------------------|--------------------|
+| POST   | `/api/v1/auth/register`    | Register           |
+| POST   | `/api/v1/auth/login`       | Login              |
+| POST   | `/api/v1/auth/refresh`     | Refresh token      |
+| POST   | `/api/v1/auth/setup-2fa`   | Setup 2FA (auth)   |
+| POST   | `/api/v1/auth/confirm-2fa` | Confirm 2FA (auth) |
+| POST   | `/api/v1/auth/disable-2fa` | Disable 2FA (auth) |
+
 ### Users
 
 | Method | Endpoint                                   | Description                         |
 |--------|--------------------------------------------|-------------------------------------|
-| POST   | `/api/v1/users/register`                   | Register                            |
-| POST   | `/api/v1/users/login`                      | Login                               |
 | GET    | `/api/v1/users/me`                         | Get current user (auth)             |
-| POST   | `/api/v1/users/me/setup-2fa`               | Setup 2FA (auth)                    |
-| POST   | `/api/v1/users/me/confirm-2fa`             | Confirm 2FA (auth)                  |
-| POST   | `/api/v1/users/me/disable-2fa`             | Disable 2FA (auth)                  |
 | POST   | `/api/v1/users/me/send-email-confirmation` | Send email confirmation code (auth) |
 | POST   | `/api/v1/users/me/confirm-email`           | Confirm email address (auth)        |
 | POST   | `/api/v1/users/me/change-password`         | Change password (auth)              |
