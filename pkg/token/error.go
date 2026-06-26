@@ -2,11 +2,11 @@ package token
 
 import "errors"
 
-type ErrTokenError struct {
+type ErrInvalidToken struct {
 	Err error `json:"error"`
 }
 
-func (e ErrTokenError) Error() string {
+func (e ErrInvalidToken) Error() string {
 	if e.Err != nil {
 		return e.Err.Error()
 	}
@@ -14,7 +14,7 @@ func (e ErrTokenError) Error() string {
 	return "invalid token"
 }
 
-func IsErrTokenError(err error) bool {
-	_, ok := errors.AsType[*ErrTokenError](err)
+func IsErrInvalidToken(err error) bool {
+	_, ok := errors.AsType[*ErrInvalidToken](err)
 	return ok
 }

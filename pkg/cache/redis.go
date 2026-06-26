@@ -27,7 +27,7 @@ func (c *redisCache) Set(ctx context.Context, key string, value string, ttl time
 	return HandleError(c.rdb.Set(ctx, key, value, ttl).Err())
 }
 
-func (c *redisCache) Cache(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
+func (c *redisCache) SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
 	key = c.keyFunc(key)
 	ok, err := c.rdb.SetNX(ctx, key, value, ttl).Result()
 	if err != nil {

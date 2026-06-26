@@ -37,7 +37,7 @@ type Container struct {
 	tokenManager         token.Manager
 	totpManager          totp.Manager
 	encryptionManager    crypto.EncryptionManager
-	taskFactory          tasks.Factory
+	taskFactory          *tasks.Factory
 	paymentProvider      paymentprovider.Provider
 	db                   database.DB
 	txManager            database.TxManager
@@ -184,6 +184,7 @@ func (c *Container) TokenManager() token.Manager {
 	if c.tokenManager == nil {
 		c.tokenManager = token.NewJWT(
 			c.Config().AuthSecret,
+			c.Config().AppName,
 			c.Config().AccessTokenExpiredTime,
 			c.Config().RefreshTokenExpiredTime,
 			c.Config().PartialTokenExpiredTime,
@@ -239,7 +240,7 @@ func (c *Container) EncryptionManager() crypto.EncryptionManager {
 	return c.encryptionManager
 }
 
-func (c *Container) TaskFactory() tasks.Factory {
+func (c *Container) TaskFactory() *tasks.Factory {
 	if c.taskFactory == nil {
 		c.taskFactory = tasks.NewFactory(c.RedisClient().RDB())
 	}

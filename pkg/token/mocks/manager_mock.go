@@ -38,7 +38,7 @@ func (_m *MockManager) EXPECT() *MockManager_Expecter {
 }
 
 // GenerateAccessToken provides a mock function for the type MockManager
-func (_mock *MockManager) GenerateAccessToken(payload token.Payload) (string, error) {
+func (_mock *MockManager) GenerateAccessToken(payload token.Payload) (string, *token.UserClaims, error) {
 	ret := _mock.Called(payload)
 
 	if len(ret) == 0 {
@@ -46,8 +46,9 @@ func (_mock *MockManager) GenerateAccessToken(payload token.Payload) (string, er
 	}
 
 	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(token.Payload) (string, error)); ok {
+	var r1 *token.UserClaims
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(token.Payload) (string, *token.UserClaims, error)); ok {
 		return returnFunc(payload)
 	}
 	if returnFunc, ok := ret.Get(0).(func(token.Payload) string); ok {
@@ -55,12 +56,19 @@ func (_mock *MockManager) GenerateAccessToken(payload token.Payload) (string, er
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(token.Payload) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(token.Payload) *token.UserClaims); ok {
 		r1 = returnFunc(payload)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*token.UserClaims)
+		}
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(token.Payload) error); ok {
+		r2 = returnFunc(payload)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // MockManager_GenerateAccessToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateAccessToken'
@@ -87,18 +95,18 @@ func (_c *MockManager_GenerateAccessToken_Call) Run(run func(payload token.Paylo
 	return _c
 }
 
-func (_c *MockManager_GenerateAccessToken_Call) Return(s string, err error) *MockManager_GenerateAccessToken_Call {
-	_c.Call.Return(s, err)
+func (_c *MockManager_GenerateAccessToken_Call) Return(s string, userClaims *token.UserClaims, err error) *MockManager_GenerateAccessToken_Call {
+	_c.Call.Return(s, userClaims, err)
 	return _c
 }
 
-func (_c *MockManager_GenerateAccessToken_Call) RunAndReturn(run func(payload token.Payload) (string, error)) *MockManager_GenerateAccessToken_Call {
+func (_c *MockManager_GenerateAccessToken_Call) RunAndReturn(run func(payload token.Payload) (string, *token.UserClaims, error)) *MockManager_GenerateAccessToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GeneratePartialToken provides a mock function for the type MockManager
-func (_mock *MockManager) GeneratePartialToken(payload token.Payload) (string, error) {
+func (_mock *MockManager) GeneratePartialToken(payload token.Payload) (string, *token.UserClaims, error) {
 	ret := _mock.Called(payload)
 
 	if len(ret) == 0 {
@@ -106,8 +114,9 @@ func (_mock *MockManager) GeneratePartialToken(payload token.Payload) (string, e
 	}
 
 	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(token.Payload) (string, error)); ok {
+	var r1 *token.UserClaims
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(token.Payload) (string, *token.UserClaims, error)); ok {
 		return returnFunc(payload)
 	}
 	if returnFunc, ok := ret.Get(0).(func(token.Payload) string); ok {
@@ -115,12 +124,19 @@ func (_mock *MockManager) GeneratePartialToken(payload token.Payload) (string, e
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(token.Payload) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(token.Payload) *token.UserClaims); ok {
 		r1 = returnFunc(payload)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*token.UserClaims)
+		}
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(token.Payload) error); ok {
+		r2 = returnFunc(payload)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // MockManager_GeneratePartialToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GeneratePartialToken'
@@ -147,18 +163,18 @@ func (_c *MockManager_GeneratePartialToken_Call) Run(run func(payload token.Payl
 	return _c
 }
 
-func (_c *MockManager_GeneratePartialToken_Call) Return(s string, err error) *MockManager_GeneratePartialToken_Call {
-	_c.Call.Return(s, err)
+func (_c *MockManager_GeneratePartialToken_Call) Return(s string, userClaims *token.UserClaims, err error) *MockManager_GeneratePartialToken_Call {
+	_c.Call.Return(s, userClaims, err)
 	return _c
 }
 
-func (_c *MockManager_GeneratePartialToken_Call) RunAndReturn(run func(payload token.Payload) (string, error)) *MockManager_GeneratePartialToken_Call {
+func (_c *MockManager_GeneratePartialToken_Call) RunAndReturn(run func(payload token.Payload) (string, *token.UserClaims, error)) *MockManager_GeneratePartialToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GenerateRefreshToken provides a mock function for the type MockManager
-func (_mock *MockManager) GenerateRefreshToken(payload token.Payload) (string, error) {
+func (_mock *MockManager) GenerateRefreshToken(payload token.Payload) (string, *token.UserClaims, error) {
 	ret := _mock.Called(payload)
 
 	if len(ret) == 0 {
@@ -166,8 +182,9 @@ func (_mock *MockManager) GenerateRefreshToken(payload token.Payload) (string, e
 	}
 
 	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(token.Payload) (string, error)); ok {
+	var r1 *token.UserClaims
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(token.Payload) (string, *token.UserClaims, error)); ok {
 		return returnFunc(payload)
 	}
 	if returnFunc, ok := ret.Get(0).(func(token.Payload) string); ok {
@@ -175,12 +192,19 @@ func (_mock *MockManager) GenerateRefreshToken(payload token.Payload) (string, e
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(token.Payload) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(token.Payload) *token.UserClaims); ok {
 		r1 = returnFunc(payload)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*token.UserClaims)
+		}
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(token.Payload) error); ok {
+		r2 = returnFunc(payload)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // MockManager_GenerateRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateRefreshToken'
@@ -207,12 +231,12 @@ func (_c *MockManager_GenerateRefreshToken_Call) Run(run func(payload token.Payl
 	return _c
 }
 
-func (_c *MockManager_GenerateRefreshToken_Call) Return(s string, err error) *MockManager_GenerateRefreshToken_Call {
-	_c.Call.Return(s, err)
+func (_c *MockManager_GenerateRefreshToken_Call) Return(s string, userClaims *token.UserClaims, err error) *MockManager_GenerateRefreshToken_Call {
+	_c.Call.Return(s, userClaims, err)
 	return _c
 }
 
-func (_c *MockManager_GenerateRefreshToken_Call) RunAndReturn(run func(payload token.Payload) (string, error)) *MockManager_GenerateRefreshToken_Call {
+func (_c *MockManager_GenerateRefreshToken_Call) RunAndReturn(run func(payload token.Payload) (string, *token.UserClaims, error)) *MockManager_GenerateRefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

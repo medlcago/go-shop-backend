@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("not found")
+	ErrCacheMiss = errors.New("cache: key not found")
 )
 
 type Cache interface {
 	Set(ctx context.Context, key string, value string, ttl time.Duration) error
-	Cache(ctx context.Context, key string, value string, ttl time.Duration) (bool, error)
+	SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error)
 	Get(ctx context.Context, key string) (string, error)
 	Exists(ctx context.Context, key string) (bool, error)
 	Delete(ctx context.Context, key string) error
@@ -26,7 +26,7 @@ func HandleError(err error) error {
 	}
 
 	if errors.Is(err, redis.Nil) {
-		return ErrNotFound
+		return ErrCacheMiss
 	}
 
 	return err

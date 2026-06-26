@@ -355,7 +355,7 @@ func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dt
 
 	claims, err := u.tokenManager.ValidateToken(tokenString)
 	if err != nil {
-		if token.IsErrTokenError(err) {
+		if token.IsErrInvalidToken(err) {
 			return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
 		}
 
@@ -371,16 +371,8 @@ func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dt
 		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
 	}
 
-	key := fmt.Sprintf("refresh_token:%s", claims.ID)
-	ttl := time.Until(claims.ExpiresAt.Time)
-
-	ok, err := u.cache.Cache(ctx, key, "1", ttl)
-	if err != nil {
+	if err := u.revokeToken(ctx, claims.ID, claims.TokenType, claims.ExpiresAt.Time); err != nil {
 		return nil, apperror.Wrap(op, err)
-	}
-
-	if !ok {
-		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
 	}
 
 	user, err := u.getUserByID(ctx, userID)
@@ -413,21 +405,45 @@ func (u *userService) createTokens(user *models.User) (*dto.TokenResponse, error
 		EmailConfirmed: user.EmailConfirmed(),
 	}
 
-	accessToken, err := u.tokenManager.GenerateAccessToken(payload)
+	accessToken, accessClaims, err := u.tokenManager.GenerateAccessToken(payload)
 	if err != nil {
 		return nil, apperror.Wrap(op, fmt.Errorf("failed to generate access token: %w", err))
 	}
 
-	refreshToken, err := u.tokenManager.GenerateRefreshToken(payload)
+	refreshToken, refreshClaims, err := u.tokenManager.GenerateRefreshToken(payload)
 	if err != nil {
 		return nil, apperror.Wrap(op, fmt.Errorf("failed to generate refresh token: %w", err))
 	}
 
 	return &dto.TokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		TokenType:    tokenType,
+		AccessToken:           accessToken,
+		RefreshToken:          refreshToken,
+		AccessTokenExpiresAt:  accessClaims.ExpiresAt.Time.Unix(),
+		RefreshTokenExpiresAt: refreshClaims.ExpiresAt.Time.Unix(),
+		TokenType:             tokenType,
 	}, nil
+}
+
+func (u *userService) revokeToken(ctx context.Context, tokenID string, tokenType string, expiresAt time.Time) error {
+	const op = "userService.revokeToken"
+
+	ttl := time.Until(expiresAt)
+	if ttl <= 0 {
+		return nil
+	}
+
+	key := fmt.Sprintf("blacklist:%s:%s", tokenType, tokenID)
+
+	ok, err := u.cache.SetNX(ctx, key, "1", ttl)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if !ok {
+		return apperror.Wrap(op, apperror.ErrInvalidToken)
+	}
+
+	return nil
 }
 
 func (u *userService) verifyPassword(password, passwordHash string) error {
@@ -451,7 +467,7 @@ func (u *userService) verifyEmailCode(ctx context.Context, userID uuid.UUID, inp
 	cacheKey := fmt.Sprintf("email_confirmation:%s", userID)
 	code, err := u.cache.Get(ctx, cacheKey)
 	if err != nil {
-		if errors.Is(err, cache.ErrNotFound) {
+		if errors.Is(err, cache.ErrCacheMiss) {
 			return apperror.Wrap(op, apperror.ErrInvalidCode)
 		}
 

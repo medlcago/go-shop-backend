@@ -38,84 +38,6 @@ func (_m *MockCache) EXPECT() *MockCache_Expecter {
 	return &MockCache_Expecter{mock: &_m.Mock}
 }
 
-// Cache provides a mock function for the type MockCache
-func (_mock *MockCache) Cache(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
-	ret := _mock.Called(ctx, key, value, ttl)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Cache")
-	}
-
-	var r0 bool
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Duration) (bool, error)); ok {
-		return returnFunc(ctx, key, value, ttl)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Duration) bool); ok {
-		r0 = returnFunc(ctx, key, value, ttl)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, time.Duration) error); ok {
-		r1 = returnFunc(ctx, key, value, ttl)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockCache_Cache_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Cache'
-type MockCache_Cache_Call struct {
-	*mock.Call
-}
-
-// Cache is a helper method to define mock.On call
-//   - ctx context.Context
-//   - key string
-//   - value string
-//   - ttl time.Duration
-func (_e *MockCache_Expecter) Cache(ctx interface{}, key interface{}, value interface{}, ttl interface{}) *MockCache_Cache_Call {
-	return &MockCache_Cache_Call{Call: _e.mock.On("Cache", ctx, key, value, ttl)}
-}
-
-func (_c *MockCache_Cache_Call) Run(run func(ctx context.Context, key string, value string, ttl time.Duration)) *MockCache_Cache_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 time.Duration
-		if args[3] != nil {
-			arg3 = args[3].(time.Duration)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *MockCache_Cache_Call) Return(b bool, err error) *MockCache_Cache_Call {
-	_c.Call.Return(b, err)
-	return _c
-}
-
-func (_c *MockCache_Cache_Call) RunAndReturn(run func(ctx context.Context, key string, value string, ttl time.Duration) (bool, error)) *MockCache_Cache_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Delete provides a mock function for the type MockCache
 func (_mock *MockCache) Delete(ctx context.Context, key string) error {
 	ret := _mock.Called(ctx, key)
@@ -370,6 +292,84 @@ func (_c *MockCache_Set_Call) Return(err error) *MockCache_Set_Call {
 }
 
 func (_c *MockCache_Set_Call) RunAndReturn(run func(ctx context.Context, key string, value string, ttl time.Duration) error) *MockCache_Set_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetNX provides a mock function for the type MockCache
+func (_mock *MockCache) SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
+	ret := _mock.Called(ctx, key, value, ttl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetNX")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Duration) (bool, error)); ok {
+		return returnFunc(ctx, key, value, ttl)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Duration) bool); ok {
+		r0 = returnFunc(ctx, key, value, ttl)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, time.Duration) error); ok {
+		r1 = returnFunc(ctx, key, value, ttl)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCache_SetNX_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetNX'
+type MockCache_SetNX_Call struct {
+	*mock.Call
+}
+
+// SetNX is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - value string
+//   - ttl time.Duration
+func (_e *MockCache_Expecter) SetNX(ctx interface{}, key interface{}, value interface{}, ttl interface{}) *MockCache_SetNX_Call {
+	return &MockCache_SetNX_Call{Call: _e.mock.On("SetNX", ctx, key, value, ttl)}
+}
+
+func (_c *MockCache_SetNX_Call) Run(run func(ctx context.Context, key string, value string, ttl time.Duration)) *MockCache_SetNX_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 time.Duration
+		if args[3] != nil {
+			arg3 = args[3].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_SetNX_Call) Return(b bool, err error) *MockCache_SetNX_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockCache_SetNX_Call) RunAndReturn(run func(ctx context.Context, key string, value string, ttl time.Duration) (bool, error)) *MockCache_SetNX_Call {
 	_c.Call.Return(run)
 	return _c
 }

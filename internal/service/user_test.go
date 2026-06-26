@@ -105,11 +105,13 @@ func (suite *UserServiceTestSuite) TestLogin_Success() {
 		EmailConfirmed: user.EmailConfirmed(),
 	}
 
+	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
-		Return("test_access_token", nil).Once()
+		Return("test_access_token", claims, nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
-		Return("test_refresh_token", nil).Once()
+		Return("test_refresh_token", claims, nil).Once()
 
 	response, err := suite.userService.Login(suite.ctx, req)
 
@@ -123,6 +125,8 @@ func (suite *UserServiceTestSuite) TestLogin_Success() {
 	suite.Equal(response.AccessToken, "test_access_token")
 	suite.Equal(response.RefreshToken, "test_refresh_token")
 	suite.Equal("Bearer", response.TokenResponse.TokenType)
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.AccessTokenExpiresAt)
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.RefreshTokenExpiresAt)
 }
 
 func (suite *UserServiceTestSuite) TestLogin_UserNotFound() {
@@ -273,11 +277,13 @@ func (suite *UserServiceTestSuite) TestLogin_2FAEnabled_Success() {
 		TwoFAEnabled: user.TwoFAEnabled,
 	}
 
+	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
-		Return("test_access_token", nil).Once()
+		Return("test_access_token", claims, nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
-		Return("test_refresh_token", nil).Once()
+		Return("test_refresh_token", claims, nil).Once()
 
 	response, err := suite.userService.Login(suite.ctx, req)
 
@@ -290,6 +296,8 @@ func (suite *UserServiceTestSuite) TestLogin_2FAEnabled_Success() {
 	suite.Equal(response.AccessToken, "test_access_token")
 	suite.Equal(response.RefreshToken, "test_refresh_token")
 	suite.Equal("Bearer", response.TokenResponse.TokenType)
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.AccessTokenExpiresAt)
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.RefreshTokenExpiresAt)
 }
 
 func (suite *UserServiceTestSuite) TestLogin_2FAEnabled_Invalid2FACode() {
@@ -376,11 +384,13 @@ func (suite *UserServiceTestSuite) TestRegister_Success() {
 		UserRole: string(models.UserRoleCustomer),
 	}
 
+	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
-		Return("test_access_token", nil).Once()
+		Return("test_access_token", claims, nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
-		Return("test_refresh_token", nil).Once()
+		Return("test_refresh_token", claims, nil).Once()
 
 	response, err := suite.userService.Register(suite.ctx, req)
 
@@ -393,6 +403,8 @@ func (suite *UserServiceTestSuite) TestRegister_Success() {
 	suite.Equal(response.AccessToken, "test_access_token")
 	suite.Equal(response.RefreshToken, "test_refresh_token")
 	suite.Equal("Bearer", response.TokenResponse.TokenType)
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.AccessTokenExpiresAt)
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.RefreshTokenExpiresAt)
 }
 
 func (suite *UserServiceTestSuite) TestRegister_EmailAlreadyExists() {
@@ -1034,7 +1046,7 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_InvalidCode_NotFoundInCache(
 		Return(user, nil).Once()
 
 	suite.cache.EXPECT().Get(suite.ctx, mock.AnythingOfType("string")).
-		Return("", cache.ErrNotFound).Once()
+		Return("", cache.ErrCacheMiss).Once()
 
 	response, err := suite.userService.ConfirmEmail(suite.ctx, suite.userID, req)
 
@@ -1237,7 +1249,7 @@ func (suite *UserServiceTestSuite) TestRefreshToken_Success() {
 		EmailConfirmed: user.EmailConfirmed(),
 	}
 
-	claims := &token.UserClaims{
+	userClaims := &token.UserClaims{
 		Payload:   payload,
 		TokenType: token.RefreshTokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -1246,22 +1258,24 @@ func (suite *UserServiceTestSuite) TestRefreshToken_Success() {
 		},
 	}
 
-	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+
+	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, userClaims.ID)
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
-		Return(claims, nil).Once()
+		Return(userClaims, nil).Once()
 
-	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
 		Return(true, nil).Once()
 
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
 		Return(user, nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
-		Return("access-token", nil).Once()
+		Return("access-token", claims, nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
-		Return("refresh-token", nil).Once()
+		Return("refresh-token", claims, nil).Once()
 
 	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
 
@@ -1271,6 +1285,8 @@ func (suite *UserServiceTestSuite) TestRefreshToken_Success() {
 	suite.Equal(response.TokenResponse.AccessToken, "access-token")
 	suite.Equal(response.TokenResponse.RefreshToken, "refresh-token")
 	suite.Equal(response.TokenResponse.TokenType, "Bearer")
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.AccessTokenExpiresAt)
+	suite.Equal(claims.ExpiresAt.Unix(), response.TokenResponse.RefreshTokenExpiresAt)
 	suite.NotNil(response.User)
 	suite.Equal(response.User.ID, user.ID)
 }
@@ -1279,7 +1295,7 @@ func (suite *UserServiceTestSuite) TestRefreshToken_InvalidToken() {
 	tokenString := "invalid-token"
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
-		Return(nil, &token.ErrTokenError{}).Once()
+		Return(nil, &token.ErrInvalidToken{}).Once()
 
 	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
 
@@ -1348,12 +1364,12 @@ func (suite *UserServiceTestSuite) TestRefreshToken_TokenAlreadyRevoked() {
 		},
 	}
 
-	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, claims.ID)
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
 		Return(false, nil).Once()
 
 	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
@@ -1378,12 +1394,12 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserNotFound() {
 		},
 	}
 
-	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, claims.ID)
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
 		Return(true, nil).Once()
 
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
@@ -1416,12 +1432,12 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserProfileDeleted() {
 		DeletedAt: gorm.DeletedAt{Time: time.Now(), Valid: true},
 	}
 
-	key := fmt.Sprintf("refresh_token:%s", claims.ID)
+	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, claims.ID)
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.cache.EXPECT().Cache(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
+	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
 		Return(true, nil).Once()
 
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).

@@ -24,8 +24,8 @@ type UserClaims struct {
 }
 
 type Manager interface {
-	GenerateAccessToken(payload Payload) (string, error)
-	GenerateRefreshToken(payload Payload) (string, error)
-	GeneratePartialToken(payload Payload) (string, error)
+	GenerateAccessToken(payload Payload) (string, *UserClaims, error)
+	GenerateRefreshToken(payload Payload) (string, *UserClaims, error)
+	GeneratePartialToken(payload Payload) (string, *UserClaims, error)
 	ValidateToken(tokenString string) (*UserClaims, error)
 }
