@@ -4,6 +4,7 @@ import "github.com/google/uuid"
 
 type CreatePaymentRequest struct {
 	OrderID uuid.UUID `json:"order_id" validate:"required"`
+	Type    string    `json:"type" validate:"required,oneof=redirect embedded"`
 }
 
 type PaymentResponse struct {

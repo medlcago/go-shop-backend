@@ -61,6 +61,7 @@ func TestPaymentServiceTestSuite(t *testing.T) {
 func (suite *PaymentServiceTestSuite) TestCreatePayment_Success() {
 	req := dto.CreatePaymentRequest{
 		OrderID: suite.orderID,
+		Type:    "redirect",
 	}
 
 	order := &models.Order{
@@ -85,6 +86,8 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_Success() {
 			UserID:  suite.userID,
 			OrderID: order.ID,
 		},
+		Type:    paymentprovider.PaymentType(req.Type),
+		Capture: true,
 	}).Return(payment, nil).Once()
 
 	suite.provider.EXPECT().GetName().
@@ -103,11 +106,13 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_Success() {
 	suite.NotNil(order.ProviderName)
 	suite.Equal(suite.providerName, *order.ProviderName)
 	suite.Equal(payment.ConfirmationURL, response.ConfirmationURL)
+	suite.Equal(payment.ConfirmationToken, response.ConfirmationToken)
 }
 
 func (suite *PaymentServiceTestSuite) TestCreatePayment_OrderNotFound() {
 	req := dto.CreatePaymentRequest{
 		OrderID: suite.orderID,
+		Type:    "redirect",
 	}
 
 	suite.orderQuery.EXPECT().GetByID(suite.ctx, req.OrderID, false).
@@ -123,6 +128,7 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_OrderNotFound() {
 func (suite *PaymentServiceTestSuite) TestCreatePayment_Forbidden() {
 	req := dto.CreatePaymentRequest{
 		OrderID: suite.orderID,
+		Type:    "redirect",
 	}
 
 	order := &models.Order{
@@ -171,6 +177,7 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_InvalidOrderStatus() {
 		suite.Run(tt.name, func() {
 			req := dto.CreatePaymentRequest{
 				OrderID: suite.orderID,
+				Type:    "redirect",
 			}
 
 			order := &models.Order{
@@ -195,6 +202,7 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_InvalidOrderStatus() {
 func (suite *PaymentServiceTestSuite) TestCreatePayment_OrderExpired() {
 	req := dto.CreatePaymentRequest{
 		OrderID: suite.orderID,
+		Type:    "redirect",
 	}
 
 	order := &models.Order{
@@ -217,6 +225,7 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_OrderExpired() {
 func (suite *PaymentServiceTestSuite) TestCreatePayment_PaymentAlreadyCreated() {
 	req := dto.CreatePaymentRequest{
 		OrderID: suite.orderID,
+		Type:    "redirect",
 	}
 
 	order := &models.Order{

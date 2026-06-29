@@ -79,6 +79,8 @@ func (p *paymentService) CreatePayment(ctx context.Context, userID uuid.UUID, re
 			UserID:  userID,
 			OrderID: req.OrderID,
 		},
+		Type:    paymentprovider.PaymentType(req.Type),
+		Capture: true,
 	})
 
 	if err != nil {
@@ -91,7 +93,8 @@ func (p *paymentService) CreatePayment(ctx context.Context, userID uuid.UUID, re
 	}
 
 	return &dto.PaymentResponse{
-		ConfirmationURL: payment.ConfirmationURL,
+		ConfirmationURL:   payment.ConfirmationURL,
+		ConfirmationToken: payment.ConfirmationToken,
 	}, nil
 }
 
