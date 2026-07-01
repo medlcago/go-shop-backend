@@ -70,3 +70,12 @@ type WishlistItemRepository interface {
 	RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (bool, error)
 	ProductExistsInWishlist(ctx context.Context, wishlistID uuid.UUID, productID uuid.UUID) (bool, error)
 }
+
+type AddressRepository interface {
+	Create(ctx context.Context, address *models.Address) error
+	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)
+	ListByUser(ctx context.Context, userID uuid.UUID) ([]*models.Address, error)
+	Update(ctx context.Context, address *models.Address) error
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+}

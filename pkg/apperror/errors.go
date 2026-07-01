@@ -56,6 +56,8 @@ var (
 	ErrEmailConfirmationCodeAlreadySent = New(http.StatusTooManyRequests, "email confirmation code already sent, please wait before requesting a new one")
 	ErrInvalidCode                      = New(http.StatusBadRequest, "invalid code")
 	ErrEmailAlreadyConfirmed            = New(http.StatusConflict, "email already confirmed")
+
+	ErrAddressNotFound = New(http.StatusNotFound, "address not found")
 )
 
 type AppError struct {

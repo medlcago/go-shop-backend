@@ -43,7 +43,7 @@ type OrderService interface {
 	AddItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, req dto.AddOrderItemRequest) (*dto.OrderResponse, error)
 	RemoveItem(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, itemID uuid.UUID) (*dto.OrderResponse, error)
 	Clear(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)
-	Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID) (*dto.OrderResponse, error)
+	Checkout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID, orderID uuid.UUID, req dto.OrderCheckoutRequest) (*dto.OrderResponse, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status models.OrderStatus) error
 	CancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) error
 }
@@ -75,4 +75,13 @@ type InventoryService interface {
 type PaymentService interface {
 	CreatePayment(ctx context.Context, userID uuid.UUID, req dto.CreatePaymentRequest) (*dto.PaymentResponse, error)
 	HandleWebhook(ctx context.Context, body []byte) error
+}
+
+type AddressService interface {
+	CreateAddress(ctx context.Context, userID uuid.UUID, req dto.CreateAddressRequest) (*dto.AddressResponse, error)
+	ListAddresses(ctx context.Context, userID uuid.UUID) ([]*dto.AddressResponse, error)
+	GetAddress(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.AddressResponse, error)
+	UpdateAddress(ctx context.Context, id uuid.UUID, userID uuid.UUID, req dto.UpdateAddressRequest) (*dto.AddressResponse, error)
+	DeleteAddress(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }

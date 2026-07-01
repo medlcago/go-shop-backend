@@ -29,3 +29,7 @@ func MapList[S any, D any](src []S) ([]D, error) {
 
 	return dest, nil
 }
+
+func Copy(dest, src any, ignoreEmpty bool) error {
+	return copier.CopyWithOption(dest, src, copier.Option{IgnoreEmpty: ignoreEmpty})
+}

@@ -30,6 +30,8 @@ type User struct {
 	TwoFAEnabled     bool       `gorm:"default:false;not null"`
 	TwoFASecret      *string    `gorm:"varchar(255)"`
 	TwoFAConfirmedAt *time.Time `gorm:"type:timestamptz"`
+
+	Addresses []Address `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 func (u *User) EmailConfirmed() bool {

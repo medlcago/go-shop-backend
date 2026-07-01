@@ -72,6 +72,7 @@ type Order struct {
 	ExpiresAt    *time.Time `gorm:"type:timestamptz;index:idx_orders_status_expires_at"`
 	PaidAt       *time.Time `gorm:"type:timestamptz"`
 	CanceledAt   *time.Time `gorm:"type:timestamptz"`
+	Address      *Address   `gorm:"serializer:json"`
 
 	CreatedAt   time.Time  `gorm:"type:timestamptz;default:now();not null"`
 	UpdatedAt   time.Time  `gorm:"type:timestamptz;default:now();not null"`

@@ -21,6 +21,7 @@ type orderService struct {
 	orderRepo        repository.OrderRepository
 	orderItemRepo    repository.OrderItemRepository
 	productRepo      repository.ProductRepository
+	addressRepo      repository.AddressRepository
 	orderTask        tasks.OrderTask
 	txManager        database.TxManager
 	orderCancelDelay time.Duration
@@ -32,6 +33,7 @@ func NewOrderService(
 	orderRepo repository.OrderRepository,
 	orderItemRepo repository.OrderItemRepository,
 	productRepo repository.ProductRepository,
+	addressRepo repository.AddressRepository,
 	orderTask tasks.OrderTask,
 	txManager database.TxManager,
 	orderCancelDelay time.Duration,
@@ -42,6 +44,7 @@ func NewOrderService(
 		orderRepo:        orderRepo,
 		orderItemRepo:    orderItemRepo,
 		productRepo:      productRepo,
+		addressRepo:      addressRepo,
 		orderTask:        orderTask,
 		txManager:        txManager,
 		orderCancelDelay: orderCancelDelay,
@@ -257,10 +260,20 @@ func (o *orderService) Checkout(
 	userID uuid.UUID,
 	sessionID uuid.UUID,
 	orderID uuid.UUID,
+	req dto.OrderCheckoutRequest,
 ) (*dto.OrderResponse, error) {
 	const op = "orderService.Checkout"
 
 	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
+		address, err := o.addressRepo.GetByID(ctx, req.AddressID, userID)
+		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				return nil, apperror.ErrAddressNotFound
+			}
+
+			return nil, err
+		}
+
 		order, err := o.getOrderByOwner(ctx, orderID, &userID, sessionID, true)
 		if err != nil {
 			return nil, err
@@ -284,6 +297,8 @@ func (o *orderService) Checkout(
 		}
 
 		order.ExpiresAt = new(time.Now().UTC().Add(o.orderCancelDelay))
+		order.Address = address
+
 		if err := o.orderRepo.Update(ctx, order); err != nil {
 			return nil, err
 		}

@@ -736,6 +736,15 @@ const docTemplate = `{
                         "name": "X-Session-ID",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "description": "checkout request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.OrderCheckoutRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -2461,6 +2470,47 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.AddressResponse": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "entrance": {
+                    "type": "string"
+                },
+                "floor": {
+                    "type": "string"
+                },
+                "house": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "street": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.CategoryResponse": {
             "type": "object",
             "properties": {
@@ -2570,11 +2620,19 @@ const docTemplate = `{
         "go-shop-backend_internal_dto.CreatePaymentRequest": {
             "type": "object",
             "required": [
-                "order_id"
+                "order_id",
+                "type"
             ],
             "properties": {
                 "order_id": {
                     "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "redirect",
+                        "embedded"
+                    ]
                 }
             }
         },
@@ -2605,6 +2663,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.OrderCheckoutRequest": {
+            "type": "object",
+            "required": [
+                "address_id"
+            ],
+            "properties": {
+                "address_id": {
                     "type": "string"
                 }
             }
@@ -2654,6 +2723,9 @@ const docTemplate = `{
         "go-shop-backend_internal_dto.OrderResponse": {
             "type": "object",
             "properties": {
+                "address": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.AddressResponse"
+                },
                 "canceled_at": {
                     "type": "string"
                 },
@@ -3007,8 +3079,14 @@ const docTemplate = `{
                 "access_token": {
                     "type": "string"
                 },
+                "access_token_expires_at": {
+                    "type": "integer"
+                },
                 "refresh_token": {
                     "type": "string"
+                },
+                "refresh_token_expires_at": {
+                    "type": "integer"
                 },
                 "token_type": {
                     "type": "string"

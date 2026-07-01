@@ -11,6 +11,10 @@ type AddOrderItemRequest struct {
 	Quantity  int       `json:"quantity" validate:"required,gt=0"`
 }
 
+type OrderCheckoutRequest struct {
+	AddressID uuid.UUID `json:"address_id" validate:"required"`
+}
+
 type OrderItemProductResponse struct {
 	ID     uuid.UUID `json:"id"`
 	Images []struct {
@@ -42,6 +46,7 @@ type OrderResponse struct {
 	CanceledAt   *time.Time          `json:"canceled_at"`
 	CompletedAt  *time.Time          `json:"completed_at"`
 	IsGuestOrder bool                `json:"is_guest_order"`
+	Address      *AddressResponse    `json:"address"`
 }
 
 type ListOrderRequest struct {

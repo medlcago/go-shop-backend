@@ -25,6 +25,33 @@ definitions:
     - priority
     - product_id
     type: object
+  go-shop-backend_internal_dto.AddressResponse:
+    properties:
+      city:
+        type: string
+      comment:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      entrance:
+        type: string
+      floor:
+        type: string
+      house:
+        type: string
+      id:
+        type: string
+      is_default:
+        type: boolean
+      name:
+        type: string
+      street:
+        type: string
+      updated_at:
+        type: string
+    type: object
   go-shop-backend_internal_dto.CategoryResponse:
     properties:
       description:
@@ -100,8 +127,14 @@ definitions:
     properties:
       order_id:
         type: string
+      type:
+        enum:
+        - redirect
+        - embedded
+        type: string
     required:
     - order_id
+    - type
     type: object
   go-shop-backend_internal_dto.CreateWishlistRequest:
     properties:
@@ -123,6 +156,13 @@ definitions:
     required:
     - code
     - password
+    type: object
+  go-shop-backend_internal_dto.OrderCheckoutRequest:
+    properties:
+      address_id:
+        type: string
+    required:
+    - address_id
     type: object
   go-shop-backend_internal_dto.OrderItemProductResponse:
     properties:
@@ -153,6 +193,8 @@ definitions:
     type: object
   go-shop-backend_internal_dto.OrderResponse:
     properties:
+      address:
+        $ref: '#/definitions/go-shop-backend_internal_dto.AddressResponse'
       canceled_at:
         type: string
       completed_at:
@@ -391,8 +433,12 @@ definitions:
     properties:
       access_token:
         type: string
+      access_token_expires_at:
+        type: integer
       refresh_token:
         type: string
+      refresh_token_expires_at:
+        type: integer
       token_type:
         type: string
       user:
@@ -1128,6 +1174,12 @@ paths:
         name: X-Session-ID
         required: true
         type: string
+      - description: checkout request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.OrderCheckoutRequest'
       produces:
       - application/json
       responses:

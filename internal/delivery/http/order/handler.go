@@ -222,8 +222,9 @@ func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 //	@Tags			Orders
 //	@Security		BearerAuth
 //	@Produce		json
-//	@Param			id				path		string	true	"Order ID"		Format(uuid)
-//	@Param			X-Session-ID	header		string	true	"Session ID"	Format(uuid)
+//	@Param			id				path		string						true	"Order ID"		Format(uuid)
+//	@Param			X-Session-ID	header		string						true	"Session ID"	Format(uuid)
+//	@Param			request			body		dto.OrderCheckoutRequest	true	"checkout request"
 //	@Success		200				{object}	response.Response[dto.OrderResponse]
 //	@Failure		400				{object}	response.Response[any]
 //	@Failure		401				{object}	response.Response[any]
@@ -239,7 +240,12 @@ func (h *Handler) Checkout(ctx fiber.Ctx) error {
 
 	orderID := uuid.MustParse(ctx.Params("id"))
 
-	resp, err := h.orderService.Checkout(ctx, *userCtx.UserID, *userCtx.SessionID, orderID)
+	var req dto.OrderCheckoutRequest
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return err
+	}
+
+	resp, err := h.orderService.Checkout(ctx, *userCtx.UserID, *userCtx.SessionID, orderID, req)
 	if err != nil {
 		return err
 	}

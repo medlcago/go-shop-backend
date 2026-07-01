@@ -59,6 +59,7 @@ type Container struct {
 	orderItemRepository    repository.OrderItemRepository
 	wishlistRepository     repository.WishlistRepository
 	wishlistItemRepository repository.WishlistItemRepository
+	addressRepository      repository.AddressRepository
 
 	// services
 	userService         service.UserService
@@ -69,6 +70,7 @@ type Container struct {
 	notificationService service.NotificationService
 	inventoryService    service.InventoryService
 	paymentService      service.PaymentService
+	addressService      service.AddressService
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -371,6 +373,14 @@ func (c *Container) WishlistItemRepo() repository.WishlistItemRepository {
 	return c.wishlistItemRepository
 }
 
+func (c *Container) AddressRepo() repository.AddressRepository {
+	if c.addressRepository == nil {
+		c.addressRepository = gormRepo.NewAddressRepository(c.DB())
+	}
+
+	return c.addressRepository
+}
+
 func (c *Container) UserService() service.UserService {
 	if c.userService == nil {
 		c.userService = service.NewUserService(
@@ -424,6 +434,7 @@ func (c *Container) OrderService() service.OrderService {
 			c.OrderRepo(),
 			c.OrderItemRepo(),
 			c.ProductRepo(),
+			c.AddressRepo(),
 			c.TaskFactory().Orders(),
 			c.TxManager(),
 			c.Config().OrderCancelDelay,
@@ -469,6 +480,14 @@ func (c *Container) PaymentService() service.PaymentService {
 	}
 
 	return c.paymentService
+}
+
+func (c *Container) AddressService() service.AddressService {
+	if c.addressService == nil {
+		c.addressService = service.NewAddressService(c.AddressRepo())
+	}
+
+	return c.addressService
 }
 
 func (c *Container) Close() error {

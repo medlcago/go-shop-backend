@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go-shop-backend/internal/core"
+	addresstHttp "go-shop-backend/internal/delivery/http/address"
 	categoryHttp "go-shop-backend/internal/delivery/http/category"
 	orderHttp "go-shop-backend/internal/delivery/http/order"
 	paymentHttp "go-shop-backend/internal/delivery/http/payment"
@@ -101,4 +102,7 @@ func (s *Server) Init() {
 
 	paymentHandler := paymentHttp.NewHandler(s.container.PaymentService())
 	paymentHttp.RegisterRoutes(v1, paymentHandler)
+
+	addressHandler := addresstHttp.NewHandler(s.container.AddressService())
+	addresstHttp.RegisterRoutes(v1, addressHandler)
 }
