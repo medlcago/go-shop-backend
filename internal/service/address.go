@@ -83,7 +83,7 @@ func (a *addressService) UpdateAddress(ctx context.Context, id uuid.UUID, userID
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if err := mapper.Copy(address, req, true); err != nil {
+	if err := mapper.Copy(address, req, false); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -119,6 +119,10 @@ func (a *addressService) SetDefault(ctx context.Context, id uuid.UUID, userID uu
 
 	err := a.addressRepo.SetDefault(ctx, id, userID)
 	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return apperror.Wrap(op, apperror.ErrAddressNotFound)
+		}
+
 		return apperror.Wrap(op, err)
 	}
 
