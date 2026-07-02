@@ -77,13 +77,23 @@ func (a *addressRepository) SetDefault(ctx context.Context, id uuid.UUID, userID
 	db := a.db.GetDB(ctx)
 
 	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := db.Model(&models.Address{}).Where("user_id = ?", userID).
+		if err := tx.Model(&models.Address{}).Where("user_id = ?", userID).
 			Update("is_default", false).Error; err != nil {
 			return err
 		}
 
-		return db.Model(&models.Address{}).Where("id = ? AND user_id = ?", id, userID).
-			Update("is_default", true).Error
+		result := tx.Model(&models.Address{}).Where("id = ? AND user_id = ?", id, userID).
+			Update("is_default", true)
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			return repository.ErrRecordNotFound
+		}
+
+		return nil
 	})
 
 	return repository.HandleError(err)
