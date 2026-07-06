@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"go-shop-backend/internal/tasks"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -38,16 +39,16 @@ func (_m *MockNotificationTask) EXPECT() *MockNotificationTask_Expecter {
 }
 
 // SendEmailConfirmationCode provides a mock function for the type MockNotificationTask
-func (_mock *MockNotificationTask) SendEmailConfirmationCode(ctx context.Context, email string, code string) error {
-	ret := _mock.Called(ctx, email, code)
+func (_mock *MockNotificationTask) SendEmailConfirmationCode(ctx context.Context, payload tasks.SendEmailConfirmationCodePayload) error {
+	ret := _mock.Called(ctx, payload)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SendEmailConfirmationCode")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, email, code)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tasks.SendEmailConfirmationCodePayload) error); ok {
+		r0 = returnFunc(ctx, payload)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -61,30 +62,24 @@ type MockNotificationTask_SendEmailConfirmationCode_Call struct {
 
 // SendEmailConfirmationCode is a helper method to define mock.On call
 //   - ctx context.Context
-//   - email string
-//   - code string
-func (_e *MockNotificationTask_Expecter) SendEmailConfirmationCode(ctx interface{}, email interface{}, code interface{}) *MockNotificationTask_SendEmailConfirmationCode_Call {
-	return &MockNotificationTask_SendEmailConfirmationCode_Call{Call: _e.mock.On("SendEmailConfirmationCode", ctx, email, code)}
+//   - payload tasks.SendEmailConfirmationCodePayload
+func (_e *MockNotificationTask_Expecter) SendEmailConfirmationCode(ctx interface{}, payload interface{}) *MockNotificationTask_SendEmailConfirmationCode_Call {
+	return &MockNotificationTask_SendEmailConfirmationCode_Call{Call: _e.mock.On("SendEmailConfirmationCode", ctx, payload)}
 }
 
-func (_c *MockNotificationTask_SendEmailConfirmationCode_Call) Run(run func(ctx context.Context, email string, code string)) *MockNotificationTask_SendEmailConfirmationCode_Call {
+func (_c *MockNotificationTask_SendEmailConfirmationCode_Call) Run(run func(ctx context.Context, payload tasks.SendEmailConfirmationCodePayload)) *MockNotificationTask_SendEmailConfirmationCode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 tasks.SendEmailConfirmationCodePayload
 		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg1 = args[1].(tasks.SendEmailConfirmationCodePayload)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -95,7 +90,7 @@ func (_c *MockNotificationTask_SendEmailConfirmationCode_Call) Return(err error)
 	return _c
 }
 
-func (_c *MockNotificationTask_SendEmailConfirmationCode_Call) RunAndReturn(run func(ctx context.Context, email string, code string) error) *MockNotificationTask_SendEmailConfirmationCode_Call {
+func (_c *MockNotificationTask_SendEmailConfirmationCode_Call) RunAndReturn(run func(ctx context.Context, payload tasks.SendEmailConfirmationCodePayload) error) *MockNotificationTask_SendEmailConfirmationCode_Call {
 	_c.Call.Return(run)
 	return _c
 }

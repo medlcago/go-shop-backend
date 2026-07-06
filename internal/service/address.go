@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -104,7 +103,7 @@ func (a *addressService) DeleteAddress(ctx context.Context, id uuid.UUID, userID
 
 	err := a.addressRepo.Delete(ctx, id, userID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return apperror.Wrap(op, apperror.ErrAddressNotFound)
 		}
 
@@ -119,7 +118,7 @@ func (a *addressService) SetDefault(ctx context.Context, id uuid.UUID, userID uu
 
 	err := a.addressRepo.SetDefault(ctx, id, userID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return apperror.Wrap(op, apperror.ErrAddressNotFound)
 		}
 
@@ -134,7 +133,7 @@ func (a *addressService) getAddressByID(ctx context.Context, id uuid.UUID, userI
 
 	address, err := a.addressRepo.GetByID(ctx, id, userID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrAddressNotFound)
 		}
 

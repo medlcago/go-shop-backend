@@ -23,24 +23,18 @@ type SendEmailConfirmationCodePayload struct {
 	Code  string `json:"code"`
 }
 
-func NewCancelOrderTask(userID, orderID uuid.UUID, delay time.Duration) (*asynq.Task, error) {
-	payload, err := json.Marshal(CancelOrderPayload{
-		UserID:  userID,
-		OrderID: orderID,
-	})
+func NewCancelOrderTask(payload CancelOrderPayload, delay time.Duration) (*asynq.Task, error) {
+	data, err := json.Marshal(payload)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return asynq.NewTask(TypeCancelOrder, payload, asynq.ProcessIn(delay)), nil
+	return asynq.NewTask(TypeCancelOrder, data, asynq.ProcessIn(delay)), nil
 }
 
-func NewSendEmailConfirmationCodeTask(email string, code string) (*asynq.Task, error) {
-	payload, err := json.Marshal(SendEmailConfirmationCodePayload{
-		Email: email,
-		Code:  code,
-	})
+func NewSendEmailConfirmationCodeTask(payload SendEmailConfirmationCodePayload) (*asynq.Task, error) {
+	data, err := json.Marshal(payload)
 
 	if err != nil {
 		return nil, err
@@ -48,7 +42,7 @@ func NewSendEmailConfirmationCodeTask(email string, code string) (*asynq.Task, e
 
 	return asynq.NewTask(
 		TypeSendEmailConfirmationCode,
-		payload,
+		data,
 		asynq.MaxRetry(3),
 	), nil
 }

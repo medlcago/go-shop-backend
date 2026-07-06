@@ -50,7 +50,7 @@ type OrderRepository interface {
 type OrderItemRepository interface {
 	AddItem(ctx context.Context, orderItem *models.OrderItem) error
 	Upsert(ctx context.Context, orderItem *models.OrderItem) error
-	RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error)
+	RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) error
 	Clear(ctx context.Context, orderID uuid.UUID) error
 }
 
@@ -67,7 +67,7 @@ type WishlistItemRepository interface {
 	GetItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (*models.WishlistItem, error)
 	AddItem(ctx context.Context, item *models.WishlistItem) error
 	UpdateItem(ctx context.Context, wishlistItem *models.WishlistItem) error
-	RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (bool, error)
+	RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) error
 	ProductExistsInWishlist(ctx context.Context, wishlistID uuid.UUID, productID uuid.UUID) (bool, error)
 }
 

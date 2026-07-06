@@ -154,29 +154,20 @@ func (_c *MockOrderItemRepository_Clear_Call) RunAndReturn(run func(ctx context.
 }
 
 // RemoveItem provides a mock function for the type MockOrderItemRepository
-func (_mock *MockOrderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error) {
+func (_mock *MockOrderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) error {
 	ret := _mock.Called(ctx, orderID, itemID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveItem")
 	}
 
-	var r0 bool
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (bool, error)); ok {
-		return returnFunc(ctx, orderID, itemID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) bool); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
 		r0 = returnFunc(ctx, orderID, itemID)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, orderID, itemID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockOrderItemRepository_RemoveItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveItem'
@@ -215,12 +206,12 @@ func (_c *MockOrderItemRepository_RemoveItem_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockOrderItemRepository_RemoveItem_Call) Return(b bool, err error) *MockOrderItemRepository_RemoveItem_Call {
-	_c.Call.Return(b, err)
+func (_c *MockOrderItemRepository_RemoveItem_Call) Return(err error) *MockOrderItemRepository_RemoveItem_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockOrderItemRepository_RemoveItem_Call) RunAndReturn(run func(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error)) *MockOrderItemRepository_RemoveItem_Call {
+func (_c *MockOrderItemRepository_RemoveItem_Call) RunAndReturn(run func(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) error) *MockOrderItemRepository_RemoveItem_Call {
 	_c.Call.Return(run)
 	return _c
 }

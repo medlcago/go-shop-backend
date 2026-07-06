@@ -433,7 +433,6 @@ func (c *Container) OrderService() service.OrderService {
 		c.orderService = service.NewOrderService(
 			c.OrderRepo(),
 			c.OrderItemRepo(),
-			c.ProductRepo(),
 			c.AddressRepo(),
 			c.TaskFactory().Orders(),
 			c.TxManager(),

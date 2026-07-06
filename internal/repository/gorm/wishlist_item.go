@@ -47,17 +47,21 @@ func (w *wishlistItemRepository) UpdateItem(ctx context.Context, wishlistItem *m
 	return repository.HandleError(err)
 }
 
-func (w *wishlistItemRepository) RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (bool, error) {
+func (w *wishlistItemRepository) RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) error {
 	db := w.db.GetDB(ctx)
 
 	result := db.Where("id = ? AND wishlist_id = ?", itemID, wishlistID).
 		Delete(&models.WishlistItem{})
 
 	if result.Error != nil {
-		return false, repository.HandleError(result.Error)
+		return repository.HandleError(result.Error)
 	}
 
-	return result.RowsAffected > 0, nil
+	if result.RowsAffected == 0 {
+		return repository.ErrRecordNotFound
+	}
+
+	return nil
 }
 
 func (w *wishlistItemRepository) ProductExistsInWishlist(ctx context.Context, wishlistID uuid.UUID, productID uuid.UUID) (bool, error) {

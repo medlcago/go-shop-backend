@@ -68,7 +68,7 @@ func (u *userService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 
 	user, err := u.userRepo.GetByEmailIncludingDeleted(ctx, req.Email)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrInvalidCredentials)
 		}
 
@@ -282,7 +282,11 @@ func (u *userService) SendEmailConfirmationCode(ctx context.Context, userID uuid
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if err := u.notificationTask.SendEmailConfirmationCode(ctx, user.Email, code); err != nil {
+	payload := tasks.SendEmailConfirmationCodePayload{
+		Email: user.Email,
+		Code:  code,
+	}
+	if err := u.notificationTask.SendEmailConfirmationCode(ctx, payload); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -507,7 +511,7 @@ func (u *userService) getUserByID(ctx context.Context, userID uuid.UUID) (*model
 
 	user, err := u.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
 		}
 
@@ -522,7 +526,7 @@ func (u *userService) getUserByIDIncludingDeleted(ctx context.Context, userID uu
 
 	user, err := u.userRepo.GetByIDIncludingDeleted(ctx, userID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
 		}
 

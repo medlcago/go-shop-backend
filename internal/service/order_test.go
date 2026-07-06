@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	serviceMocks "go-shop-backend/internal/service/mocks"
+	"go-shop-backend/internal/tasks"
 	tasksMocks "go-shop-backend/internal/tasks/mocks"
 	uploadMocks "go-shop-backend/internal/upload/mocks"
 	"go-shop-backend/pkg/apperror"
@@ -25,7 +26,6 @@ type OrderServiceTestSuite struct {
 	suite.Suite
 	orderRepo        *repoMocks.MockOrderRepository
 	orderItemRepo    *repoMocks.MockOrderItemRepository
-	productRepo      *repoMocks.MockProductRepository
 	addressRepo      *repoMocks.MockAddressRepository
 	txManager        *database.NoopTxManager
 	paymentProvider  *paymentproviderMocks.MockProvider
@@ -51,7 +51,6 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 
 	suite.orderRepo = repoMocks.NewMockOrderRepository(suite.T())
 	suite.orderItemRepo = repoMocks.NewMockOrderItemRepository(suite.T())
-	suite.productRepo = repoMocks.NewMockProductRepository(suite.T())
 	suite.addressRepo = repoMocks.NewMockAddressRepository(suite.T())
 	suite.txManager = database.NewNoopTxManager()
 	suite.orderTask = tasksMocks.NewMockOrderTask(suite.T())
@@ -60,7 +59,6 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.orderService = NewOrderService(
 		suite.orderRepo,
 		suite.orderItemRepo,
-		suite.productRepo,
 		suite.addressRepo,
 		suite.orderTask,
 		suite.txManager,
@@ -485,7 +483,7 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_Success() {
 		Return(order, nil).Once()
 
 	suite.orderItemRepo.EXPECT().RemoveItem(suite.ctx, suite.orderID, suite.itemID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(orderAfterDelete, nil).Once()
@@ -550,7 +548,7 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_ItemNotFound() {
 		Return(order, nil).Once()
 
 	suite.orderItemRepo.EXPECT().RemoveItem(suite.ctx, suite.orderID, suite.itemID).
-		Return(false, nil).Once()
+		Return(repository.ErrRecordNotFound).Once()
 
 	response, err := suite.orderService.RemoveItem(suite.ctx, &suite.userID, suite.sessionID, suite.orderID, suite.itemID)
 
@@ -694,6 +692,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 		AddressID: suite.addressID,
 	}
 
+	payload := tasks.CancelOrderPayload{
+		OrderID: suite.orderID,
+		UserID:  suite.userID,
+	}
+
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
@@ -705,7 +708,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.AnythingOfType("*models.Order")).
 		Run(func(ctx context.Context, o *models.Order) {
-			suite.Equal(*&suite.userID, *o.UserID)
+			suite.Equal(suite.userID, *o.UserID)
 			suite.Equal(order.TotalAmount, o.TotalAmount)
 			suite.Equal(models.OrderStatusPending, o.Status)
 			suite.Nil(o.PaymentID)
@@ -714,10 +717,10 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 			suite.NotNil(o.Address)
 		}).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(suite.ctx, *&suite.userID, suite.orderID, suite.orderCancelDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(suite.ctx, payload, suite.orderCancelDelay).
 		Return(nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.NoError(err)
 	suite.NotNil(response)
@@ -750,6 +753,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 		AddressID: suite.addressID,
 	}
 
+	payload := tasks.CancelOrderPayload{
+		OrderID: suite.orderID,
+		UserID:  suite.userID,
+	}
+
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
@@ -760,19 +768,19 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 		Return(nil).Once()
 
 	suite.orderRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(o *models.Order) bool {
-		return o.UserID != nil && *o.UserID == *&suite.userID
+		return o.UserID != nil && *o.UserID == suite.userID
 	})).Return(nil).Once()
 
-	suite.orderTask.EXPECT().EnqueueCancelOrder(suite.ctx, *&suite.userID, suite.orderID, suite.orderCancelDelay).
+	suite.orderTask.EXPECT().EnqueueCancelOrder(suite.ctx, payload, suite.orderCancelDelay).
 		Return(nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.NoError(err)
 	suite.NotNil(response)
 
 	suite.NotNil(order.UserID)
-	suite.Equal(*&suite.userID, *order.UserID)
+	suite.Equal(suite.userID, *order.UserID)
 	suite.Equal(suite.orderID, response.ID)
 }
 
@@ -784,7 +792,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_AddressNotFound() {
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrAddressNotFound)
@@ -822,7 +830,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, order.ID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
@@ -852,7 +860,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(order, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, order.ID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrEmptyOrder)
@@ -904,7 +912,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_UnavailableItemError() {
 	suite.inventoryService.EXPECT().ReserveItems(suite.ctx, mock.Anything).
 		Return(apperror.UnavailableItemsError(unavailableItems)).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, order.ID, req)
 
 	suite.Nil(response)
 
@@ -935,7 +943,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, suite.orderID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
@@ -975,7 +983,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(nil, dbError).Once()
 
-	response, err := suite.orderService.Checkout(suite.ctx, *&suite.userID, suite.sessionID, order.ID, req)
+	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, order.ID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbError)

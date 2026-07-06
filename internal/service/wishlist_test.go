@@ -771,7 +771,7 @@ func (suite *WishlistServiceTestSuite) TestRemoveItem_Success() {
 		Return(wishlist, nil).Once()
 
 	suite.wishlistItemRepo.EXPECT().RemoveItem(suite.ctx, suite.wishlistID, suite.itemID).
-		Return(true, nil).Once()
+		Return(nil).Once()
 
 	suite.wishlistRepo.EXPECT().GetByID(suite.ctx, suite.wishlistID, true).
 		Return(wishlist, nil).Once()
@@ -810,7 +810,7 @@ func (suite *WishlistServiceTestSuite) TestRemoveItem_UserIsNotOwner() {
 	suite.ErrorIs(err, apperror.ErrForbidden)
 }
 
-func (suite *WishlistServiceTestSuite) TestRemoveItem_NotRemoved() {
+func (suite *WishlistServiceTestSuite) TestRemoveItem_WishlistItemNotFound() {
 	wishlist := &models.Wishlist{
 		ID:     suite.wishlistID,
 		UserID: suite.userID,
@@ -820,7 +820,7 @@ func (suite *WishlistServiceTestSuite) TestRemoveItem_NotRemoved() {
 		Return(wishlist, nil).Once()
 
 	suite.wishlistItemRepo.EXPECT().RemoveItem(suite.ctx, suite.wishlistID, suite.itemID).
-		Return(false, nil).Once()
+		Return(repository.ErrRecordNotFound).Once()
 
 	response, err := suite.wishlistService.RemoveItem(suite.ctx, suite.userID, suite.wishlistID, suite.itemID)
 

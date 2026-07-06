@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -50,7 +49,7 @@ func (p *paymentService) CreatePayment(ctx context.Context, userID uuid.UUID, re
 
 	order, err := p.orderQuery.GetByID(ctx, req.OrderID, false)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrOrderNotFound)
 		}
 
@@ -111,7 +110,7 @@ func (p *paymentService) HandleWebhook(ctx context.Context, body []byte) error {
 
 		order, err := p.orderQuery.GetByPayment(ctx, p.provider.GetName(), event.PaymentID, true)
 		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
+			if repository.IsRecordNotFound(err) {
 				return nil
 			}
 			return err

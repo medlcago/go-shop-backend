@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
@@ -17,11 +16,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type AddressQuery interface {
+	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)
+}
+
 type orderService struct {
 	orderRepo        repository.OrderRepository
 	orderItemRepo    repository.OrderItemRepository
-	productRepo      repository.ProductRepository
-	addressRepo      repository.AddressRepository
+	addressQuery     AddressQuery
 	orderTask        tasks.OrderTask
 	txManager        database.TxManager
 	orderCancelDelay time.Duration
@@ -32,8 +34,7 @@ type orderService struct {
 func NewOrderService(
 	orderRepo repository.OrderRepository,
 	orderItemRepo repository.OrderItemRepository,
-	productRepo repository.ProductRepository,
-	addressRepo repository.AddressRepository,
+	addressQuery AddressQuery,
 	orderTask tasks.OrderTask,
 	txManager database.TxManager,
 	orderCancelDelay time.Duration,
@@ -43,8 +44,7 @@ func NewOrderService(
 	return &orderService{
 		orderRepo:        orderRepo,
 		orderItemRepo:    orderItemRepo,
-		productRepo:      productRepo,
-		addressRepo:      addressRepo,
+		addressQuery:     addressQuery,
 		orderTask:        orderTask,
 		txManager:        txManager,
 		orderCancelDelay: orderCancelDelay,
@@ -194,13 +194,12 @@ func (o *orderService) RemoveItem(
 			return nil, apperror.ErrInvalidOrderStatus
 		}
 
-		removed, err := o.orderItemRepo.RemoveItem(ctx, orderID, itemID)
-		if err != nil {
-			return nil, err
-		}
+		if err := o.orderItemRepo.RemoveItem(ctx, orderID, itemID); err != nil {
+			if repository.IsRecordNotFound(err) {
+				return nil, apperror.ErrItemNotFound
+			}
 
-		if !removed {
-			return nil, apperror.ErrItemNotFound
+			return nil, err
 		}
 
 		return o.recalculateOrder(ctx, orderID)
@@ -265,9 +264,9 @@ func (o *orderService) Checkout(
 	const op = "orderService.Checkout"
 
 	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
-		address, err := o.addressRepo.GetByID(ctx, req.AddressID, userID)
+		address, err := o.addressQuery.GetByID(ctx, req.AddressID, userID)
 		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
+			if repository.IsRecordNotFound(err) {
 				return nil, apperror.ErrAddressNotFound
 			}
 
@@ -303,7 +302,11 @@ func (o *orderService) Checkout(
 			return nil, err
 		}
 
-		if err := o.orderTask.EnqueueCancelOrder(ctx, userID, orderID, o.orderCancelDelay); err != nil {
+		payload := tasks.CancelOrderPayload{
+			UserID:  userID,
+			OrderID: orderID,
+		}
+		if err := o.orderTask.EnqueueCancelOrder(ctx, payload, o.orderCancelDelay); err != nil {
 			return nil, err
 		}
 
@@ -430,7 +433,7 @@ func (o *orderService) getOrderByOwner(
 
 	order, err := o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, preload)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrForbidden)
 		}
 
@@ -449,7 +452,7 @@ func (o *orderService) getOrderByID(
 
 	order, err := o.orderRepo.GetByID(ctx, orderID, preload)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrOrderNotFound)
 		}
 

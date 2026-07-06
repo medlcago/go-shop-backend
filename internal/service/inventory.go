@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -32,7 +31,7 @@ func (i *inventoryService) CheckProduct(ctx context.Context, productID uuid.UUID
 
 	product, err := i.productRepo.GetByID(ctx, productID, false)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrProductNotFound)
 		}
 

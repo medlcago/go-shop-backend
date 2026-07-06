@@ -9,6 +9,7 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
+	"go-shop-backend/internal/tasks"
 	tasksMocks "go-shop-backend/internal/tasks/mocks"
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/cache"
@@ -903,7 +904,9 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_Success() {
 	suite.cache.EXPECT().Set(suite.ctx, cacheKey, mock.AnythingOfType("string"), suite.userEmailConfig.EmailConfirmationCodeTTL).
 		Return(nil).Once()
 
-	suite.notificationTask.EXPECT().SendEmailConfirmationCode(suite.ctx, user.Email, mock.AnythingOfType("string")).
+	suite.notificationTask.EXPECT().SendEmailConfirmationCode(suite.ctx, mock.MatchedBy(func(payload tasks.SendEmailConfirmationCodePayload) bool {
+		return payload.Email == user.Email && payload.Code != ""
+	})).
 		Return(nil).Once()
 
 	response, err := suite.userService.SendEmailConfirmationCode(suite.ctx, suite.userID)

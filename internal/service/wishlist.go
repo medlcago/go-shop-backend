@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
@@ -114,7 +113,7 @@ func (w *wishlistService) GetSharedWishlist(
 
 	wl, err := w.wishlistRepo.GetByShareToken(ctx, shareToken, true)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
 		}
 
@@ -312,13 +311,12 @@ func (w *wishlistService) RemoveItem(
 		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
-	removed, err := w.wishlistItemRepo.RemoveItem(ctx, wishlistID, itemID)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
+	if err := w.wishlistItemRepo.RemoveItem(ctx, wishlistID, itemID); err != nil {
+		if repository.IsRecordNotFound(err) {
+			return nil, apperror.Wrap(op, apperror.ErrWishlistItemNotFound)
+		}
 
-	if !removed {
-		return nil, apperror.Wrap(op, apperror.ErrWishlistItemNotFound)
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := w.getWishlistResponse(ctx, wishlistID)
@@ -338,7 +336,7 @@ func (w *wishlistService) getWishlistByID(
 
 	wl, err := w.wishlistRepo.GetByID(ctx, id, preload)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
 		}
 
@@ -357,7 +355,7 @@ func (w *wishlistService) getWishlistItem(
 
 	item, err := w.wishlistItemRepo.GetItem(ctx, wishlistID, itemID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrWishlistItemNotFound)
 		}
 

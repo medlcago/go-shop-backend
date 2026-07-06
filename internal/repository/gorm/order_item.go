@@ -38,17 +38,21 @@ func (o *orderItemRepository) Upsert(ctx context.Context, orderItem *models.Orde
 	return repository.HandleError(err)
 }
 
-func (o *orderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) (bool, error) {
+func (o *orderItemRepository) RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) error {
 	db := o.db.GetDB(ctx)
 
 	result := db.Where("id = ? AND order_id = ?", itemID, orderID).
 		Delete(&models.OrderItem{})
 
 	if result.Error != nil {
-		return false, repository.HandleError(result.Error)
+		return repository.HandleError(result.Error)
 	}
 
-	return result.RowsAffected > 0, nil
+	if result.RowsAffected == 0 {
+		return repository.ErrRecordNotFound
+	}
+
+	return nil
 }
 
 func (o *orderItemRepository) Clear(ctx context.Context, orderID uuid.UUID) error {

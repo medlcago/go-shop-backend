@@ -6,9 +6,9 @@ package mocks
 
 import (
 	"context"
+	"go-shop-backend/internal/tasks"
 	"time"
 
-	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -40,16 +40,16 @@ func (_m *MockOrderTask) EXPECT() *MockOrderTask_Expecter {
 }
 
 // EnqueueCancelOrder provides a mock function for the type MockOrderTask
-func (_mock *MockOrderTask) EnqueueCancelOrder(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, delay time.Duration) error {
-	ret := _mock.Called(ctx, userID, orderID, delay)
+func (_mock *MockOrderTask) EnqueueCancelOrder(ctx context.Context, payload tasks.CancelOrderPayload, delay time.Duration) error {
+	ret := _mock.Called(ctx, payload, delay)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnqueueCancelOrder")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, time.Duration) error); ok {
-		r0 = returnFunc(ctx, userID, orderID, delay)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tasks.CancelOrderPayload, time.Duration) error); ok {
+		r0 = returnFunc(ctx, payload, delay)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,36 +63,30 @@ type MockOrderTask_EnqueueCancelOrder_Call struct {
 
 // EnqueueCancelOrder is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID uuid.UUID
-//   - orderID uuid.UUID
+//   - payload tasks.CancelOrderPayload
 //   - delay time.Duration
-func (_e *MockOrderTask_Expecter) EnqueueCancelOrder(ctx interface{}, userID interface{}, orderID interface{}, delay interface{}) *MockOrderTask_EnqueueCancelOrder_Call {
-	return &MockOrderTask_EnqueueCancelOrder_Call{Call: _e.mock.On("EnqueueCancelOrder", ctx, userID, orderID, delay)}
+func (_e *MockOrderTask_Expecter) EnqueueCancelOrder(ctx interface{}, payload interface{}, delay interface{}) *MockOrderTask_EnqueueCancelOrder_Call {
+	return &MockOrderTask_EnqueueCancelOrder_Call{Call: _e.mock.On("EnqueueCancelOrder", ctx, payload, delay)}
 }
 
-func (_c *MockOrderTask_EnqueueCancelOrder_Call) Run(run func(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, delay time.Duration)) *MockOrderTask_EnqueueCancelOrder_Call {
+func (_c *MockOrderTask_EnqueueCancelOrder_Call) Run(run func(ctx context.Context, payload tasks.CancelOrderPayload, delay time.Duration)) *MockOrderTask_EnqueueCancelOrder_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 uuid.UUID
+		var arg1 tasks.CancelOrderPayload
 		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
+			arg1 = args[1].(tasks.CancelOrderPayload)
 		}
-		var arg2 uuid.UUID
+		var arg2 time.Duration
 		if args[2] != nil {
-			arg2 = args[2].(uuid.UUID)
-		}
-		var arg3 time.Duration
-		if args[3] != nil {
-			arg3 = args[3].(time.Duration)
+			arg2 = args[2].(time.Duration)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -103,7 +97,7 @@ func (_c *MockOrderTask_EnqueueCancelOrder_Call) Return(err error) *MockOrderTas
 	return _c
 }
 
-func (_c *MockOrderTask_EnqueueCancelOrder_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, delay time.Duration) error) *MockOrderTask_EnqueueCancelOrder_Call {
+func (_c *MockOrderTask_EnqueueCancelOrder_Call) RunAndReturn(run func(ctx context.Context, payload tasks.CancelOrderPayload, delay time.Duration) error) *MockOrderTask_EnqueueCancelOrder_Call {
 	_c.Call.Return(run)
 	return _c
 }

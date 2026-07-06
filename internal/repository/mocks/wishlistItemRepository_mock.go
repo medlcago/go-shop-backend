@@ -243,29 +243,20 @@ func (_c *MockWishlistItemRepository_ProductExistsInWishlist_Call) RunAndReturn(
 }
 
 // RemoveItem provides a mock function for the type MockWishlistItemRepository
-func (_mock *MockWishlistItemRepository) RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (bool, error) {
+func (_mock *MockWishlistItemRepository) RemoveItem(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) error {
 	ret := _mock.Called(ctx, wishlistID, itemID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveItem")
 	}
 
-	var r0 bool
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (bool, error)); ok {
-		return returnFunc(ctx, wishlistID, itemID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) bool); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
 		r0 = returnFunc(ctx, wishlistID, itemID)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, wishlistID, itemID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockWishlistItemRepository_RemoveItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveItem'
@@ -304,12 +295,12 @@ func (_c *MockWishlistItemRepository_RemoveItem_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockWishlistItemRepository_RemoveItem_Call) Return(b bool, err error) *MockWishlistItemRepository_RemoveItem_Call {
-	_c.Call.Return(b, err)
+func (_c *MockWishlistItemRepository_RemoveItem_Call) Return(err error) *MockWishlistItemRepository_RemoveItem_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockWishlistItemRepository_RemoveItem_Call) RunAndReturn(run func(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) (bool, error)) *MockWishlistItemRepository_RemoveItem_Call {
+func (_c *MockWishlistItemRepository_RemoveItem_Call) RunAndReturn(run func(ctx context.Context, wishlistID uuid.UUID, itemID uuid.UUID) error) *MockWishlistItemRepository_RemoveItem_Call {
 	_c.Call.Return(run)
 	return _c
 }

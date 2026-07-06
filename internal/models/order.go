@@ -41,7 +41,7 @@ func (s OrderStatus) CanTransitionTo(next OrderStatus) bool {
 	}
 
 	if s == next {
-		return true
+		return false
 	}
 
 	allowed, ok := orderStatusTransitions[s]
@@ -94,7 +94,7 @@ func (o *Order) HasItems() bool {
 }
 
 func (o *Order) Checkout() error {
-	if o.Status != OrderStatusDraft {
+	if !o.Status.CanTransitionTo(OrderStatusPending) {
 		return apperror.ErrInvalidOrderStatus
 	}
 
@@ -108,7 +108,7 @@ func (o *Order) Checkout() error {
 }
 
 func (o *Order) Pay() error {
-	if o.Status != OrderStatusPending {
+	if !o.Status.CanTransitionTo(OrderStatusPaid) {
 		return apperror.ErrInvalidOrderStatus
 	}
 
@@ -118,7 +118,7 @@ func (o *Order) Pay() error {
 }
 
 func (o *Order) Cancel() error {
-	if o.Status != OrderStatusPending {
+	if !o.Status.CanTransitionTo(OrderStatusCanceled) {
 		return apperror.ErrInvalidOrderStatus
 	}
 

@@ -42,10 +42,10 @@ func TestOrder_HasItems(t *testing.T) {
 
 func TestOrder_Checkout(t *testing.T) {
 	tests := []struct {
-		name        string
-		order       *Order
-		expectedErr error
-		expected    *Order
+		name           string
+		order          *Order
+		expectedErr    error
+		expectedStatus OrderStatus
 	}{
 		{
 			name: "successful checkout",
@@ -54,10 +54,7 @@ func TestOrder_Checkout(t *testing.T) {
 				Status: OrderStatusDraft,
 				Items:  []OrderItem{{Quantity: 1, UnitPrice: 1000}},
 			},
-			expectedErr: nil,
-			expected: &Order{
-				Status: OrderStatusPending,
-			},
+			expectedStatus: OrderStatusPending,
 		},
 		{
 			name: "checkout with non-draft order should fail",
@@ -87,8 +84,7 @@ func TestOrder_Checkout(t *testing.T) {
 				assert.ErrorIs(t, err, tt.expectedErr)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expected.Status, tt.order.Status)
-				assert.Equal(t, tt.expected.UserID, tt.order.UserID)
+				assert.Equal(t, tt.expectedStatus, tt.order.Status)
 			}
 		})
 	}
@@ -400,36 +396,36 @@ func TestOrderStatus_CanTransitionTo(t *testing.T) {
 			expected: true,
 		},
 
-		// Same status transitions (allowed)
+		// Same status transitions (forbidden)
 		{
 			name:     "draft -> draft",
 			current:  OrderStatusDraft,
 			next:     OrderStatusDraft,
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "pending -> pending",
 			current:  OrderStatusPending,
 			next:     OrderStatusPending,
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "paid -> paid",
 			current:  OrderStatusPaid,
 			next:     OrderStatusPaid,
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "canceled -> canceled",
 			current:  OrderStatusCanceled,
 			next:     OrderStatusCanceled,
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "completed -> completed",
 			current:  OrderStatusCompleted,
 			next:     OrderStatusCompleted,
-			expected: true,
+			expected: false,
 		},
 
 		// Invalid transitions

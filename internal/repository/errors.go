@@ -21,3 +21,7 @@ func HandleError(err error) error {
 
 	return err
 }
+
+func IsRecordNotFound(err error) bool {
+	return errors.Is(err, ErrRecordNotFound)
+}

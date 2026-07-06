@@ -54,6 +54,12 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 			message = http.StatusText(status)
 		}
 
+		// Handling UUID parsing errors
+		if strings.Contains(err.Error(), "invalid urn") || strings.Contains(err.Error(), "invalid UUID") {
+			status = http.StatusBadRequest
+			message = http.StatusText(status)
+		}
+
 		log.Error(
 			"request error",
 			slog.Int("status", status),
