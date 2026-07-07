@@ -74,3 +74,14 @@
 | PATCH  | `/api/v1/wishlists/:wishlistID/items/:itemID`    | Update item in wishlist (auth)   |
 | DELETE | `/api/v1/wishlists/:wishlistID/items/:itemID`    | Remove item from wishlist (auth) |
 | GET    | `/api/v1/wishlists/shared/:token`                | Get shared wishlist by token     |
+
+### Addresses
+
+| Method | Endpoint                               | Description                         |
+|--------|----------------------------------------|-------------------------------------|
+| POST   | `/api/v1/addresses`                    | Create address (auth)               |
+| GET    | `/api/v1/addresses`                    | List of the user's addresses (auth) |
+| GET    | `/api/v1/addresses/:addressID`         | Get address (auth)                  |
+| PUT    | `/api/v1/addresses/:addressID`         | Update address (auth)               |
+| DELETE | `/api/v1/addresses/:addressID`         | Delete address (auth)               |
+| PUT    | `/api/v1/addresses/:addressID/default` | Set default address (auth)          |
