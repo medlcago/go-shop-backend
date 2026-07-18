@@ -104,15 +104,7 @@ type UserContext struct {
 }
 
 func GetUserContext(ctx fiber.Ctx) UserContext {
-	var userCtx UserContext
-
-	if v := ctx.Locals(CtxUserContext); v != nil {
-		if userContext, ok := v.(UserContext); ok {
-			userCtx = userContext
-		}
-	}
-
-	return userCtx
+	return fiber.Locals[UserContext](ctx, CtxUserContext)
 }
 
 func ExtractBearer(ctx fiber.Ctx) (string, error) {

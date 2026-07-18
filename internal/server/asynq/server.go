@@ -52,10 +52,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	s.Init()
 
-	s.logger.Info(
-		"Asynq server starting",
-		slog.String("env", s.container.Config().Environment),
-	)
+	s.logger.Info("Asynq server starting")
 
 	return s.srv.Run(s.mux)
 }

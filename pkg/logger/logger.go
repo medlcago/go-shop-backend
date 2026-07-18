@@ -24,12 +24,14 @@ func NewSlog(env Env) *slog.Logger {
 		level = slog.LevelInfo
 	}
 
-	l := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+	handler := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
 		Level:     level,
 		AddSource: env == EnvDevelopment,
-	}))
+	}).WithAttrs([]slog.Attr{
+		slog.String("environment", string(env)),
+	})
 
-	return l
+	return slog.New(handler)
 }
 
 func Err(err error) slog.Attr {

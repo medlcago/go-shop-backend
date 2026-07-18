@@ -16,6 +16,7 @@ import (
 	"log/slog"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -57,7 +58,6 @@ func (s *Server) Start(ctx context.Context) error {
 	s.logger.Info(
 		"HTTP server starting",
 		slog.String("addr", addr),
-		slog.String("env", s.container.Config().Environment),
 	)
 
 	return s.app.Listen(addr, fiber.ListenConfig{
@@ -77,11 +77,16 @@ func (s *Server) Name() string {
 }
 
 func (s *Server) Init() {
+	metricsFactory := s.container.MetricsFactory()
+
+	s.app.Use(middleware.Prometheus(metricsFactory.HTTPMetrics()))
 	s.app.Use(middleware.IdentityUser(s.container.TokenManager()))
 
 	if s.IsDevMode() {
 		s.app.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
 	}
+
+	s.app.Get("/metrics", promhttp.HandlerFor(metricsFactory.Registry(), promhttp.HandlerOpts{}))
 
 	v1 := s.app.Group("/api/v1")
 

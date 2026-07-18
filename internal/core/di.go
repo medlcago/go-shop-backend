@@ -2,8 +2,10 @@ package core
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"go-shop-backend/config"
+	"go-shop-backend/internal/metrics"
 	"go-shop-backend/internal/repository"
 	gormRepo "go-shop-backend/internal/repository/gorm"
 	"go-shop-backend/internal/service"
@@ -49,6 +51,7 @@ type Container struct {
 	cache                cache.Cache
 	templateManager      template.Manager
 	notificationRegistry notification.SenderRegistry
+	metricsFactory       *metrics.Factory
 
 	// repositories
 	userRepository         repository.UserRepository
@@ -309,6 +312,14 @@ func (c *Container) NotificationRegistry() notification.SenderRegistry {
 	return c.notificationRegistry
 }
 
+func (c *Container) MetricsFactory() *metrics.Factory {
+	if c.metricsFactory == nil {
+		c.metricsFactory = metrics.New(NewPrometheusRegistry(c))
+	}
+
+	return c.metricsFactory
+}
+
 func (c *Container) UserRepo() repository.UserRepository {
 	if c.userRepository == nil {
 		c.userRepository = gormRepo.NewUserRepository(c.DB())
@@ -499,4 +510,13 @@ func (c *Container) Close() error {
 	}
 
 	return nil
+}
+
+func sqlDBFromContainer(container *Container) (*sql.DB, error) {
+	sqlDB, err := container.DB().GetDB(context.Background()).DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sql db from container: %w", err)
+	}
+
+	return sqlDB, nil
 }
