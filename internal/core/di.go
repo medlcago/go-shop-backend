@@ -29,51 +29,65 @@ import (
 	"go-shop-backend/pkg/totp"
 	"go-shop-backend/pkg/validator"
 	"log/slog"
+	"sync"
 )
+
+type Lazy[T any] struct {
+	once sync.Once
+	val  T
+}
+
+func (l *Lazy[T]) Get(factory func() T) T {
+	l.once.Do(func() {
+		l.val = factory()
+	})
+
+	return l.val
+}
 
 type Container struct {
 	cfg                  *config.Config
-	logger               *slog.Logger
-	validator            validator.Validator
-	hasher               hasher.Hasher
-	tokenManager         token.Manager
-	totpManager          totp.Manager
-	encryptionManager    crypto.EncryptionManager
-	taskFactory          *tasks.Factory
-	paymentProvider      paymentprovider.Provider
-	db                   database.DB
-	txManager            database.TxManager
-	storage              storage.Storage
-	redisClient          *redis.Client
-	contentTypeDetector  contenttype.Detector
-	uploadPolicyProvider upload.PolicyProvider
-	uploadManager        upload.Manager
-	cache                cache.Cache
-	templateManager      template.Manager
-	notificationRegistry notification.SenderRegistry
-	metricsFactory       *metrics.Factory
+	logger               Lazy[*slog.Logger]
+	validator            Lazy[validator.Validator]
+	hasher               Lazy[hasher.Hasher]
+	tokenManager         Lazy[token.Manager]
+	totpManager          Lazy[totp.Manager]
+	encryptionManager    Lazy[crypto.EncryptionManager]
+	taskFactory          Lazy[*tasks.Factory]
+	paymentProvider      Lazy[paymentprovider.Provider]
+	db                   Lazy[database.DB]
+	txManager            Lazy[database.TxManager]
+	storage              Lazy[storage.Storage]
+	redisClient          Lazy[*redis.Client]
+	contentTypeDetector  Lazy[contenttype.Detector]
+	uploadPolicyProvider Lazy[upload.PolicyProvider]
+	uploadManager        Lazy[upload.Manager]
+	cache                Lazy[cache.Cache]
+	templateManager      Lazy[template.Manager]
+	notificationRegistry Lazy[notification.SenderRegistry]
+	metricsFactory       Lazy[*metrics.Factory]
 
 	// repositories
-	userRepository         repository.UserRepository
-	productRepository      repository.ProductRepository
-	categoryRepository     repository.CategoryRepository
-	uploadRepository       repository.UploadRepository
-	orderRepository        repository.OrderRepository
-	orderItemRepository    repository.OrderItemRepository
-	wishlistRepository     repository.WishlistRepository
-	wishlistItemRepository repository.WishlistItemRepository
-	addressRepository      repository.AddressRepository
+	userRepository         Lazy[repository.UserRepository]
+	productRepository      Lazy[repository.ProductRepository]
+	categoryRepository     Lazy[repository.CategoryRepository]
+	uploadRepository       Lazy[repository.UploadRepository]
+	orderRepository        Lazy[repository.OrderRepository]
+	orderItemRepository    Lazy[repository.OrderItemRepository]
+	wishlistRepository     Lazy[repository.WishlistRepository]
+	wishlistItemRepository Lazy[repository.WishlistItemRepository]
+	addressRepository      Lazy[repository.AddressRepository]
 
 	// services
-	userService         service.UserService
-	productService      service.ProductService
-	categoryService     service.CategoryService
-	orderService        service.OrderService
-	wishlistService     service.WishlistService
-	notificationService service.NotificationService
-	inventoryService    service.InventoryService
-	paymentService      service.PaymentService
-	addressService      service.AddressService
+	userService         Lazy[service.UserService]
+	productService      Lazy[service.ProductService]
+	categoryService     Lazy[service.CategoryService]
+	orderService        Lazy[service.OrderService]
+	wishlistService     Lazy[service.WishlistService]
+	notificationService Lazy[service.NotificationService]
+	inventoryService    Lazy[service.InventoryService]
+	paymentService      Lazy[service.PaymentService]
+	addressService      Lazy[service.AddressService]
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -87,189 +101,158 @@ func (c *Container) Config() *config.Config {
 }
 
 func (c *Container) Logger() *slog.Logger {
-	if c.logger == nil {
-		c.logger = logger.NewSlog(logger.Env(c.Config().Environment))
-		slog.SetDefault(c.logger)
-	}
-
-	return c.logger
+	return c.logger.Get(func() *slog.Logger {
+		return logger.NewSlog(logger.Env(c.Config().Environment))
+	})
 }
 
 func (c *Container) Validator() validator.Validator {
-	if c.validator == nil {
-		c.validator = NewValidator()
-	}
-
-	return c.validator
+	return c.validator.Get(func() validator.Validator {
+		return NewValidator()
+	})
 }
 
 func (c *Container) DB() database.DB {
-	if c.db != nil {
-		return c.db
-	}
+	return c.db.Get(func() database.DB {
+		db, err := database.New(
+			c.Config().Database.URI,
+			database.WithMaxOpenConns(c.Config().Database.MaxOpenConns),
+			database.WithMaxIdleConns(c.Config().Database.MaxIdleConns),
+			database.WithConnMaxLifetime(c.Config().Database.ConnMaxLifetime),
+			database.WithConnMaxIdleTime(c.Config().Database.ConnMaxIdleTime),
+			database.WithLogger(c.Logger()),
+		)
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to connect to database", err)
+		}
 
-	db, err := database.New(
-		c.Config().Database.URI,
-		database.WithMaxOpenConns(c.Config().Database.MaxOpenConns),
-		database.WithMaxIdleConns(c.Config().Database.MaxIdleConns),
-		database.WithConnMaxLifetime(c.Config().Database.ConnMaxLifetime),
-		database.WithConnMaxIdleTime(c.Config().Database.ConnMaxIdleTime),
-		database.WithLogger(c.Logger()),
-	)
-	if err != nil {
-		logger.Fatal(c.Logger(), "failed to connect to database", err)
-	}
+		return db
+	})
 
-	c.db = db
-	return db
 }
 
 func (c *Container) TxManager() database.TxManager {
-	if c.txManager == nil {
-		c.txManager = database.NewGormTxManager(c.DB().GetDB(context.Background()))
-	}
-
-	return c.txManager
+	return c.txManager.Get(func() database.TxManager {
+		return database.NewGormTxManager(c.DB().GetDB(context.Background()))
+	})
 }
 
 func (c *Container) RedisClient() *redis.Client {
-	if c.redisClient != nil {
-		return c.redisClient
-	}
+	return c.redisClient.Get(func() *redis.Client {
+		redisClient, err := redis.New(
+			c.Config().Redis.Address,
+			c.Config().Redis.Password,
+			redis.WithDB(c.Config().Redis.DB),
+			redis.WithDialTimeout(c.Config().Redis.DialTimeout),
+			redis.WithReadTimeout(c.Config().Redis.ReadTimeout),
+			redis.WithWriteTimeout(c.Config().Redis.WriteTimeout),
+			redis.WithPoolSize(c.Config().Redis.PoolSize),
+			redis.WithMinIdleConns(c.Config().Redis.MinIdleConns),
+		)
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to create redis client", err)
+		}
 
-	redisClient, err := redis.New(
-		c.Config().Redis.Address,
-		c.Config().Redis.Password,
-		redis.WithDB(c.Config().Redis.DB),
-		redis.WithDialTimeout(c.Config().Redis.DialTimeout),
-		redis.WithReadTimeout(c.Config().Redis.ReadTimeout),
-		redis.WithWriteTimeout(c.Config().Redis.WriteTimeout),
-		redis.WithPoolSize(c.Config().Redis.PoolSize),
-		redis.WithMinIdleConns(c.Config().Redis.MinIdleConns),
-	)
-	if err != nil {
-		logger.Fatal(c.Logger(), "failed to create redis client", err)
-	}
-
-	c.redisClient = redisClient
-	return redisClient
+		return redisClient
+	})
 }
 
 func (c *Container) Storage() storage.Storage {
-	if c.storage != nil {
-		return c.storage
-	}
+	return c.storage.Get(func() storage.Storage {
+		minioStorage, err := minio.New(&minio.Config{
+			Endpoint:  c.Config().S3.Endpoint,
+			AccessKey: c.Config().S3.AccessKey,
+			SecretKey: c.Config().S3.SecretKey,
+			Secure:    c.Config().S3.UseSSL,
+			Bucket:    c.Config().S3.Bucket,
+			Region:    c.Config().S3.Region,
+			BaseURL:   c.Config().S3.BaseURL,
+		})
 
-	minioStorage, err := minio.New(&minio.Config{
-		Endpoint:  c.Config().S3.Endpoint,
-		AccessKey: c.Config().S3.AccessKey,
-		SecretKey: c.Config().S3.SecretKey,
-		Secure:    c.Config().S3.UseSSL,
-		Bucket:    c.Config().S3.Bucket,
-		Region:    c.Config().S3.Region,
-		BaseURL:   c.Config().S3.BaseURL,
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to create minio storage", err)
+		}
+
+		return minioStorage
 	})
-	if err != nil {
-		logger.Fatal(c.Logger(), "failed to create minio storage", err)
-	}
-
-	c.storage = minioStorage
-	return minioStorage
 }
 
 func (c *Container) PasswordHasher() hasher.Hasher {
-	if c.hasher == nil {
-		c.hasher = hasher.NewArgon2ID()
-	}
-
-	return c.hasher
+	return c.hasher.Get(func() hasher.Hasher {
+		return hasher.NewArgon2ID()
+	})
 }
 
 func (c *Container) TokenManager() token.Manager {
-	if c.tokenManager == nil {
-		c.tokenManager = token.NewJWT(
+	return c.tokenManager.Get(func() token.Manager {
+		tokenManager := token.NewJWT(
 			c.Config().AuthSecret,
 			c.Config().AppName,
 			c.Config().AccessTokenExpiredTime,
 			c.Config().RefreshTokenExpiredTime,
 			c.Config().PartialTokenExpiredTime,
 		)
-	}
 
-	return c.tokenManager
+		return tokenManager
+	})
 }
 
 func (c *Container) ContentTypeDetector() contenttype.Detector {
-	if c.contentTypeDetector == nil {
-		c.contentTypeDetector = contenttype.NewMagicDetector()
-	}
-
-	return c.contentTypeDetector
+	return c.contentTypeDetector.Get(func() contenttype.Detector {
+		return contenttype.NewMagicDetector()
+	})
 }
 
 func (c *Container) PaymentProvider() paymentprovider.Provider {
-	if c.paymentProvider != nil {
-		return c.paymentProvider
-	}
+	return c.paymentProvider.Get(func() paymentprovider.Provider {
+		paymentProvider, err := yookassa.New(
+			yookassa.NewConfig(c.Config().Yookassa.AccountID, c.Config().Yookassa.SecretKey, c.Config().Yookassa.ReturnURL),
+		)
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to create payment provider", err)
+		}
 
-	paymentProvider, err := yookassa.New(
-		yookassa.NewConfig(c.Config().Yookassa.AccountID, c.Config().Yookassa.SecretKey, c.Config().Yookassa.ReturnURL),
-	)
-	if err != nil {
-		logger.Fatal(c.Logger(), "failed to create payment provider", err)
-	}
-
-	c.paymentProvider = paymentProvider
-	return paymentProvider
+		return paymentProvider
+	})
 }
 
 func (c *Container) TOTPManager() totp.Manager {
-	if c.totpManager == nil {
-		c.totpManager = totp.New(c.Config().AppName)
-	}
-
-	return c.totpManager
+	return c.totpManager.Get(func() totp.Manager {
+		return totp.New(c.Config().AppName)
+	})
 }
 
 func (c *Container) EncryptionManager() crypto.EncryptionManager {
-	if c.encryptionManager != nil {
-		return c.encryptionManager
-	}
+	return c.encryptionManager.Get(func() crypto.EncryptionManager {
+		encryptionManager, err := crypto.NewAESGCMEncryptionManagerFromBase64(c.Config().MasterKey)
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to create encryption manager", err)
+		}
 
-	encryptionManager, err := crypto.NewAESGCMEncryptionManagerFromBase64(c.Config().MasterKey)
-	if err != nil {
-		logger.Fatal(c.Logger(), "failed to create encryption manager", err)
-	}
-
-	c.encryptionManager = encryptionManager
-	return c.encryptionManager
+		return encryptionManager
+	})
 }
 
 func (c *Container) TaskFactory() *tasks.Factory {
-	if c.taskFactory == nil {
-		c.taskFactory = tasks.NewFactory(c.RedisClient().RDB())
-	}
-
-	return c.taskFactory
+	return c.taskFactory.Get(func() *tasks.Factory {
+		return tasks.NewFactory(c.RedisClient().RDB())
+	})
 }
 
 func (c *Container) UploadPolicyProvider() upload.PolicyProvider {
-	if c.uploadPolicyProvider != nil {
-		return c.uploadPolicyProvider
-	}
+	return c.uploadPolicyProvider.Get(func() upload.PolicyProvider {
+		uploadPolicyProvider, err := NewUploadPolicyProvider()
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to create upload policy provider", err)
+		}
 
-	uploadPolicyProvider, err := NewUploadPolicyProvider()
-	if err != nil {
-		logger.Fatal(c.Logger(), "failed to create upload policy provider", err)
-	}
-
-	c.uploadPolicyProvider = uploadPolicyProvider
-	return c.uploadPolicyProvider
+		return uploadPolicyProvider
+	})
 }
 
 func (c *Container) UploadManager() upload.Manager {
-	if c.uploadManager == nil {
-		c.uploadManager = upload.NewManager(
+	return c.uploadManager.Get(func() upload.Manager {
+		uploadManager := upload.NewManager(
 			c.Storage(),
 			c.UploadRepo(),
 			c.Config().Upload,
@@ -277,124 +260,97 @@ func (c *Container) UploadManager() upload.Manager {
 			c.UploadPolicyProvider(),
 			c.Logger(),
 		)
-	}
 
-	return c.uploadManager
+		return uploadManager
+	})
 }
 
 func (c *Container) Cache() cache.Cache {
-	if c.cache == nil {
-		c.cache = cache.NewRedisCache(c.RedisClient().RDB(), c.Config().AppName)
-	}
-
-	return c.cache
+	return c.cache.Get(func() cache.Cache {
+		return cache.NewRedisCache(c.RedisClient().RDB(), c.Config().AppName)
+	})
 }
 
 func (c *Container) TemplateManager() template.Manager {
-	if c.templateManager != nil {
-		return c.templateManager
-	}
+	return c.templateManager.Get(func() template.Manager {
+		templateManager := template.NewManager()
+		if err := templateManager.LoadFromFS(templates.FS, "*.gohtml"); err != nil {
+			logger.Fatal(c.Logger(), "failed to load templates from FS", err)
+		}
 
-	templateManager := template.NewManager()
-	if err := templateManager.LoadFromFS(templates.FS, "*.gohtml"); err != nil {
-		logger.Fatal(c.Logger(), "failed to load templates from FS", err)
-	}
-
-	c.templateManager = templateManager
-	return c.templateManager
+		return templateManager
+	})
 }
 
 func (c *Container) NotificationRegistry() notification.SenderRegistry {
-	if c.notificationRegistry == nil {
-		c.notificationRegistry = NewNotificationRegistry(c.Config())
-	}
-
-	return c.notificationRegistry
+	return c.notificationRegistry.Get(func() notification.SenderRegistry {
+		return NewNotificationRegistry(c.Config())
+	})
 }
 
 func (c *Container) MetricsFactory() *metrics.Factory {
-	if c.metricsFactory == nil {
-		c.metricsFactory = metrics.New(NewPrometheusRegistry(c))
-	}
-
-	return c.metricsFactory
+	return c.metricsFactory.Get(func() *metrics.Factory {
+		return metrics.New(NewPrometheusRegistry(c))
+	})
 }
 
 func (c *Container) UserRepo() repository.UserRepository {
-	if c.userRepository == nil {
-		c.userRepository = gormRepo.NewUserRepository(c.DB())
-	}
-
-	return c.userRepository
+	return c.userRepository.Get(func() repository.UserRepository {
+		return gormRepo.NewUserRepository(c.DB())
+	})
 }
 
 func (c *Container) ProductRepo() repository.ProductRepository {
-	if c.productRepository == nil {
-		c.productRepository = gormRepo.NewProductRepository(c.DB())
-	}
-
-	return c.productRepository
+	return c.productRepository.Get(func() repository.ProductRepository {
+		return gormRepo.NewProductRepository(c.DB())
+	})
 }
 
 func (c *Container) CategoryRepo() repository.CategoryRepository {
-	if c.categoryRepository == nil {
-		c.categoryRepository = gormRepo.NewCategoryRepository(c.DB())
-	}
-
-	return c.categoryRepository
+	return c.categoryRepository.Get(func() repository.CategoryRepository {
+		return gormRepo.NewCategoryRepository(c.DB())
+	})
 }
 
 func (c *Container) OrderRepo() repository.OrderRepository {
-	if c.orderRepository == nil {
-		c.orderRepository = gormRepo.NewOrderRepository(c.DB())
-	}
-
-	return c.orderRepository
+	return c.orderRepository.Get(func() repository.OrderRepository {
+		return gormRepo.NewOrderRepository(c.DB())
+	})
 }
 
 func (c *Container) OrderItemRepo() repository.OrderItemRepository {
-	if c.orderItemRepository == nil {
-		c.orderItemRepository = gormRepo.NewOrderItemRepository(c.DB())
-	}
-
-	return c.orderItemRepository
+	return c.orderItemRepository.Get(func() repository.OrderItemRepository {
+		return gormRepo.NewOrderItemRepository(c.DB())
+	})
 }
 
 func (c *Container) UploadRepo() repository.UploadRepository {
-	if c.uploadRepository == nil {
-		c.uploadRepository = gormRepo.NewUploadRepository(c.DB())
-	}
-
-	return c.uploadRepository
+	return c.uploadRepository.Get(func() repository.UploadRepository {
+		return gormRepo.NewUploadRepository(c.DB())
+	})
 }
 
 func (c *Container) WishlistRepo() repository.WishlistRepository {
-	if c.wishlistRepository == nil {
-		c.wishlistRepository = gormRepo.NewWishlistRepository(c.DB())
-	}
-
-	return c.wishlistRepository
+	return c.wishlistRepository.Get(func() repository.WishlistRepository {
+		return gormRepo.NewWishlistRepository(c.DB())
+	})
 }
 
 func (c *Container) WishlistItemRepo() repository.WishlistItemRepository {
-	if c.wishlistItemRepository == nil {
-		c.wishlistItemRepository = gormRepo.NewWishlistItemRepository(c.DB())
-	}
-
-	return c.wishlistItemRepository
+	return c.wishlistItemRepository.Get(func() repository.WishlistItemRepository {
+		return gormRepo.NewWishlistItemRepository(c.DB())
+	})
 }
 
 func (c *Container) AddressRepo() repository.AddressRepository {
-	if c.addressRepository == nil {
-		c.addressRepository = gormRepo.NewAddressRepository(c.DB())
-	}
-
-	return c.addressRepository
+	return c.addressRepository.Get(func() repository.AddressRepository {
+		return gormRepo.NewAddressRepository(c.DB())
+	})
 }
 
 func (c *Container) UserService() service.UserService {
-	if c.userService == nil {
-		c.userService = service.NewUserService(
+	return c.userService.Get(func() service.UserService {
+		userService := service.NewUserService(
 			c.UserRepo(),
 			c.TokenManager(),
 			c.PasswordHasher(),
@@ -407,41 +363,35 @@ func (c *Container) UserService() service.UserService {
 				EmailConfirmationCodeTTL:    c.Config().Email.ConfirmationCodeTTL,
 			},
 		)
-	}
 
-	return c.userService
+		return userService
+	})
 }
 
 func (c *Container) ProductService() service.ProductService {
-	if c.productService == nil {
-		c.productService = service.NewProductService(c.ProductRepo(), c.UploadManager())
-	}
-
-	return c.productService
+	return c.productService.Get(func() service.ProductService {
+		return service.NewProductService(c.ProductRepo(), c.UploadManager())
+	})
 }
 
 func (c *Container) CategoryService() service.CategoryService {
-	if c.categoryService == nil {
-		c.categoryService = service.NewCategoryService(c.CategoryRepo())
-	}
-
-	return c.categoryService
+	return c.categoryService.Get(func() service.CategoryService {
+		return service.NewCategoryService(c.CategoryRepo())
+	})
 }
 
 func (c *Container) InventoryService() service.InventoryService {
-	if c.inventoryService == nil {
-		c.inventoryService = service.NewInventoryService(
+	return c.inventoryService.Get(func() service.InventoryService {
+		return service.NewInventoryService(
 			c.ProductRepo(),
 			c.TxManager(),
 		)
-	}
-
-	return c.inventoryService
+	})
 }
 
 func (c *Container) OrderService() service.OrderService {
-	if c.orderService == nil {
-		c.orderService = service.NewOrderService(
+	return c.orderService.Get(func() service.OrderService {
+		return service.NewOrderService(
 			c.OrderRepo(),
 			c.OrderItemRepo(),
 			c.AddressRepo(),
@@ -451,53 +401,43 @@ func (c *Container) OrderService() service.OrderService {
 			c.UploadManager(),
 			c.InventoryService(),
 		)
-	}
-
-	return c.orderService
+	})
 }
 
 func (c *Container) WishlistService() service.WishlistService {
-	if c.wishlistService == nil {
-		c.wishlistService = service.NewWishlistService(
+	return c.wishlistService.Get(func() service.WishlistService {
+		return service.NewWishlistService(
 			c.WishlistRepo(),
 			c.WishlistItemRepo(),
 			c.ProductRepo(),
 		)
-	}
-
-	return c.wishlistService
+	})
 }
 
 func (c *Container) NotificationService() service.NotificationService {
-	if c.notificationService == nil {
-		c.notificationService = service.NewNotificationService(
+	return c.notificationService.Get(func() service.NotificationService {
+		return service.NewNotificationService(
 			c.NotificationRegistry(),
 			c.TemplateManager(),
 		)
-	}
-
-	return c.notificationService
+	})
 }
 
 func (c *Container) PaymentService() service.PaymentService {
-	if c.paymentService == nil {
-		c.paymentService = service.NewPaymentService(
+	return c.paymentService.Get(func() service.PaymentService {
+		return service.NewPaymentService(
 			c.PaymentProvider(),
 			c.OrderRepo(),
 			c.OrderService(),
 			c.TxManager(),
 		)
-	}
-
-	return c.paymentService
+	})
 }
 
 func (c *Container) AddressService() service.AddressService {
-	if c.addressService == nil {
-		c.addressService = service.NewAddressService(c.AddressRepo())
-	}
-
-	return c.addressService
+	return c.addressService.Get(func() service.AddressService {
+		return service.NewAddressService(c.AddressRepo())
+	})
 }
 
 func (c *Container) Close() error {
