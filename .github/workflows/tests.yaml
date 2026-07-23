@@ -7,6 +7,8 @@ on:
       - '**/README.md'
       - '**/Makefile'
       - 'docs/**'
+      - 'docker-compose.yaml'
+      - 'docker-compose.*.yaml'
 
   pull_request:
     branches: [ master ]
@@ -14,6 +16,8 @@ on:
       - '**/README.md'
       - '**/Makefile'
       - 'docs/**'
+      - 'docker-compose.yaml'
+      - 'docker-compose.*.yaml'
 
 jobs:
   test:

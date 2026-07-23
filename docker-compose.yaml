@@ -78,6 +78,16 @@ services:
     depends_on:
       - app
 
+  asynqmon:
+    image: hibiken/asynqmon:latest
+    container_name: asynq_monitor
+    ports:
+      - "3000:3000"
+    command: [ "-redis-url=redis://:${REDIS_PASSWORD}@redis:6379/0", "-port=3000" ]
+    depends_on:
+      - redis
+    restart: always
+
 volumes:
   postgres_data:
   redis_data:
