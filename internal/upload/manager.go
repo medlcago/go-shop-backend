@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go-shop-backend/config"
+	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/apperror"
@@ -17,8 +18,8 @@ import (
 )
 
 type Manager interface {
-	SignURL(ctx context.Context, req SignURLRequest, policy Policy) (*SignURLResponse, error)
-	Save(ctx context.Context, req SaveUploadRequest, policy Policy) (*ContentResponse, error)
+	SignURL(ctx context.Context, req dto.UploadSignURLRequest, uploadType Type) (*dto.UploadSignURLResponse, error)
+	Save(ctx context.Context, req dto.UploadSaveRequest, uploadType Type) (*dto.UploadResponse, error)
 	PublicURL(objectKey string) string
 }
 
@@ -27,7 +28,7 @@ type uploadManager struct {
 	uploadRepo     repository.UploadRepository
 	uploadConfig   config.Upload
 	ctDetector     contenttype.Detector
-	policyProvider PolicyProvider
+	policyRegistry PolicyRegistry
 	logger         *slog.Logger
 }
 
@@ -36,7 +37,7 @@ func NewManager(
 	uploadRepo repository.UploadRepository,
 	uploadConfig config.Upload,
 	ctDetector contenttype.Detector,
-	policyProvider PolicyProvider,
+	policyRegistry PolicyRegistry,
 	logger *slog.Logger,
 ) *uploadManager {
 	return &uploadManager{
@@ -44,49 +45,49 @@ func NewManager(
 		uploadRepo:     uploadRepo,
 		uploadConfig:   uploadConfig,
 		ctDetector:     ctDetector,
-		policyProvider: policyProvider,
+		policyRegistry: policyRegistry,
 		logger:         logger,
 	}
 }
 
-func (m *uploadManager) SignURL(ctx context.Context, req SignURLRequest, policy Policy) (*SignURLResponse, error) {
+func (m *uploadManager) SignURL(ctx context.Context, req dto.UploadSignURLRequest, uploadType Type) (*dto.UploadSignURLResponse, error) {
 	const op = "uploadManager.SignURL"
 
-	constraints, err := m.policyProvider.Get(policy)
+	filePolicy, err := m.policyRegistry.Get(uploadType)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if err := m.validateSignURLRequest(req, constraints); err != nil {
+	if err := m.validateSignURLRequest(req, filePolicy); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
 	uploadID := uuid.New()
 	metadata := map[string]string{
 		"Upload-Id":   uploadID.String(),
-		"Entity-Type": string(req.Entity.Type),
+		"Entity-Type": req.Entity.Type,
 		"Entity-Id":   req.Entity.ID.String(),
 	}
 
 	objectKey := m.generateObjectKey(req.Entity, uploadID, req.Ext)
-	effectiveMaxSize := m.effectiveMaxSize(constraints)
+	effectiveMaxSize := m.effectiveMaxSize(filePolicy)
 	expireDate := time.Now().UTC().Add(m.uploadConfig.PresignedUrlTTL)
 
 	options := storage.TemporaryUploadURLOptions{
 		ObjectKey:   objectKey,
 		ContentType: req.ContentType,
+		MinSize:     filePolicy.MinSize,
 		MaxSize:     effectiveMaxSize,
 		Expires:     expireDate,
 		Metadata:    metadata,
 	}
 
 	result, err := m.storage.TemporaryUploadURL(ctx, options)
-
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	response := &SignURLResponse{
+	response := &dto.UploadSignURLResponse{
 		UploadID:    uploadID,
 		UploadURL:   result.URL,
 		Filename:    objectKey,
@@ -98,7 +99,7 @@ func (m *uploadManager) SignURL(ctx context.Context, req SignURLRequest, policy 
 	return response, nil
 }
 
-func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy Policy) (*ContentResponse, error) {
+func (m *uploadManager) Save(ctx context.Context, req dto.UploadSaveRequest, uploadType Type) (*dto.UploadResponse, error) {
 	const op = "uploadManager.Save"
 
 	obj, err := m.storage.GetObjectInfo(ctx, req.ObjectKey)
@@ -114,12 +115,12 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 		return nil, apperror.Wrap(op, err)
 	}
 
-	constraints, err := m.policyProvider.Get(policy)
+	filePolicy, err := m.policyRegistry.Get(uploadType)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	effectiveMaxSize := m.effectiveMaxSize(constraints)
+	effectiveMaxSize := m.effectiveMaxSize(filePolicy)
 	if obj.Size > effectiveMaxSize {
 		m.delete(ctx, req.ObjectKey)
 		return nil, apperror.Wrap(op, apperror.ErrFileTooLarge)
@@ -130,7 +131,7 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if !constraints.IsValidType(detectedCT) {
+	if !filePolicy.IsValidContentType(detectedCT) {
 		m.delete(ctx, req.ObjectKey)
 		return nil, apperror.Wrap(op, apperror.ErrInvalidFileType)
 	}
@@ -138,7 +139,7 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 	upload := &models.Upload{
 		ObjectKey:   req.ObjectKey,
 		EntityID:    req.Entity.ID,
-		EntityType:  string(req.Entity.Type),
+		EntityType:  models.EntityType(req.Entity.Type),
 		FileSize:    obj.Size,
 		ContentType: &detectedCT,
 		MediaType:   models.UploadMediaTypeDefault,
@@ -152,7 +153,7 @@ func (m *uploadManager) Save(ctx context.Context, req SaveUploadRequest, policy 
 
 	url := m.PublicURL(req.ObjectKey)
 
-	response := &ContentResponse{
+	response := &dto.UploadResponse{
 		URL:         url,
 		ContentType: upload.ContentType,
 		MediaType:   string(upload.MediaType),
@@ -168,17 +169,17 @@ func (m *uploadManager) PublicURL(objectKey string) string {
 	return m.storage.PublicURL(objectKey)
 }
 
-func (m *uploadManager) validateSignURLRequest(req SignURLRequest, constraints FileConstraints) error {
+func (m *uploadManager) validateSignURLRequest(req dto.UploadSignURLRequest, filePolicy FilePolicy) error {
 	const op = "uploadManager.validateSignURLRequest"
 
-	if !constraints.IsValidExt(req.Ext, req.ContentType) {
+	if !filePolicy.IsValidExt(req.Ext, req.ContentType) {
 		return apperror.Wrap(op, apperror.ErrContentTypeMismatch)
 	}
 
 	return nil
 }
 
-func (m *uploadManager) generateObjectKey(entity Entity, uploadID uuid.UUID, ext string) string {
+func (m *uploadManager) generateObjectKey(entity dto.UploadEntity, uploadID uuid.UUID, ext string) string {
 	return fmt.Sprintf("%s/%s/%s.%s",
 		entity.Type,
 		entity.ID,
@@ -233,11 +234,11 @@ func (m *uploadManager) delete(ctx context.Context, objectKey string) {
 	}
 }
 
-func (m *uploadManager) effectiveMaxSize(constraints FileConstraints) int64 {
-	return min(constraints.MaxSize, m.uploadConfig.MaxFileSize)
+func (m *uploadManager) effectiveMaxSize(filePolicy FilePolicy) int64 {
+	return min(filePolicy.MaxSize, m.uploadConfig.MaxFileSize)
 }
 
-func (m *uploadManager) validateMetadata(req SaveUploadRequest, metadata map[string]string) error {
+func (m *uploadManager) validateMetadata(req dto.UploadSaveRequest, metadata map[string]string) error {
 	const op = "uploadManager.validateMetadata"
 
 	if metadata["Upload-Id"] != req.UploadID.String() {
@@ -248,7 +249,7 @@ func (m *uploadManager) validateMetadata(req SaveUploadRequest, metadata map[str
 		return apperror.Wrap(op, apperror.ErrInvalidEntityID)
 	}
 
-	if metadata["Entity-Type"] != string(req.Entity.Type) {
+	if metadata["Entity-Type"] != req.Entity.Type {
 		return apperror.Wrap(op, apperror.ErrInvalidEntityType)
 	}
 

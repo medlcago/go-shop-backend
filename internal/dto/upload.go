@@ -6,7 +6,25 @@ import (
 	"github.com/google/uuid"
 )
 
-type SignURLResponse struct {
+type UploadEntity struct {
+	ID   uuid.UUID
+	Type string
+}
+
+func NewUploadEntity(id uuid.UUID, entityType string) UploadEntity {
+	return UploadEntity{
+		ID:   id,
+		Type: entityType,
+	}
+}
+
+type UploadSignURLRequest struct {
+	ContentType string
+	Entity      UploadEntity
+	Ext         string
+}
+
+type UploadSignURLResponse struct {
 	UploadID    uuid.UUID `json:"upload_id"`
 	UploadURL   string    `json:"upload_url"`
 	Filename    string    `json:"filename"`
@@ -14,6 +32,13 @@ type SignURLResponse struct {
 	ExpireDate  time.Time `json:"expire_date"`
 
 	FormData map[string]string `json:"form_data,omitempty"`
+}
+
+type UploadSaveRequest struct {
+	UploadID  uuid.UUID
+	ObjectKey string
+	Entity    UploadEntity
+	IsMain    bool
 }
 
 type UploadResponse struct {

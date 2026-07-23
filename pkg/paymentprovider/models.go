@@ -20,9 +20,24 @@ const (
 	PaymentTypeEmbedded PaymentType = "embedded"
 )
 
+type Currency string
+
+const (
+	CurrencyRUB Currency = "RUB"
+)
+
+func (c Currency) IsValid() bool {
+	switch c {
+	case CurrencyRUB:
+		return true
+	}
+
+	return false
+}
+
 type Amount struct {
-	Value    string `json:"value"`
-	Currency string `json:"currency"`
+	Value    string   `json:"value"`
+	Currency Currency `json:"currency"`
 }
 
 type Metadata struct {
@@ -31,12 +46,10 @@ type Metadata struct {
 }
 
 type CreatePaymentRequest struct {
-	Metadata `json:"metadata"`
-
-	// Amount in the smallest currency unit (e.g., cents for USD, kopeks for RUB)
-	Amount  int64       `json:"amount"`
-	Type    PaymentType `json:"type"`
-	Capture bool        `json:"capture"`
+	Amount   Amount      `json:"amount"`
+	Type     PaymentType `json:"type"`
+	Capture  bool        `json:"capture"`
+	Metadata Metadata    `json:"metadata"`
 }
 
 type Payment struct {

@@ -14,7 +14,7 @@ import (
 var _ storage.Storage = (*Storage)(nil)
 
 type Storage struct {
-	cli     *minio.Client
+	client  *minio.Client
 	bucket  string
 	baseURL string
 }
@@ -48,7 +48,7 @@ func New(cfg *Config) (*Storage, error) {
 	}
 
 	return &Storage{
-		cli:     client,
+		client:  client,
 		bucket:  cfg.Bucket,
 		baseURL: cfg.BaseURL,
 	}, nil
@@ -57,7 +57,7 @@ func New(cfg *Config) (*Storage, error) {
 func (s *Storage) Upload(ctx context.Context, objectKey string, r io.Reader, size int64, opts storage.UploadOptions) (string, error) {
 	const op = "minio.Storage.Upload"
 
-	_, err := s.cli.PutObject(ctx, s.bucket, objectKey, r, size, minio.PutObjectOptions{
+	_, err := s.client.PutObject(ctx, s.bucket, objectKey, r, size, minio.PutObjectOptions{
 		ContentType:  opts.ContentType,
 		UserMetadata: opts.Metadata,
 	})
@@ -71,7 +71,7 @@ func (s *Storage) Upload(ctx context.Context, objectKey string, r io.Reader, siz
 func (s *Storage) Delete(ctx context.Context, objectKey string) error {
 	const op = "minio.Storage.Delete"
 
-	err := s.cli.RemoveObject(ctx, s.bucket, objectKey, minio.RemoveObjectOptions{})
+	err := s.client.RemoveObject(ctx, s.bucket, objectKey, minio.RemoveObjectOptions{})
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -82,7 +82,7 @@ func (s *Storage) Delete(ctx context.Context, objectKey string) error {
 func (s *Storage) TemporaryURL(ctx context.Context, objectKey string, expires time.Duration) (string, error) {
 	const op = "minio.Storage.TemporaryURL"
 
-	u, err := s.cli.PresignedGetObject(ctx, s.bucket, objectKey, expires, nil)
+	u, err := s.client.PresignedGetObject(ctx, s.bucket, objectKey, expires, nil)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
@@ -107,7 +107,7 @@ func (s *Storage) TemporaryUploadURL(ctx context.Context, opts storage.Temporary
 		return nil, fmt.Errorf("%s: set content type: %w", op, err)
 	}
 
-	if err := policy.SetContentLengthRange(1, opts.MaxSize); err != nil {
+	if err := policy.SetContentLengthRange(opts.MinSize, opts.MaxSize); err != nil {
 		return nil, fmt.Errorf("%s: set length range: %w", op, err)
 	}
 
@@ -121,7 +121,7 @@ func (s *Storage) TemporaryUploadURL(ctx context.Context, opts storage.Temporary
 		}
 	}
 
-	u, formData, err := s.cli.PresignedPostPolicy(ctx, policy)
+	u, formData, err := s.client.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return nil, fmt.Errorf("%s: presigned post policy: %w", op, err)
 	}
@@ -139,10 +139,9 @@ func (s *Storage) PublicURL(objectKey string) string {
 func (s *Storage) Exists(ctx context.Context, objectKey string) error {
 	const op = "minio.Storage.Exists"
 
-	_, err := s.cli.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
+	_, err := s.client.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
 	if err != nil {
-		errResp := minio.ToErrorResponse(err)
-		if errResp.Code == minio.NoSuchKey {
+		if s.isNoSuchKey(err) {
 			return fmt.Errorf("%s: %w", op, storage.ErrNotFound)
 		}
 
@@ -155,7 +154,7 @@ func (s *Storage) Exists(ctx context.Context, objectKey string) error {
 func (s *Storage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
 	const op = "minio.Storage.Open"
 
-	obj, err := s.cli.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
+	obj, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -163,8 +162,7 @@ func (s *Storage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser
 	if _, err := obj.Stat(); err != nil {
 		_ = obj.Close()
 
-		errResp := minio.ToErrorResponse(err)
-		if errResp.Code == minio.NoSuchKey {
+		if s.isNoSuchKey(err) {
 			return nil, fmt.Errorf("%s: %w", op, storage.ErrNotFound)
 		}
 
@@ -177,7 +175,7 @@ func (s *Storage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser
 func (s *Storage) GetObjectInfo(ctx context.Context, objectKey string) (*storage.ObjectInfo, error) {
 	const op = "minio.Storage.GetObjectInfo"
 
-	info, err := s.cli.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
+	info, err := s.client.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -190,4 +188,9 @@ func (s *Storage) GetObjectInfo(ctx context.Context, objectKey string) (*storage
 		ETag:         info.ETag,
 		Metadata:     info.UserMetadata,
 	}, nil
+}
+
+func (s *Storage) isNoSuchKey(err error) bool {
+	errResp := minio.ToErrorResponse(err)
+	return errResp.Code == minio.NoSuchKey
 }

@@ -1,13 +1,14 @@
 package core
 
 import (
-	"fmt"
+	"go-shop-backend/internal/service"
 	"go-shop-backend/internal/upload"
 )
 
 var (
-	productImageConstraints = upload.FileConstraints{
-		MaxSize: 5 << 20,
+	productImagePolicy = upload.FilePolicy{
+		MinSize: 5 << 10, // 5 KB
+		MaxSize: 5 << 20, // 5 MB
 		AllowedFormats: []upload.Format{
 			{
 				Extensions: []string{"jpg", "jpeg"}, ContentType: "image/jpeg",
@@ -19,22 +20,12 @@ var (
 	}
 )
 
-var (
-	productImagePolicyEntry = upload.PolicyEntry{
-		Policy:      upload.ProductImagePolicy,
-		Constraints: productImageConstraints,
-	}
-)
+func NewUploadPolicyRegistry() upload.PolicyRegistry {
+	registry := upload.NewPolicyRegistry()
+	registry.Register(
+		service.ProductImageType,
+		productImagePolicy,
+	)
 
-func NewUploadPolicyProvider() (upload.PolicyProvider, error) {
-	policyEntries := []upload.PolicyEntry{
-		productImagePolicyEntry,
-	}
-
-	policyProvider, err := upload.NewPolicyProvider(policyEntries...)
-	if err != nil {
-		return nil, fmt.Errorf("core: upload.NewPolicyProvider failed: %w", err)
-	}
-
-	return policyProvider, nil
+	return registry
 }

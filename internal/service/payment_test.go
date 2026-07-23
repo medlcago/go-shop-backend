@@ -16,6 +16,7 @@ import (
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -77,18 +78,23 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_Success() {
 		ConfirmationURL: "https://test.com",
 	}
 
+	idempotencyKey := order.ID.String()
+
 	suite.orderQuery.EXPECT().GetByID(suite.ctx, req.OrderID, false).
 		Return(order, nil).Once()
 
 	suite.provider.EXPECT().CreatePayment(suite.ctx, &paymentprovider.CreatePaymentRequest{
-		Amount: order.TotalAmount,
+		Amount: paymentprovider.Amount{
+			Value:    decimal.NewFromInt(order.TotalAmount).Div(decimal.NewFromInt(100)).String(),
+			Currency: paymentprovider.CurrencyRUB,
+		},
 		Metadata: paymentprovider.Metadata{
 			UserID:  suite.userID,
 			OrderID: order.ID,
 		},
 		Type:    paymentprovider.PaymentType(req.Type),
 		Capture: true,
-	}).Return(payment, nil).Once()
+	}, idempotencyKey).Return(payment, nil).Once()
 
 	suite.provider.EXPECT().GetName().
 		Return(suite.providerName).Once()

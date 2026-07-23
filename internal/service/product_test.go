@@ -7,7 +7,6 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
-	"go-shop-backend/internal/upload"
 	uploadMocks "go-shop-backend/internal/upload/mocks"
 	"go-shop-backend/pkg/apperror"
 	"go-shop-backend/pkg/utils"
@@ -489,9 +488,9 @@ func (suite *ProductServiceTestSuite) TestUploadImage_Success() {
 		Ext:         "jpg",
 	}
 
-	signUrlReq := upload.SignURLRequest{
+	signRequest := dto.UploadSignURLRequest{
 		ContentType: req.ContentType,
-		Entity:      upload.NewProductEntity(suite.productID),
+		Entity:      dto.NewUploadEntity(suite.productID, string(models.EntityTypeProduct)),
 		Ext:         req.Ext,
 	}
 
@@ -500,8 +499,8 @@ func (suite *ProductServiceTestSuite) TestUploadImage_Success() {
 	suite.productRepo.EXPECT().Exists(suite.ctx, suite.productID).
 		Return(true, nil).Once()
 
-	suite.uploadManager.EXPECT().SignURL(suite.ctx, signUrlReq, upload.ProductImagePolicy).
-		Return(&upload.SignURLResponse{UploadID: uploadID}, nil).Once()
+	suite.uploadManager.EXPECT().SignURL(suite.ctx, signRequest, ProductImageType).
+		Return(&dto.UploadSignURLResponse{UploadID: uploadID}, nil).Once()
 
 	response, err := suite.productService.UploadImage(suite.ctx, suite.productID, req)
 
@@ -536,24 +535,23 @@ func (suite *ProductServiceTestSuite) TestConfirmUploadImage_Success() {
 
 	url := "https://example.com/"
 
-	saveUploadReq := upload.SaveUploadRequest{
+	saveRequest := dto.UploadSaveRequest{
 		UploadID:  req.UploadID,
 		ObjectKey: req.ObjectKey,
-		Entity:    upload.NewProductEntity(suite.productID),
+		Entity:    dto.NewUploadEntity(suite.productID, string(models.EntityTypeProduct)),
 		IsMain:    false,
 	}
 
 	suite.productRepo.EXPECT().Exists(suite.ctx, suite.productID).
 		Return(true, nil).Once()
 
-	suite.uploadManager.EXPECT().Save(suite.ctx, saveUploadReq, upload.ProductImagePolicy).
-		Return(&upload.ContentResponse{URL: url}, nil).Once()
+	suite.uploadManager.EXPECT().Save(suite.ctx, saveRequest, ProductImageType).
+		Return(&dto.UploadResponse{URL: url}, nil).Once()
 
 	response, err := suite.productService.ConfirmUploadImage(suite.ctx, suite.productID, req)
 
 	suite.NotNil(response)
 	suite.NoError(err)
-
 	suite.Equal(url, response.URL)
 }
 

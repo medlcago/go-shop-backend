@@ -13,6 +13,10 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	ProductImageType upload.Type = "product_image"
+)
+
 type productService struct {
 	productRepo   repository.ProductRepository
 	uploadManager upload.Manager
@@ -133,25 +137,20 @@ func (p *productService) UploadImage(
 	ctx context.Context,
 	productID uuid.UUID,
 	req dto.UploadProductImageRequest,
-) (*dto.SignURLResponse, error) {
+) (*dto.UploadSignURLResponse, error) {
 	const op = "productService.UploadProductImage"
 
 	if err := p.productExists(ctx, productID); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	signUrlReq := upload.SignURLRequest{
+	signRequest := dto.UploadSignURLRequest{
 		ContentType: req.ContentType,
-		Entity:      upload.NewProductEntity(productID),
+		Entity:      dto.NewUploadEntity(productID, string(models.EntityTypeProduct)),
 		Ext:         req.Ext,
 	}
 
-	signUrlResp, err := p.uploadManager.SignURL(ctx, signUrlReq, upload.ProductImagePolicy)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	response, err := mapper.MapOne[*upload.SignURLResponse, dto.SignURLResponse](signUrlResp)
+	response, err := p.uploadManager.SignURL(ctx, signRequest, ProductImageType)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -170,19 +169,14 @@ func (p *productService) ConfirmUploadImage(
 		return nil, apperror.Wrap(op, err)
 	}
 
-	saveUploadReq := upload.SaveUploadRequest{
+	saveRequest := dto.UploadSaveRequest{
 		UploadID:  req.UploadID,
 		ObjectKey: req.ObjectKey,
-		Entity:    upload.NewProductEntity(productID),
+		Entity:    dto.NewUploadEntity(productID, string(models.EntityTypeProduct)),
 		IsMain:    false,
 	}
 
-	saveUploadResp, err := p.uploadManager.Save(ctx, saveUploadReq, upload.ProductImagePolicy)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	response, err := mapper.MapOne[*upload.ContentResponse, dto.UploadResponse](saveUploadResp)
+	response, err := p.uploadManager.Save(ctx, saveRequest, ProductImageType)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}

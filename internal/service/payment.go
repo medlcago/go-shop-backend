@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type OrderQuery interface {
@@ -72,15 +73,21 @@ func (p *paymentService) CreatePayment(ctx context.Context, userID uuid.UUID, re
 		return nil, apperror.Wrap(op, apperror.ErrPaymentAlreadyCreated)
 	}
 
+	rubles := decimal.NewFromInt(order.TotalAmount).Div(decimal.NewFromInt(100))
+	idempotencyKey := order.ID.String()
+
 	payment, err := p.provider.CreatePayment(ctx, &paymentprovider.CreatePaymentRequest{
-		Amount: order.TotalAmount,
+		Amount: paymentprovider.Amount{
+			Value:    rubles.String(),
+			Currency: paymentprovider.CurrencyRUB,
+		},
 		Metadata: paymentprovider.Metadata{
 			UserID:  userID,
 			OrderID: req.OrderID,
 		},
 		Type:    paymentprovider.PaymentType(req.Type),
 		Capture: true,
-	})
+	}, idempotencyKey)
 
 	if err != nil {
 		return nil, apperror.Wrap(op, err)

@@ -39,16 +39,16 @@ func (_m *MockProvider) EXPECT() *MockProvider_Expecter {
 }
 
 // CancelPayment provides a mock function for the type MockProvider
-func (_mock *MockProvider) CancelPayment(ctx context.Context, paymentID string) error {
-	ret := _mock.Called(ctx, paymentID)
+func (_mock *MockProvider) CancelPayment(ctx context.Context, paymentID string, idempotencyKey string) error {
+	ret := _mock.Called(ctx, paymentID, idempotencyKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CancelPayment")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, paymentID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, paymentID, idempotencyKey)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,11 +63,12 @@ type MockProvider_CancelPayment_Call struct {
 // CancelPayment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - paymentID string
-func (_e *MockProvider_Expecter) CancelPayment(ctx interface{}, paymentID interface{}) *MockProvider_CancelPayment_Call {
-	return &MockProvider_CancelPayment_Call{Call: _e.mock.On("CancelPayment", ctx, paymentID)}
+//   - idempotencyKey string
+func (_e *MockProvider_Expecter) CancelPayment(ctx interface{}, paymentID interface{}, idempotencyKey interface{}) *MockProvider_CancelPayment_Call {
+	return &MockProvider_CancelPayment_Call{Call: _e.mock.On("CancelPayment", ctx, paymentID, idempotencyKey)}
 }
 
-func (_c *MockProvider_CancelPayment_Call) Run(run func(ctx context.Context, paymentID string)) *MockProvider_CancelPayment_Call {
+func (_c *MockProvider_CancelPayment_Call) Run(run func(ctx context.Context, paymentID string, idempotencyKey string)) *MockProvider_CancelPayment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -77,9 +78,14 @@ func (_c *MockProvider_CancelPayment_Call) Run(run func(ctx context.Context, pay
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -90,14 +96,14 @@ func (_c *MockProvider_CancelPayment_Call) Return(err error) *MockProvider_Cance
 	return _c
 }
 
-func (_c *MockProvider_CancelPayment_Call) RunAndReturn(run func(ctx context.Context, paymentID string) error) *MockProvider_CancelPayment_Call {
+func (_c *MockProvider_CancelPayment_Call) RunAndReturn(run func(ctx context.Context, paymentID string, idempotencyKey string) error) *MockProvider_CancelPayment_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreatePayment provides a mock function for the type MockProvider
-func (_mock *MockProvider) CreatePayment(ctx context.Context, req *paymentprovider.CreatePaymentRequest) (*paymentprovider.Payment, error) {
-	ret := _mock.Called(ctx, req)
+func (_mock *MockProvider) CreatePayment(ctx context.Context, req *paymentprovider.CreatePaymentRequest, idempotencyKey string) (*paymentprovider.Payment, error) {
+	ret := _mock.Called(ctx, req, idempotencyKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreatePayment")
@@ -105,18 +111,18 @@ func (_mock *MockProvider) CreatePayment(ctx context.Context, req *paymentprovid
 
 	var r0 *paymentprovider.Payment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *paymentprovider.CreatePaymentRequest) (*paymentprovider.Payment, error)); ok {
-		return returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *paymentprovider.CreatePaymentRequest, string) (*paymentprovider.Payment, error)); ok {
+		return returnFunc(ctx, req, idempotencyKey)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *paymentprovider.CreatePaymentRequest) *paymentprovider.Payment); ok {
-		r0 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *paymentprovider.CreatePaymentRequest, string) *paymentprovider.Payment); ok {
+		r0 = returnFunc(ctx, req, idempotencyKey)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*paymentprovider.Payment)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *paymentprovider.CreatePaymentRequest) error); ok {
-		r1 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *paymentprovider.CreatePaymentRequest, string) error); ok {
+		r1 = returnFunc(ctx, req, idempotencyKey)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -131,11 +137,12 @@ type MockProvider_CreatePayment_Call struct {
 // CreatePayment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *paymentprovider.CreatePaymentRequest
-func (_e *MockProvider_Expecter) CreatePayment(ctx interface{}, req interface{}) *MockProvider_CreatePayment_Call {
-	return &MockProvider_CreatePayment_Call{Call: _e.mock.On("CreatePayment", ctx, req)}
+//   - idempotencyKey string
+func (_e *MockProvider_Expecter) CreatePayment(ctx interface{}, req interface{}, idempotencyKey interface{}) *MockProvider_CreatePayment_Call {
+	return &MockProvider_CreatePayment_Call{Call: _e.mock.On("CreatePayment", ctx, req, idempotencyKey)}
 }
 
-func (_c *MockProvider_CreatePayment_Call) Run(run func(ctx context.Context, req *paymentprovider.CreatePaymentRequest)) *MockProvider_CreatePayment_Call {
+func (_c *MockProvider_CreatePayment_Call) Run(run func(ctx context.Context, req *paymentprovider.CreatePaymentRequest, idempotencyKey string)) *MockProvider_CreatePayment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -145,9 +152,14 @@ func (_c *MockProvider_CreatePayment_Call) Run(run func(ctx context.Context, req
 		if args[1] != nil {
 			arg1 = args[1].(*paymentprovider.CreatePaymentRequest)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -158,7 +170,7 @@ func (_c *MockProvider_CreatePayment_Call) Return(payment *paymentprovider.Payme
 	return _c
 }
 
-func (_c *MockProvider_CreatePayment_Call) RunAndReturn(run func(ctx context.Context, req *paymentprovider.CreatePaymentRequest) (*paymentprovider.Payment, error)) *MockProvider_CreatePayment_Call {
+func (_c *MockProvider_CreatePayment_Call) RunAndReturn(run func(ctx context.Context, req *paymentprovider.CreatePaymentRequest, idempotencyKey string) (*paymentprovider.Payment, error)) *MockProvider_CreatePayment_Call {
 	_c.Call.Return(run)
 	return _c
 }

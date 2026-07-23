@@ -60,7 +60,7 @@ type Container struct {
 	storage              Lazy[storage.Storage]
 	redisClient          Lazy[*redis.Client]
 	contentTypeDetector  Lazy[contenttype.Detector]
-	uploadPolicyProvider Lazy[upload.PolicyProvider]
+	uploadPolicyRegistry Lazy[upload.PolicyRegistry]
 	uploadManager        Lazy[upload.Manager]
 	cache                Lazy[cache.Cache]
 	templateManager      Lazy[template.Manager]
@@ -205,9 +205,13 @@ func (c *Container) ContentTypeDetector() contenttype.Detector {
 
 func (c *Container) PaymentProvider() paymentprovider.Provider {
 	return c.paymentProvider.Get(func() paymentprovider.Provider {
-		paymentProvider, err := yookassa.New(
-			yookassa.NewConfig(c.Config().Yookassa.AccountID, c.Config().Yookassa.SecretKey, c.Config().Yookassa.ReturnURL),
+		yookassaConfig := yookassa.NewConfig(
+			c.Config().Yookassa.AccountID,
+			c.Config().Yookassa.SecretKey,
+			c.Config().Yookassa.ReturnURL,
 		)
+
+		paymentProvider, err := yookassa.New(yookassaConfig)
 		if err != nil {
 			logger.Fatal(c.Logger(), "failed to create payment provider", err)
 		}
@@ -239,14 +243,9 @@ func (c *Container) TaskFactory() *tasks.Factory {
 	})
 }
 
-func (c *Container) UploadPolicyProvider() upload.PolicyProvider {
-	return c.uploadPolicyProvider.Get(func() upload.PolicyProvider {
-		uploadPolicyProvider, err := NewUploadPolicyProvider()
-		if err != nil {
-			logger.Fatal(c.Logger(), "failed to create upload policy provider", err)
-		}
-
-		return uploadPolicyProvider
+func (c *Container) UploadPolicyRegistry() upload.PolicyRegistry {
+	return c.uploadPolicyRegistry.Get(func() upload.PolicyRegistry {
+		return NewUploadPolicyRegistry()
 	})
 }
 
@@ -257,7 +256,7 @@ func (c *Container) UploadManager() upload.Manager {
 			c.UploadRepo(),
 			c.Config().Upload,
 			c.ContentTypeDetector(),
-			c.UploadPolicyProvider(),
+			c.UploadPolicyRegistry(),
 			c.Logger(),
 		)
 

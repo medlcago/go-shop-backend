@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFileConstraints_IsValidExt(t *testing.T) {
-	constraints := upload.FileConstraints{
+func TestFilePolicy_IsValidExt(t *testing.T) {
+	filePolicy := upload.FilePolicy{
 		AllowedFormats: []upload.Format{
 			{
 				ContentType: "image/jpeg",
@@ -73,14 +73,14 @@ func TestFileConstraints_IsValidExt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := constraints.IsValidExt(tt.ext, tt.ct)
+			got := filePolicy.IsValidExt(tt.ext, tt.ct)
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestFileConstraints_IsValidType(t *testing.T) {
-	constraints := upload.FileConstraints{
+func TestFilePolicy_IsValidType(t *testing.T) {
+	filePolicy := upload.FilePolicy{
 		AllowedFormats: []upload.Format{
 			{
 				ContentType: "image/jpeg",
@@ -122,7 +122,7 @@ func TestFileConstraints_IsValidType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := constraints.IsValidType(tt.ct)
+			got := filePolicy.IsValidContentType(tt.ct)
 			assert.Equal(t, tt.want, got)
 		})
 	}

@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/upload"
 
 	mock "github.com/stretchr/testify/mock"
@@ -90,27 +91,27 @@ func (_c *MockManager_PublicURL_Call) RunAndReturn(run func(objectKey string) st
 }
 
 // Save provides a mock function for the type MockManager
-func (_mock *MockManager) Save(ctx context.Context, req upload.SaveUploadRequest, policy upload.Policy) (*upload.ContentResponse, error) {
-	ret := _mock.Called(ctx, req, policy)
+func (_mock *MockManager) Save(ctx context.Context, req dto.UploadSaveRequest, uploadType upload.Type) (*dto.UploadResponse, error) {
+	ret := _mock.Called(ctx, req, uploadType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
 	}
 
-	var r0 *upload.ContentResponse
+	var r0 *dto.UploadResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, upload.SaveUploadRequest, upload.Policy) (*upload.ContentResponse, error)); ok {
-		return returnFunc(ctx, req, policy)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UploadSaveRequest, upload.Type) (*dto.UploadResponse, error)); ok {
+		return returnFunc(ctx, req, uploadType)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, upload.SaveUploadRequest, upload.Policy) *upload.ContentResponse); ok {
-		r0 = returnFunc(ctx, req, policy)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UploadSaveRequest, upload.Type) *dto.UploadResponse); ok {
+		r0 = returnFunc(ctx, req, uploadType)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*upload.ContentResponse)
+			r0 = ret.Get(0).(*dto.UploadResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, upload.SaveUploadRequest, upload.Policy) error); ok {
-		r1 = returnFunc(ctx, req, policy)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.UploadSaveRequest, upload.Type) error); ok {
+		r1 = returnFunc(ctx, req, uploadType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -124,25 +125,25 @@ type MockManager_Save_Call struct {
 
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req upload.SaveUploadRequest
-//   - policy upload.Policy
-func (_e *MockManager_Expecter) Save(ctx interface{}, req interface{}, policy interface{}) *MockManager_Save_Call {
-	return &MockManager_Save_Call{Call: _e.mock.On("Save", ctx, req, policy)}
+//   - req dto.UploadSaveRequest
+//   - uploadType upload.Type
+func (_e *MockManager_Expecter) Save(ctx interface{}, req interface{}, uploadType interface{}) *MockManager_Save_Call {
+	return &MockManager_Save_Call{Call: _e.mock.On("Save", ctx, req, uploadType)}
 }
 
-func (_c *MockManager_Save_Call) Run(run func(ctx context.Context, req upload.SaveUploadRequest, policy upload.Policy)) *MockManager_Save_Call {
+func (_c *MockManager_Save_Call) Run(run func(ctx context.Context, req dto.UploadSaveRequest, uploadType upload.Type)) *MockManager_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 upload.SaveUploadRequest
+		var arg1 dto.UploadSaveRequest
 		if args[1] != nil {
-			arg1 = args[1].(upload.SaveUploadRequest)
+			arg1 = args[1].(dto.UploadSaveRequest)
 		}
-		var arg2 upload.Policy
+		var arg2 upload.Type
 		if args[2] != nil {
-			arg2 = args[2].(upload.Policy)
+			arg2 = args[2].(upload.Type)
 		}
 		run(
 			arg0,
@@ -153,38 +154,38 @@ func (_c *MockManager_Save_Call) Run(run func(ctx context.Context, req upload.Sa
 	return _c
 }
 
-func (_c *MockManager_Save_Call) Return(contentResponse *upload.ContentResponse, err error) *MockManager_Save_Call {
-	_c.Call.Return(contentResponse, err)
+func (_c *MockManager_Save_Call) Return(uploadResponse *dto.UploadResponse, err error) *MockManager_Save_Call {
+	_c.Call.Return(uploadResponse, err)
 	return _c
 }
 
-func (_c *MockManager_Save_Call) RunAndReturn(run func(ctx context.Context, req upload.SaveUploadRequest, policy upload.Policy) (*upload.ContentResponse, error)) *MockManager_Save_Call {
+func (_c *MockManager_Save_Call) RunAndReturn(run func(ctx context.Context, req dto.UploadSaveRequest, uploadType upload.Type) (*dto.UploadResponse, error)) *MockManager_Save_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SignURL provides a mock function for the type MockManager
-func (_mock *MockManager) SignURL(ctx context.Context, req upload.SignURLRequest, policy upload.Policy) (*upload.SignURLResponse, error) {
-	ret := _mock.Called(ctx, req, policy)
+func (_mock *MockManager) SignURL(ctx context.Context, req dto.UploadSignURLRequest, uploadType upload.Type) (*dto.UploadSignURLResponse, error) {
+	ret := _mock.Called(ctx, req, uploadType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SignURL")
 	}
 
-	var r0 *upload.SignURLResponse
+	var r0 *dto.UploadSignURLResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, upload.SignURLRequest, upload.Policy) (*upload.SignURLResponse, error)); ok {
-		return returnFunc(ctx, req, policy)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UploadSignURLRequest, upload.Type) (*dto.UploadSignURLResponse, error)); ok {
+		return returnFunc(ctx, req, uploadType)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, upload.SignURLRequest, upload.Policy) *upload.SignURLResponse); ok {
-		r0 = returnFunc(ctx, req, policy)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.UploadSignURLRequest, upload.Type) *dto.UploadSignURLResponse); ok {
+		r0 = returnFunc(ctx, req, uploadType)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*upload.SignURLResponse)
+			r0 = ret.Get(0).(*dto.UploadSignURLResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, upload.SignURLRequest, upload.Policy) error); ok {
-		r1 = returnFunc(ctx, req, policy)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.UploadSignURLRequest, upload.Type) error); ok {
+		r1 = returnFunc(ctx, req, uploadType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -198,25 +199,25 @@ type MockManager_SignURL_Call struct {
 
 // SignURL is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req upload.SignURLRequest
-//   - policy upload.Policy
-func (_e *MockManager_Expecter) SignURL(ctx interface{}, req interface{}, policy interface{}) *MockManager_SignURL_Call {
-	return &MockManager_SignURL_Call{Call: _e.mock.On("SignURL", ctx, req, policy)}
+//   - req dto.UploadSignURLRequest
+//   - uploadType upload.Type
+func (_e *MockManager_Expecter) SignURL(ctx interface{}, req interface{}, uploadType interface{}) *MockManager_SignURL_Call {
+	return &MockManager_SignURL_Call{Call: _e.mock.On("SignURL", ctx, req, uploadType)}
 }
 
-func (_c *MockManager_SignURL_Call) Run(run func(ctx context.Context, req upload.SignURLRequest, policy upload.Policy)) *MockManager_SignURL_Call {
+func (_c *MockManager_SignURL_Call) Run(run func(ctx context.Context, req dto.UploadSignURLRequest, uploadType upload.Type)) *MockManager_SignURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 upload.SignURLRequest
+		var arg1 dto.UploadSignURLRequest
 		if args[1] != nil {
-			arg1 = args[1].(upload.SignURLRequest)
+			arg1 = args[1].(dto.UploadSignURLRequest)
 		}
-		var arg2 upload.Policy
+		var arg2 upload.Type
 		if args[2] != nil {
-			arg2 = args[2].(upload.Policy)
+			arg2 = args[2].(upload.Type)
 		}
 		run(
 			arg0,
@@ -227,12 +228,12 @@ func (_c *MockManager_SignURL_Call) Run(run func(ctx context.Context, req upload
 	return _c
 }
 
-func (_c *MockManager_SignURL_Call) Return(signURLResponse *upload.SignURLResponse, err error) *MockManager_SignURL_Call {
-	_c.Call.Return(signURLResponse, err)
+func (_c *MockManager_SignURL_Call) Return(uploadSignURLResponse *dto.UploadSignURLResponse, err error) *MockManager_SignURL_Call {
+	_c.Call.Return(uploadSignURLResponse, err)
 	return _c
 }
 
-func (_c *MockManager_SignURL_Call) RunAndReturn(run func(ctx context.Context, req upload.SignURLRequest, policy upload.Policy) (*upload.SignURLResponse, error)) *MockManager_SignURL_Call {
+func (_c *MockManager_SignURL_Call) RunAndReturn(run func(ctx context.Context, req dto.UploadSignURLRequest, uploadType upload.Type) (*dto.UploadSignURLResponse, error)) *MockManager_SignURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

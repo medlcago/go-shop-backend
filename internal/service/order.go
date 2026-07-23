@@ -329,13 +329,13 @@ func (o *orderService) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID,
 	const op = "orderService.UpdateOrderStatus"
 
 	err := o.txManager.Wrap(ctx, func(ctx context.Context) error {
+		if !status.IsValid() {
+			return apperror.ErrInvalidOrderStatus
+		}
+
 		order, err := o.getOrderByID(ctx, orderID, true)
 		if err != nil {
 			return err
-		}
-
-		if !status.IsValid() {
-			return apperror.ErrInvalidOrderStatus
 		}
 
 		if !order.Status.CanTransitionTo(status) {

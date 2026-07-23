@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"go-shop-backend/pkg/paymentprovider"
 
-	"github.com/google/uuid"
 	yookassasdk "github.com/rvinnie/yookassa-sdk-go/yookassa"
 	yoocommon "github.com/rvinnie/yookassa-sdk-go/yookassa/common"
 	yoopayment "github.com/rvinnie/yookassa-sdk-go/yookassa/payment"
 	yoowebhook "github.com/rvinnie/yookassa-sdk-go/yookassa/webhook"
-	"github.com/shopspring/decimal"
 )
 
 const (
@@ -53,10 +51,12 @@ func New(cfg *Config) (*Provider, error) {
 	}, nil
 }
 
-func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.CreatePaymentRequest) (*paymentprovider.Payment, error) {
-	paymentHandler := p.paymentHandler.WithIdempotencyKey(uuid.NewString())
+func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.CreatePaymentRequest, idempotencyKey string) (*paymentprovider.Payment, error) {
+	if !req.Amount.Currency.IsValid() {
+		return nil, fmt.Errorf("yookassa: unsupported currency: %s", req.Amount.Currency)
+	}
 
-	rubles := decimal.NewFromInt(req.Amount).Div(decimal.NewFromInt(100))
+	paymentHandler := p.paymentHandler.WithIdempotencyKey(idempotencyKey)
 
 	var confirmation yoopayment.Confirmer
 
@@ -76,8 +76,8 @@ func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.Creat
 
 	payment, err := paymentHandler.CreatePayment(ctx, &yoopayment.Payment{
 		Amount: &yoocommon.Amount{
-			Value:    rubles.StringFixed(2),
-			Currency: "RUB",
+			Value:    req.Amount.Value,
+			Currency: string(req.Amount.Currency),
 		},
 		PaymentMethod: yoopayment.PaymentTypeBankCard,
 		Confirmation:  confirmation,
@@ -115,7 +115,7 @@ func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.Creat
 		Status: paymentprovider.PaymentStatusPending,
 		Amount: paymentprovider.Amount{
 			Value:    payment.Amount.Value,
-			Currency: payment.Amount.Currency,
+			Currency: paymentprovider.Currency(payment.Amount.Currency),
 		},
 		Description:       payment.Description,
 		Metadata:          req.Metadata,
@@ -124,8 +124,8 @@ func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.Creat
 	}, nil
 }
 
-func (p *Provider) CancelPayment(ctx context.Context, paymentID string) error {
-	paymentHandler := p.paymentHandler.WithIdempotencyKey(uuid.NewString())
+func (p *Provider) CancelPayment(ctx context.Context, paymentID string, idempotencyKey string) error {
+	paymentHandler := p.paymentHandler.WithIdempotencyKey(idempotencyKey)
 
 	_, err := paymentHandler.CancelPayment(ctx, paymentID)
 	if err != nil {
@@ -135,8 +135,8 @@ func (p *Provider) CancelPayment(ctx context.Context, paymentID string) error {
 	return nil
 }
 
-func (p *Provider) CapturePayment(ctx context.Context, paymentID string) error {
-	paymentHandler := p.paymentHandler.WithIdempotencyKey(uuid.NewString())
+func (p *Provider) CapturePayment(ctx context.Context, paymentID string, idempotencyKey string) error {
+	paymentHandler := p.paymentHandler.WithIdempotencyKey(idempotencyKey)
 
 	payment, err := paymentHandler.FindPayment(ctx, paymentID)
 	if err != nil {
@@ -189,7 +189,7 @@ func (p *Provider) ParseWebhook(body []byte) (*paymentprovider.WebhookEvent, err
 		Metadata:  metadata,
 		Amount: paymentprovider.Amount{
 			Value:    yookassaWebhookEvent.Object.Amount.Value,
-			Currency: yookassaWebhookEvent.Object.Amount.Currency,
+			Currency: paymentprovider.Currency(yookassaWebhookEvent.Object.Amount.Currency),
 		},
 	}
 

@@ -19,18 +19,19 @@ const (
 	UploadVariantOriginal UploadVariant = "original"
 )
 
+type EntityType string
+
+const (
+	EntityTypeProduct EntityType = "products"
+)
+
 type Upload struct {
 	ID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 
-	ObjectKey string `gorm:"type:varchar(1024);not null;
-		uniqueIndex:idx_uploads_object_key_unique,where:deleted_at IS NULL"`
+	ObjectKey string `gorm:"type:varchar(1024);not null;uniqueIndex:idx_uploads_object_key_unique,where:deleted_at IS NULL"`
 
-	EntityType string `gorm:"type:varchar(255);not null;
-		index:idx_uploads_entity_created_at,priority:1,where:deleted_at IS NULL;
-		index:idx_uploads_entity_media_type,priority:1,where:deleted_at IS NULL"`
-	EntityID uuid.UUID `gorm:"type:uuid;not null;
-		index:idx_uploads_entity_created_at,priority:2,where:deleted_at IS NULL;
-		index:idx_uploads_entity_media_type,priority:2,where:deleted_at IS NULL"`
+	EntityType EntityType `gorm:"type:varchar(255);not null;index:idx_uploads_entity_created_at,priority:1,where:deleted_at IS NULL;index:idx_uploads_entity_media_type,priority:1,where:deleted_at IS NULL"`
+	EntityID   uuid.UUID  `gorm:"type:uuid;not null;index:idx_uploads_entity_created_at,priority:2,where:deleted_at IS NULL;index:idx_uploads_entity_media_type,priority:2,where:deleted_at IS NULL"`
 
 	FileSize    int64   `gorm:"not null"`
 	ContentType *string `gorm:"type:varchar(255)"`

@@ -28,7 +28,7 @@ type ProductService interface {
 	CreateProduct(ctx context.Context, req dto.ProductCreateRequest) (*dto.ProductResponse, error)
 	UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error)
 	Search(ctx context.Context, req dto.SearchProductRequest) ([]*dto.ProductResponse, int64, error)
-	UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageRequest) (*dto.SignURLResponse, error)
+	UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageRequest) (*dto.UploadSignURLResponse, error)
 	ConfirmUploadImage(ctx context.Context, productID uuid.UUID, req dto.ConfirmUploadProductImageRequest) (*dto.UploadResponse, error)
 }
 

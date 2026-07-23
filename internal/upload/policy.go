@@ -2,43 +2,75 @@ package upload
 
 import (
 	"fmt"
+	"slices"
+	"sync"
 )
 
-type Policy string
+type Type string
 
-const (
-	ProductImagePolicy Policy = "product_image"
-)
-
-type PolicyProvider interface {
-	Get(policy Policy) (FileConstraints, error)
+type PolicyRegistry interface {
+	Get(t Type) (FilePolicy, error)
+	Register(t Type, filePolicy FilePolicy)
 }
 
-type policyProvider struct {
-	policies map[Policy]FileConstraints
+type policyRegistry struct {
+	policies map[Type]FilePolicy
+	mu       sync.RWMutex
 }
 
-func (p *policyProvider) Get(policy Policy) (FileConstraints, error) {
-	c, ok := p.policies[policy]
+func NewPolicyRegistry() *policyRegistry {
+	return &policyRegistry{
+		policies: make(map[Type]FilePolicy),
+	}
+}
+func (p *policyRegistry) Get(t Type) (FilePolicy, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	policy, ok := p.policies[t]
 	if !ok {
-		return FileConstraints{}, fmt.Errorf("unknown policy: %s", policy)
+		return FilePolicy{}, fmt.Errorf("upload policy %q not found", t)
 	}
-	return c, nil
+
+	return policy, nil
 }
 
-type PolicyEntry struct {
-	Policy      Policy
-	Constraints FileConstraints
+func (p *policyRegistry) Register(t Type, policy FilePolicy) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if _, ok := p.policies[t]; ok {
+		panic(fmt.Sprintf("upload policy %q already registered", t))
+	}
+
+	p.policies[t] = policy
 }
 
-func NewPolicyProvider(entries ...PolicyEntry) (PolicyProvider, error) {
-	p := &policyProvider{policies: make(map[Policy]FileConstraints, len(entries))}
-	for _, e := range entries {
-		if _, exists := p.policies[e.Policy]; exists {
-			return nil, fmt.Errorf("duplicate policy: %s", e.Policy)
+type Format struct {
+	Extensions  []string
+	ContentType string
+}
+
+type FilePolicy struct {
+	MinSize        int64
+	MaxSize        int64
+	AllowedFormats []Format
+}
+
+func (f *FilePolicy) IsValidExt(ext, ct string) bool {
+	for _, f := range f.AllowedFormats {
+		if f.ContentType == ct {
+			return slices.Contains(f.Extensions, ext)
 		}
-		p.policies[e.Policy] = e.Constraints
 	}
+	return false
+}
 
-	return p, nil
+func (f *FilePolicy) IsValidContentType(ct string) bool {
+	for _, f := range f.AllowedFormats {
+		if f.ContentType == ct {
+			return true
+		}
+	}
+	return false
 }
