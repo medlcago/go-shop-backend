@@ -1077,3 +1077,67 @@ func (suite *OrderServiceTestSuite) TestCancelOrder_DifferentUserCancelsOrder_Re
 	suite.ErrorContains(err, "orderService.CancelOrder")
 	suite.ErrorIs(err, apperror.ErrForbidden)
 }
+
+// ==================== UpdateOrderStatus Tests ====================
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_Success_OrderStatusPaid() {
+	order := &models.Order{
+		ID:     suite.orderID,
+		Status: models.OrderStatusPending,
+	}
+
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(order, nil).Once()
+
+	suite.inventoryService.EXPECT().DeductItems(suite.ctx, mock.Anything).
+		Return(nil).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(order *models.Order) bool {
+		return order.Status == models.OrderStatusPaid
+	})).Return(nil).Once()
+
+	err := suite.orderService.UpdateOrderStatus(suite.ctx, suite.orderID, models.OrderStatusPaid)
+	suite.NoError(err)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_Success_OrderStatusCanceled() {
+	order := &models.Order{
+		ID:     suite.orderID,
+		Status: models.OrderStatusPending,
+	}
+
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(order, nil).Once()
+
+	suite.inventoryService.EXPECT().ReleaseItems(suite.ctx, mock.Anything).
+		Return(nil).Once()
+
+	suite.orderRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(order *models.Order) bool {
+		return order.Status == models.OrderStatusCanceled
+	})).Return(nil).Once()
+
+	err := suite.orderService.UpdateOrderStatus(suite.ctx, suite.orderID, models.OrderStatusCanceled)
+	suite.NoError(err)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_InvalidOrderStatus() {
+	err := suite.orderService.UpdateOrderStatus(suite.ctx, suite.orderID, "test")
+
+	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
+	suite.ErrorContains(err, "orderService.UpdateOrderStatus")
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_InvalidTransitionStatus() {
+	order := &models.Order{
+		ID:     suite.orderID,
+		Status: models.OrderStatusCanceled,
+	}
+
+	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
+		Return(order, nil).Once()
+
+	err := suite.orderService.UpdateOrderStatus(suite.ctx, suite.orderID, models.OrderStatusPaid)
+
+	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
+	suite.ErrorContains(err, "orderService.UpdateOrderStatus")
+}
