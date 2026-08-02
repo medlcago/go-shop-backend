@@ -46,7 +46,7 @@ func (h *Handler) CreateWishlist(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.wishlistService.CreateWishlist(ctx, *userCtx.UserID, req)
+	resp, err := h.wishlistService.CreateWishlist(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (h *Handler) GetWishlist(ctx fiber.Ctx) error {
 
 	wishlistID := uuid.MustParse(ctx.Params("wishlistID"))
 
-	resp, err := h.wishlistService.GetWishlist(ctx, *userCtx.UserID, wishlistID)
+	resp, err := h.wishlistService.GetWishlist(ctx.Context(), *userCtx.UserID, wishlistID)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (h *Handler) GetWishlists(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, total, err := h.wishlistService.GetWishlists(ctx, *userCtx.UserID, req)
+	resp, total, err := h.wishlistService.GetWishlists(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (h *Handler) GetWishlists(ctx fiber.Ctx) error {
 func (h *Handler) GetSharedWishlist(ctx fiber.Ctx) error {
 	token := ctx.Params("token")
 
-	resp, err := h.wishlistService.GetSharedWishlist(ctx, token)
+	resp, err := h.wishlistService.GetSharedWishlist(ctx.Context(), token)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (h *Handler) RegenerateShareToken(ctx fiber.Ctx) error {
 
 	wishlistID := uuid.MustParse(ctx.Params("wishlistID"))
 
-	resp, err := h.wishlistService.RegenerateShareToken(ctx, *userCtx.UserID, wishlistID)
+	resp, err := h.wishlistService.RegenerateShareToken(ctx.Context(), *userCtx.UserID, wishlistID)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (h *Handler) UpdateWishlist(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.wishlistService.UpdateWishlist(ctx, *userCtx.UserID, wishlistID, req)
+	resp, err := h.wishlistService.UpdateWishlist(ctx.Context(), *userCtx.UserID, wishlistID, req)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (h *Handler) AddItem(ctx fiber.Ctx) error {
 
 	wishlistID := uuid.MustParse(ctx.Params("wishlistID"))
 
-	resp, err := h.wishlistService.AddItem(ctx, *userCtx.UserID, wishlistID, req)
+	resp, err := h.wishlistService.AddItem(ctx.Context(), *userCtx.UserID, wishlistID, req)
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (h *Handler) UpdateItem(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.wishlistService.UpdateItem(ctx, *userCtx.UserID, wishlistID, itemID, req)
+	resp, err := h.wishlistService.UpdateItem(ctx.Context(), *userCtx.UserID, wishlistID, itemID, req)
 	if err != nil {
 		return err
 	}
@@ -319,7 +319,7 @@ func (h *Handler) RemoveItem(ctx fiber.Ctx) error {
 	wishlistID := uuid.MustParse(ctx.Params("wishlistID"))
 	itemID := uuid.MustParse(ctx.Params("itemID"))
 
-	resp, err := h.wishlistService.RemoveItem(ctx, *userCtx.UserID, wishlistID, itemID)
+	resp, err := h.wishlistService.RemoveItem(ctx.Context(), *userCtx.UserID, wishlistID, itemID)
 	if err != nil {
 		return err
 	}

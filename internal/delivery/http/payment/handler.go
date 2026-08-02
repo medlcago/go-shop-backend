@@ -49,7 +49,7 @@ func (h *Handler) CreatePayment(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.paymentService.CreatePayment(ctx, *userCtx.UserID, req)
+	resp, err := h.paymentService.CreatePayment(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (h *Handler) CreatePayment(ctx fiber.Ctx) error {
 }
 
 func (h *Handler) HandleYookassaWebhook(ctx fiber.Ctx) error {
-	err := h.paymentService.HandleWebhook(ctx, ctx.Body())
+	err := h.paymentService.HandleWebhook(ctx.Context(), ctx.Body())
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (h *Handler) GetUserPaymentMethods(ctx fiber.Ctx) error {
 		return apperror.ErrInvalidCredentials
 	}
 
-	resp, total, err := h.paymentService.GetUserPaymentMethods(ctx, *userCtx.UserID)
+	resp, total, err := h.paymentService.GetUserPaymentMethods(ctx.Context(), *userCtx.UserID)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (h *Handler) SetDefaultPaymentMethod(ctx fiber.Ctx) error {
 
 	id := uuid.MustParse(ctx.Params("id"))
 
-	if err := h.paymentService.SetDefaultPaymentMethod(ctx, id, *userCtx.UserID); err != nil {
+	if err := h.paymentService.SetDefaultPaymentMethod(ctx.Context(), id, *userCtx.UserID); err != nil {
 		return err
 	}
 
@@ -104,7 +104,7 @@ func (h *Handler) DeletePaymentMethod(ctx fiber.Ctx) error {
 
 	id := uuid.MustParse(ctx.Params("id"))
 
-	if err := h.paymentService.DeletePaymentMethod(ctx, id, *userCtx.UserID); err != nil {
+	if err := h.paymentService.DeletePaymentMethod(ctx.Context(), id, *userCtx.UserID); err != nil {
 		return err
 	}
 

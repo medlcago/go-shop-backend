@@ -39,7 +39,7 @@ func (h *Handler) CreateOrder(ctx fiber.Ctx) error {
 		return apperror.ErrInvalidCredentials
 	}
 
-	resp, err := h.orderService.CreateOrder(ctx, userCtx.UserID, *userCtx.SessionID)
+	resp, err := h.orderService.CreateOrder(ctx.Context(), userCtx.UserID, *userCtx.SessionID)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (h *Handler) GetOrder(ctx fiber.Ctx) error {
 
 	orderID := uuid.MustParse(ctx.Params("id"))
 
-	resp, err := h.orderService.GetOrder(ctx, userCtx.UserID, *userCtx.SessionID, orderID)
+	resp, err := h.orderService.GetOrder(ctx.Context(), userCtx.UserID, *userCtx.SessionID, orderID)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (h *Handler) GetOrders(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, total, err := h.orderService.GetOrders(ctx, userCtx.UserID, *userCtx.SessionID, req)
+	resp, total, err := h.orderService.GetOrders(ctx.Context(), userCtx.UserID, *userCtx.SessionID, req)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (h *Handler) AddItem(ctx fiber.Ctx) error {
 
 	orderID := uuid.MustParse(ctx.Params("id"))
 
-	resp, err := h.orderService.AddItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, req)
+	resp, err := h.orderService.AddItem(ctx.Context(), userCtx.UserID, *userCtx.SessionID, orderID, req)
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (h *Handler) RemoveItem(ctx fiber.Ctx) error {
 	orderID := uuid.MustParse(ctx.Params("id"))
 	itemID := uuid.MustParse(ctx.Params("itemID"))
 
-	resp, err := h.orderService.RemoveItem(ctx, userCtx.UserID, *userCtx.SessionID, orderID, itemID)
+	resp, err := h.orderService.RemoveItem(ctx.Context(), userCtx.UserID, *userCtx.SessionID, orderID, itemID)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (h *Handler) ClearItems(ctx fiber.Ctx) error {
 
 	orderID := uuid.MustParse(ctx.Params("id"))
 
-	resp, err := h.orderService.Clear(ctx, userCtx.UserID, *userCtx.SessionID, orderID)
+	resp, err := h.orderService.Clear(ctx.Context(), userCtx.UserID, *userCtx.SessionID, orderID)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (h *Handler) Checkout(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.orderService.Checkout(ctx, *userCtx.UserID, *userCtx.SessionID, orderID, req)
+	resp, err := h.orderService.Checkout(ctx.Context(), *userCtx.UserID, *userCtx.SessionID, orderID, req)
 	if err != nil {
 		return err
 	}
@@ -277,7 +277,7 @@ func (h *Handler) CancelOrder(ctx fiber.Ctx) error {
 
 	orderID := uuid.MustParse(ctx.Params("id"))
 
-	err := h.orderService.CancelOrder(ctx, *userCtx.UserID, orderID)
+	err := h.orderService.CancelOrder(ctx.Context(), *userCtx.UserID, orderID)
 	if err != nil {
 		return err
 	}

@@ -39,7 +39,7 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.userService.Login(ctx, req)
+	resp, err := h.userService.Login(ctx.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (h *Handler) Register(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.userService.Register(ctx, req)
+	resp, err := h.userService.Register(ctx.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (h *Handler) Setup2FA(ctx fiber.Ctx) error {
 		return apperror.ErrInvalidCredentials
 	}
 
-	resp, err := h.userService.Setup2FA(ctx, *userCtx.UserID)
+	resp, err := h.userService.Setup2FA(ctx.Context(), *userCtx.UserID)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (h *Handler) Confirm2FA(ctx fiber.Ctx) error {
 		return err
 	}
 
-	err := h.userService.Confirm2FA(ctx, *userCtx.UserID, req)
+	err := h.userService.Confirm2FA(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (h *Handler) Disable2FA(ctx fiber.Ctx) error {
 		return err
 	}
 
-	err := h.userService.Disable2FA(ctx, *userCtx.UserID, req)
+	err := h.userService.Disable2FA(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (h *Handler) Disable2FA(ctx fiber.Ctx) error {
 func (h *Handler) RefreshToken(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 
-	resp, err := h.userService.RefreshToken(ctx, userCtx.Token)
+	resp, err := h.userService.RefreshToken(ctx.Context(), userCtx.Token)
 	if err != nil {
 		return err
 	}
@@ -210,7 +210,7 @@ func (h *Handler) GetMe(ctx fiber.Ctx) error {
 		return apperror.ErrInvalidCredentials
 	}
 
-	resp, err := h.userService.GetUserByID(ctx, *userCtx.UserID)
+	resp, err := h.userService.GetUserByID(ctx.Context(), *userCtx.UserID)
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (h *Handler) SendEmailConfirmationCode(ctx fiber.Ctx) error {
 		return apperror.ErrInvalidCredentials
 	}
 
-	resp, err := h.userService.SendEmailConfirmationCode(ctx, *userCtx.UserID)
+	resp, err := h.userService.SendEmailConfirmationCode(ctx.Context(), *userCtx.UserID)
 	if err != nil {
 		return err
 	}
@@ -273,7 +273,7 @@ func (h *Handler) ConfirmEmail(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.userService.ConfirmEmail(ctx, *userCtx.UserID, req)
+	resp, err := h.userService.ConfirmEmail(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -307,7 +307,7 @@ func (h *Handler) ChangePassword(ctx fiber.Ctx) error {
 		return err
 	}
 
-	err := h.userService.ChangePassword(ctx, *userCtx.UserID, req)
+	err := h.userService.ChangePassword(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}

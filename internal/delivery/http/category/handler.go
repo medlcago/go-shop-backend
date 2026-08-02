@@ -48,7 +48,7 @@ func (h *Handler) ListCategories(ctx fiber.Ctx) error {
 
 	req.ID = id
 
-	resp, total, err := h.categoryService.ListCategories(ctx, req)
+	resp, total, err := h.categoryService.ListCategories(ctx.Context(), req)
 	if err != nil {
 		return err
 	}

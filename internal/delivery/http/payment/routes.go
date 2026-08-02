@@ -32,11 +32,11 @@ func RegisterRoutes(r fiber.Router, paymentHandler *Handler) {
 			paymentHandler.GetUserPaymentMethods,
 		)
 		protectedPaymentGroup.Put(
-			":id<guid>/default",
+			"/user-methods/:id<guid>/default",
 			paymentHandler.SetDefaultPaymentMethod,
 		)
 		protectedPaymentGroup.Delete(
-			":id<guid>",
+			"/user-methods/:id<guid>",
 			paymentHandler.DeletePaymentMethod,
 		)
 	}

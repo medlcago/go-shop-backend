@@ -32,7 +32,7 @@ func (h *Handler) CreateAddress(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.addressService.CreateAddress(ctx, *userCtx.UserID, req)
+	resp, err := h.addressService.CreateAddress(ctx.Context(), *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (h *Handler) ListAddresses(ctx fiber.Ctx) error {
 		return apperror.ErrInvalidCredentials
 	}
 
-	resp, err := h.addressService.ListAddresses(ctx, *userCtx.UserID)
+	resp, err := h.addressService.ListAddresses(ctx.Context(), *userCtx.UserID)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (h *Handler) GetAddress(ctx fiber.Ctx) error {
 
 	addressID := uuid.MustParse(ctx.Params("addressID"))
 
-	resp, err := h.addressService.GetAddress(ctx, addressID, *userCtx.UserID)
+	resp, err := h.addressService.GetAddress(ctx.Context(), addressID, *userCtx.UserID)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (h *Handler) UpdateAddress(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.addressService.UpdateAddress(ctx, addressID, *userCtx.UserID, req)
+	resp, err := h.addressService.UpdateAddress(ctx.Context(), addressID, *userCtx.UserID, req)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (h *Handler) DeleteAddress(ctx fiber.Ctx) error {
 
 	addressID := uuid.MustParse(ctx.Params("addressID"))
 
-	err := h.addressService.DeleteAddress(ctx, addressID, *userCtx.UserID)
+	err := h.addressService.DeleteAddress(ctx.Context(), addressID, *userCtx.UserID)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (h *Handler) SetDefaultAddress(ctx fiber.Ctx) error {
 
 	addressID := uuid.MustParse(ctx.Params("addressID"))
 
-	err := h.addressService.SetDefault(ctx, addressID, *userCtx.UserID)
+	err := h.addressService.SetDefault(ctx.Context(), addressID, *userCtx.UserID)
 	if err != nil {
 		return err
 	}

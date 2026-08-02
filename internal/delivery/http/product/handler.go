@@ -37,7 +37,7 @@ func NewHandler(productService service.ProductService) *Handler {
 func (h *Handler) GetProductByID(ctx fiber.Ctx) error {
 	id := uuid.MustParse(ctx.Params("id"))
 
-	resp, err := h.productService.GetProductByID(ctx, id)
+	resp, err := h.productService.GetProductByID(ctx.Context(), id)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (h *Handler) ListProducts(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, total, err := h.productService.ListProducts(ctx, req)
+	resp, total, err := h.productService.ListProducts(ctx.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (h *Handler) CreateProduct(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.productService.CreateProduct(ctx, req)
+	resp, err := h.productService.CreateProduct(ctx.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (h *Handler) UpdateProduct(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.productService.UpdateProduct(ctx, productID, req)
+	resp, err := h.productService.UpdateProduct(ctx.Context(), productID, req)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (h *Handler) Search(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, total, err := h.productService.Search(ctx, req)
+	resp, total, err := h.productService.Search(ctx.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.productService.UploadImage(ctx, productID, req)
+	resp, err := h.productService.UploadImage(ctx.Context(), productID, req)
 	if err != nil {
 		return err
 	}
@@ -257,7 +257,7 @@ func (h *Handler) ConfirmUploadImage(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.productService.ConfirmUploadImage(ctx, productID, req)
+	resp, err := h.productService.ConfirmUploadImage(ctx.Context(), productID, req)
 	if err != nil {
 		return err
 	}
