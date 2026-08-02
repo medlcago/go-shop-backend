@@ -17,6 +17,12 @@ func SetupApp(container *core.Container) *fiber.App {
 		IdleTimeout:     container.Config().HTTPServer.IdleTimeout,
 		ErrorHandler:    middleware.ErrorHandler(container.Logger()),
 		StructValidator: container.Validator(),
+		ProxyHeader:     fiber.HeaderXForwardedFor,
+		TrustProxy:      true,
+		TrustProxyConfig: fiber.TrustProxyConfig{
+			Proxies: []string{"10.100.0.0/24"},
+		},
+		EnableIPValidation: true,
 	})
 
 	app.Use(recover.New())

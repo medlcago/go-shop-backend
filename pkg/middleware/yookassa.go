@@ -46,7 +46,7 @@ func YookassaIPWhitelist() fiber.Handler {
 
 		ip := net.ParseIP(clientIP)
 		if ip == nil {
-			return ctx.SendStatus(fiber.StatusForbidden)
+			return ctx.Drop()
 		}
 
 		for _, allowedIP := range parsedIPs {
@@ -61,7 +61,7 @@ func YookassaIPWhitelist() fiber.Handler {
 			}
 		}
 
-		return ctx.SendStatus(fiber.StatusForbidden)
+		return ctx.Drop()
 	}
 }
 

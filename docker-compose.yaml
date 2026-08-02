@@ -9,6 +9,8 @@ services:
     volumes:
       - ./.env.docker:/app/.env:ro
     restart: on-failure
+    networks:
+      - internal
 
   postgres:
     image: postgres:17-alpine
@@ -24,6 +26,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: on-failure
+    networks:
+      - internal
 
   minio:
     image: quay.io/minio/minio:latest
@@ -44,6 +48,8 @@ services:
       timeout: 20s
       retries: 3
     restart: always
+    networks:
+      - internal
 
   nginx:
     container_name: nginx
@@ -58,6 +64,8 @@ services:
       - app
       - minio
     restart: always
+    networks:
+      - internal
 
   redis:
     image: redis:8.6.2-alpine
@@ -67,6 +75,8 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks:
+      - internal
 
   prometheus:
     image: prom/prometheus
@@ -77,6 +87,8 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
       - app
+    networks:
+      - internal
 
   asynqmon:
     image: hibiken/asynqmon:latest
@@ -87,9 +99,19 @@ services:
     depends_on:
       - redis
     restart: always
+    networks:
+      - internal
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
   nginx_cache:
+
+
+networks:
+  internal:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.100.0.0/24
