@@ -113,6 +113,143 @@ func (_c *MockPaymentService_CreatePayment_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
+// DeletePaymentMethod provides a mock function for the type MockPaymentService
+func (_mock *MockPaymentService) DeletePaymentMethod(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	ret := _mock.Called(ctx, id, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeletePaymentMethod")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, id, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockPaymentService_DeletePaymentMethod_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePaymentMethod'
+type MockPaymentService_DeletePaymentMethod_Call struct {
+	*mock.Call
+}
+
+// DeletePaymentMethod is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - userID uuid.UUID
+func (_e *MockPaymentService_Expecter) DeletePaymentMethod(ctx interface{}, id interface{}, userID interface{}) *MockPaymentService_DeletePaymentMethod_Call {
+	return &MockPaymentService_DeletePaymentMethod_Call{Call: _e.mock.On("DeletePaymentMethod", ctx, id, userID)}
+}
+
+func (_c *MockPaymentService_DeletePaymentMethod_Call) Run(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID)) *MockPaymentService_DeletePaymentMethod_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPaymentService_DeletePaymentMethod_Call) Return(err error) *MockPaymentService_DeletePaymentMethod_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockPaymentService_DeletePaymentMethod_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID) error) *MockPaymentService_DeletePaymentMethod_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserPaymentMethods provides a mock function for the type MockPaymentService
+func (_mock *MockPaymentService) GetUserPaymentMethods(ctx context.Context, userID uuid.UUID) ([]*dto.UserPaymentMethodResponse, int64, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserPaymentMethods")
+	}
+
+	var r0 []*dto.UserPaymentMethodResponse
+	var r1 int64
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*dto.UserPaymentMethodResponse, int64, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*dto.UserPaymentMethodResponse); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*dto.UserPaymentMethodResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) int64); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, uuid.UUID) error); ok {
+		r2 = returnFunc(ctx, userID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockPaymentService_GetUserPaymentMethods_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserPaymentMethods'
+type MockPaymentService_GetUserPaymentMethods_Call struct {
+	*mock.Call
+}
+
+// GetUserPaymentMethods is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *MockPaymentService_Expecter) GetUserPaymentMethods(ctx interface{}, userID interface{}) *MockPaymentService_GetUserPaymentMethods_Call {
+	return &MockPaymentService_GetUserPaymentMethods_Call{Call: _e.mock.On("GetUserPaymentMethods", ctx, userID)}
+}
+
+func (_c *MockPaymentService_GetUserPaymentMethods_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *MockPaymentService_GetUserPaymentMethods_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPaymentService_GetUserPaymentMethods_Call) Return(userPaymentMethodResponses []*dto.UserPaymentMethodResponse, n int64, err error) *MockPaymentService_GetUserPaymentMethods_Call {
+	_c.Call.Return(userPaymentMethodResponses, n, err)
+	return _c
+}
+
+func (_c *MockPaymentService_GetUserPaymentMethods_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]*dto.UserPaymentMethodResponse, int64, error)) *MockPaymentService_GetUserPaymentMethods_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HandleWebhook provides a mock function for the type MockPaymentService
 func (_mock *MockPaymentService) HandleWebhook(ctx context.Context, body []byte) error {
 	ret := _mock.Called(ctx, body)
@@ -166,6 +303,69 @@ func (_c *MockPaymentService_HandleWebhook_Call) Return(err error) *MockPaymentS
 }
 
 func (_c *MockPaymentService_HandleWebhook_Call) RunAndReturn(run func(ctx context.Context, body []byte) error) *MockPaymentService_HandleWebhook_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetDefaultPaymentMethod provides a mock function for the type MockPaymentService
+func (_mock *MockPaymentService) SetDefaultPaymentMethod(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	ret := _mock.Called(ctx, id, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetDefaultPaymentMethod")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, id, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockPaymentService_SetDefaultPaymentMethod_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetDefaultPaymentMethod'
+type MockPaymentService_SetDefaultPaymentMethod_Call struct {
+	*mock.Call
+}
+
+// SetDefaultPaymentMethod is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - userID uuid.UUID
+func (_e *MockPaymentService_Expecter) SetDefaultPaymentMethod(ctx interface{}, id interface{}, userID interface{}) *MockPaymentService_SetDefaultPaymentMethod_Call {
+	return &MockPaymentService_SetDefaultPaymentMethod_Call{Call: _e.mock.On("SetDefaultPaymentMethod", ctx, id, userID)}
+}
+
+func (_c *MockPaymentService_SetDefaultPaymentMethod_Call) Run(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID)) *MockPaymentService_SetDefaultPaymentMethod_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPaymentService_SetDefaultPaymentMethod_Call) Return(err error) *MockPaymentService_SetDefaultPaymentMethod_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockPaymentService_SetDefaultPaymentMethod_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID) error) *MockPaymentService_SetDefaultPaymentMethod_Call {
 	_c.Call.Return(run)
 	return _c
 }

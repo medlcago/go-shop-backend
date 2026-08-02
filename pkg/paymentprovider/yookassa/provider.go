@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"go-shop-backend/pkg/paymentprovider"
+	"net/http"
 
 	yookassasdk "github.com/rvinnie/yookassa-sdk-go/yookassa"
 	yoocommon "github.com/rvinnie/yookassa-sdk-go/yookassa/common"
+	yooopts "github.com/rvinnie/yookassa-sdk-go/yookassa/opts"
 	yoopayment "github.com/rvinnie/yookassa-sdk-go/yookassa/payment"
 	yoowebhook "github.com/rvinnie/yookassa-sdk-go/yookassa/webhook"
 )
@@ -37,12 +39,16 @@ func NewConfig(accountId string, secretKey string, returnURL string) *Config {
 	}
 }
 
-func New(cfg *Config) (*Provider, error) {
+func New(httpClient *http.Client, cfg *Config) (*Provider, error) {
 	if cfg == nil {
-		return nil, errors.New("config is nil")
+		return nil, errors.New("yookassa: config is nil")
 	}
 
-	client := yookassasdk.NewClient(cfg.AccountId, cfg.SecretKey)
+	if httpClient == nil {
+		return nil, errors.New("yookassa: httpClient is nil")
+	}
+
+	client := yookassasdk.NewClient(cfg.AccountId, cfg.SecretKey, yooopts.WithHTTPClient(*httpClient))
 
 	return &Provider{
 		client:         client,
@@ -58,20 +64,23 @@ func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.Creat
 
 	paymentHandler := p.paymentHandler.WithIdempotencyKey(idempotencyKey)
 
-	var confirmation yoopayment.Confirmer
+	var (
+		confirmation  yoopayment.Confirmer
+		paymentMethod yoopayment.PaymentMethoder
+		err           error
+	)
 
-	switch req.Type {
-	case paymentprovider.PaymentTypeRedirect:
-		confirmation = yoopayment.Redirect{
-			Type:      yoopayment.TypeRedirect,
-			ReturnURL: p.cfg.ReturnURL,
+	if req.PaymentType != "" {
+		if !req.PaymentType.IsValid() {
+			return nil, fmt.Errorf("yookassa: unsupported payment type: %s", req.PaymentType)
 		}
-	case paymentprovider.PaymentTypeEmbedded:
-		confirmation = yoopayment.Embedded{
-			Type: yoopayment.TypeEmbedded,
+
+		confirmation, err = p.createConfirmation(req.PaymentType)
+		if err != nil {
+			return nil, fmt.Errorf("yookassa: failed to create confirmation: %w", err)
 		}
-	default:
-		return nil, fmt.Errorf("yookassa: invalid payment type: %s", req.Type)
+
+		paymentMethod = yoopayment.PaymentTypeBankCard
 	}
 
 	payment, err := paymentHandler.CreatePayment(ctx, &yoopayment.Payment{
@@ -79,49 +88,25 @@ func (p *Provider) CreatePayment(ctx context.Context, req *paymentprovider.Creat
 			Value:    req.Amount.Value,
 			Currency: string(req.Amount.Currency),
 		},
-		PaymentMethod: yoopayment.PaymentTypeBankCard,
-		Confirmation:  confirmation,
-		Capture:       req.Capture,
-		Description:   fmt.Sprintf("Оплата заказа № %s", req.Metadata.OrderID),
-		Metadata:      req.Metadata,
+		PaymentMethod:     paymentMethod,
+		Confirmation:      confirmation,
+		Capture:           req.Capture,
+		Description:       req.Description,
+		Metadata:          req.Metadata,
+		SavePaymentMethod: req.SavePaymentMethod,
+		PaymentMethodID:   req.PaymentMethodID,
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("yookassa: failed to create payment: %w", err)
 	}
 
-	var (
-		confirmationURL   string
-		confirmationToken string
-	)
-
-	switch req.Type {
-	case paymentprovider.PaymentTypeRedirect:
-		confirmationURL, err = p.paymentHandler.ParsePaymentLink(payment)
-		if err != nil {
-			return nil, fmt.Errorf("yookassa: failed to parse payment link: %w", err)
-		}
-	case paymentprovider.PaymentTypeEmbedded:
-		confirmationToken, err = p.parsePaymentToken(payment)
-		if err != nil {
-			return nil, fmt.Errorf("yookassa: failed to parse payment token: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("yookassa: invalid payment type: %s", req.Type)
+	response, err := p.buildPaymentResponse(req.PaymentType, payment)
+	if err != nil {
+		return nil, fmt.Errorf("yookassa: failed to build payment response: %w", err)
 	}
 
-	return &paymentprovider.Payment{
-		ID:     payment.ID,
-		Status: paymentprovider.PaymentStatusPending,
-		Amount: paymentprovider.Amount{
-			Value:    payment.Amount.Value,
-			Currency: paymentprovider.Currency(payment.Amount.Currency),
-		},
-		Description:       payment.Description,
-		Metadata:          req.Metadata,
-		ConfirmationURL:   confirmationURL,
-		ConfirmationToken: confirmationToken,
-	}, nil
+	return response, nil
 }
 
 func (p *Provider) CancelPayment(ctx context.Context, paymentID string, idempotencyKey string) error {
@@ -152,35 +137,41 @@ func (p *Provider) CapturePayment(ctx context.Context, paymentID string, idempot
 }
 
 func (p *Provider) ParseWebhook(body []byte) (*paymentprovider.WebhookEvent, error) {
-	var yookassaWebhookEvent yoowebhook.WebhookEvent[yoopayment.Payment]
-	if err := json.Unmarshal(body, &yookassaWebhookEvent); err != nil {
-		return nil, fmt.Errorf("yookassa: failed to parse webhook event: %w", err)
+	yookassaWebhookEvent, err := p.parseWebhookBody(body)
+	if err != nil {
+		return nil, fmt.Errorf("yookassa: failed to parse payment webhook body: %w", err)
 	}
 
 	switch yookassaWebhookEvent.Type {
 	case yoowebhook.WebhookTypeNotification:
-		switch yookassaWebhookEvent.Event {
-		case yoowebhook.EventPaymentSucceeded, yoowebhook.EventPaymentWaitingForCapture, yoowebhook.EventPaymentCanceled:
-		default:
-			return nil, fmt.Errorf("yookassa: webhook event type %s not supported", yookassaWebhookEvent.Event)
+		if !p.isSupportedWebhookEvent(yookassaWebhookEvent.Event) {
+			return nil, fmt.Errorf("yookassa: unsupported webhook event: %s", yookassaWebhookEvent.Event)
 		}
 	default:
 		return nil, fmt.Errorf("yookassa: webhook type %s not supported", yookassaWebhookEvent.Type)
 	}
 
-	metadataBytes, err := json.Marshal(yookassaWebhookEvent.Object.Metadata)
+	paymentMethod, err := p.parsePaymentMethod(yookassaWebhookEvent.Object.PaymentMethod)
 	if err != nil {
-		return nil, fmt.Errorf("yookassa: failed to parse webhook event: %w", err)
+		return nil, fmt.Errorf("yookassa: failed to parse payment method: %w", err)
 	}
 
-	var metadata paymentprovider.Metadata
-	if err := json.Unmarshal(metadataBytes, &metadata); err != nil {
-		return nil, fmt.Errorf("yookassa: failed to parse webhook event: invalid metadata format: %w", err)
+	metadata, err := p.parsePaymentMetadata(yookassaWebhookEvent.Object.Metadata)
+	if err != nil {
+		return nil, fmt.Errorf("yookassa: failed to parse webhook event: failed to extract payment metadata: %w", err)
 	}
 
 	status, err := p.parseWebhookEventStatus(yookassaWebhookEvent.Event)
 	if err != nil {
 		return nil, fmt.Errorf("yookassa: failed to parse payment status: %w", err)
+	}
+
+	var cancellationDetails *paymentprovider.CancellationDetails
+	if yookassaWebhookEvent.Object.CancellationDetails != nil {
+		cancellationDetails = &paymentprovider.CancellationDetails{
+			Party:  yookassaWebhookEvent.Object.CancellationDetails.Party,
+			Reason: yookassaWebhookEvent.Object.CancellationDetails.Reason,
+		}
 	}
 
 	webhookEvent := &paymentprovider.WebhookEvent{
@@ -191,12 +182,48 @@ func (p *Provider) ParseWebhook(body []byte) (*paymentprovider.WebhookEvent, err
 			Value:    yookassaWebhookEvent.Object.Amount.Value,
 			Currency: paymentprovider.Currency(yookassaWebhookEvent.Object.Amount.Currency),
 		},
+		PaymentMethod:       paymentMethod,
+		CancellationDetails: cancellationDetails,
 	}
 
 	return webhookEvent, nil
 }
 func (p *Provider) GetName() string {
 	return ProviderName
+}
+
+func (p *Provider) createConfirmation(paymentType paymentprovider.PaymentType) (yoopayment.Confirmer, error) {
+	switch paymentType {
+	case paymentprovider.PaymentTypeRedirect:
+		return yoopayment.Redirect{
+			Type:      yoopayment.TypeRedirect,
+			ReturnURL: p.cfg.ReturnURL,
+		}, nil
+	case paymentprovider.PaymentTypeEmbedded:
+		return yoopayment.Embedded{
+			Type: yoopayment.TypeEmbedded,
+		}, nil
+	default:
+		return nil, fmt.Errorf("invalid payment type: %s", paymentType)
+	}
+}
+
+func (p *Provider) isSupportedWebhookEvent(event yoowebhook.WebhookEventType) bool {
+	switch event {
+	case yoowebhook.EventPaymentSucceeded, yoowebhook.EventPaymentWaitingForCapture, yoowebhook.EventPaymentCanceled:
+		return true
+	}
+
+	return false
+}
+
+func (p *Provider) parseWebhookBody(body []byte) (yoowebhook.WebhookEvent[yoopayment.Payment], error) {
+	var webhookEvent yoowebhook.WebhookEvent[yoopayment.Payment]
+	if err := json.Unmarshal(body, &webhookEvent); err != nil {
+		return yoowebhook.WebhookEvent[yoopayment.Payment]{}, fmt.Errorf("failed to unmarshal webhook event: %w", err)
+	}
+
+	return webhookEvent, nil
 }
 
 func (p *Provider) parseWebhookEventStatus(event yoowebhook.WebhookEventType) (paymentprovider.PaymentStatus, error) {
@@ -208,7 +235,22 @@ func (p *Provider) parseWebhookEventStatus(event yoowebhook.WebhookEventType) (p
 	case yoowebhook.EventPaymentWaitingForCapture:
 		return paymentprovider.PaymentStatusWaitingForCapture, nil
 	default:
-		return "", errors.New("unsupported webhook event status")
+		return "", fmt.Errorf("unsupported webhook event status: %s", event)
+	}
+}
+
+func (p *Provider) parsePaymentStatus(status yoopayment.Status) (paymentprovider.PaymentStatus, error) {
+	switch status {
+	case yoopayment.Pending:
+		return paymentprovider.PaymentStatusPending, nil
+	case yoopayment.WaitingForCapture:
+		return paymentprovider.PaymentStatusWaitingForCapture, nil
+	case yoopayment.Succeeded:
+		return paymentprovider.PaymentStatusSucceeded, nil
+	case yoopayment.Canceled:
+		return paymentprovider.PaymentStatusCanceled, nil
+	default:
+		return "", fmt.Errorf("unsupported payment status: %s", status)
 	}
 }
 
@@ -224,4 +266,98 @@ func (p *Provider) parsePaymentToken(payment *yoopayment.Payment) (string, error
 	}
 
 	return token, nil
+}
+
+func (p *Provider) parsePaymentMetadata(metadata any) (paymentprovider.Metadata, error) {
+	metadataBytes, err := json.Marshal(metadata)
+	if err != nil {
+		return paymentprovider.Metadata{}, fmt.Errorf("failed to marshal payment metadata: %w", err)
+	}
+
+	var paymentMetadata paymentprovider.Metadata
+	if err := json.Unmarshal(metadataBytes, &paymentMetadata); err != nil {
+		return paymentprovider.Metadata{}, fmt.Errorf("failed to unmarshal payment metadata: %w", err)
+	}
+
+	return paymentMetadata, nil
+}
+
+func (p *Provider) parsePaymentMethod(method yoopayment.PaymentMethoder) (paymentprovider.PaymentMethod, error) {
+	paymentMethodBytes, err := json.Marshal(method)
+	if err != nil {
+		return paymentprovider.PaymentMethod{}, fmt.Errorf("failed to marshal payment method: %w", err)
+	}
+
+	var paymentMethod paymentprovider.PaymentMethod
+	if err := json.Unmarshal(paymentMethodBytes, &paymentMethod); err != nil {
+		return paymentprovider.PaymentMethod{}, fmt.Errorf("failed to unmarshal payment method: %w", err)
+	}
+
+	return paymentMethod, nil
+}
+
+func (p *Provider) extractConfirmationData(paymentType paymentprovider.PaymentType, payment *yoopayment.Payment) (confirmationURL string, confirmationToken string, err error) {
+	switch paymentType {
+	case paymentprovider.PaymentTypeRedirect:
+		confirmationURL, err = p.paymentHandler.ParsePaymentLink(payment)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to parse payment link: %w", err)
+		}
+		return confirmationURL, "", nil
+	case paymentprovider.PaymentTypeEmbedded:
+		confirmationToken, err = p.parsePaymentToken(payment)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to parse payment token: %w", err)
+		}
+		return "", confirmationToken, nil
+	default:
+		return "", "", fmt.Errorf("invalid payment type: %s", paymentType)
+	}
+}
+
+func (p *Provider) buildPaymentResponse(paymentType paymentprovider.PaymentType, payment *yoopayment.Payment) (*paymentprovider.Payment, error) {
+	var (
+		confirmationURL     string
+		confirmationToken   string
+		cancellationDetails *paymentprovider.CancellationDetails
+		err                 error
+	)
+
+	if payment.Confirmation != nil {
+		confirmationURL, confirmationToken, err = p.extractConfirmationData(paymentType, payment)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract confirmation data: %w", err)
+		}
+	}
+
+	if payment.CancellationDetails != nil {
+		cancellationDetails = &paymentprovider.CancellationDetails{
+			Party:  payment.CancellationDetails.Party,
+			Reason: payment.CancellationDetails.Reason,
+		}
+	}
+
+	paymentStatus, err := p.parsePaymentStatus(payment.Status)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse payment status: %w", err)
+	}
+
+	metadata, err := p.parsePaymentMetadata(payment.Metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse payment metadata: %w", err)
+	}
+
+	return &paymentprovider.Payment{
+		ID:     payment.ID,
+		Status: paymentStatus,
+		Amount: paymentprovider.Amount{
+			Value:    payment.Amount.Value,
+			Currency: paymentprovider.Currency(payment.Amount.Currency),
+		},
+		Description:         payment.Description,
+		Metadata:            metadata,
+		ConfirmationURL:     confirmationURL,
+		ConfirmationToken:   confirmationToken,
+		CancellationDetails: cancellationDetails,
+	}, nil
 }

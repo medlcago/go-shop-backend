@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/pkg/response"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -64,4 +65,48 @@ func (h *Handler) HandleYookassaWebhook(ctx fiber.Ctx) error {
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
+}
+
+func (h *Handler) GetUserPaymentMethods(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	resp, total, err := h.paymentService.GetUserPaymentMethods(ctx, *userCtx.UserID)
+	if err != nil {
+		return err
+	}
+
+	return response.PaginatedJSON(ctx, fiber.StatusOK, resp, total)
+}
+
+func (h *Handler) SetDefaultPaymentMethod(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	id := uuid.MustParse(ctx.Params("id"))
+
+	if err := h.paymentService.SetDefaultPaymentMethod(ctx, id, *userCtx.UserID); err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(fiber.StatusOK)
+}
+
+func (h *Handler) DeletePaymentMethod(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	id := uuid.MustParse(ctx.Params("id"))
+
+	if err := h.paymentService.DeletePaymentMethod(ctx, id, *userCtx.UserID); err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

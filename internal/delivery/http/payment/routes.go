@@ -11,15 +11,33 @@ func RegisterRoutes(r fiber.Router, paymentHandler *Handler) {
 	paymentGroup := r.Group("/payments")
 	{
 		paymentGroup.Post(
-			"/",
-			middleware.RequireAuth(),
-			middleware.RequireTokenType(token.AccessTokenType),
-			paymentHandler.CreatePayment,
-		)
-		paymentGroup.Post(
 			"/webhook/yookassa",
 			middleware.YookassaIPWhitelist(),
 			paymentHandler.HandleYookassaWebhook,
+		)
+	}
+
+	protectedPaymentGroup := paymentGroup.Group(
+		"/",
+		middleware.RequireAuth(),
+		middleware.RequireTokenType(token.AccessTokenType),
+	)
+	{
+		protectedPaymentGroup.Post(
+			"/",
+			paymentHandler.CreatePayment,
+		)
+		protectedPaymentGroup.Get(
+			"/user-methods",
+			paymentHandler.GetUserPaymentMethods,
+		)
+		protectedPaymentGroup.Put(
+			":id<guid>/default",
+			paymentHandler.SetDefaultPaymentMethod,
+		)
+		protectedPaymentGroup.Delete(
+			":id<guid>",
+			paymentHandler.DeletePaymentMethod,
 		)
 	}
 }

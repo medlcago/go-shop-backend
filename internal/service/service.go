@@ -75,6 +75,9 @@ type InventoryService interface {
 type PaymentService interface {
 	CreatePayment(ctx context.Context, userID uuid.UUID, req dto.CreatePaymentRequest) (*dto.PaymentResponse, error)
 	HandleWebhook(ctx context.Context, body []byte) error
+	GetUserPaymentMethods(ctx context.Context, userID uuid.UUID) ([]*dto.UserPaymentMethodResponse, int64, error)
+	SetDefaultPaymentMethod(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	DeletePaymentMethod(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
 
 type AddressService interface {

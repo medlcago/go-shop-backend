@@ -48,7 +48,6 @@ type OrderRepository interface {
 }
 
 type OrderItemRepository interface {
-	AddItem(ctx context.Context, orderItem *models.OrderItem) error
 	Upsert(ctx context.Context, orderItem *models.OrderItem) error
 	RemoveItem(ctx context.Context, orderID uuid.UUID, itemID uuid.UUID) error
 	Clear(ctx context.Context, orderID uuid.UUID) error
@@ -78,4 +77,12 @@ type AddressRepository interface {
 	Update(ctx context.Context, address *models.Address) error
 	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+}
+
+type UserPaymentMethodRepository interface {
+	Upsert(ctx context.Context, paymentMethod *models.UserPaymentMethod) error
+	GetByID(ctx context.Context, id uuid.UUID) (*models.UserPaymentMethod, error)
+	GetListByUser(ctx context.Context, userID uuid.UUID) ([]*models.UserPaymentMethod, int64, error)
+	SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }

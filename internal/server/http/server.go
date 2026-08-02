@@ -53,7 +53,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	s.Init()
 
-	addr := fmt.Sprintf(":%d", s.container.Config().HttpServer.Port)
+	addr := fmt.Sprintf(":%d", s.container.Config().HTTPServer.Port)
 
 	s.logger.Info(
 		"HTTP server starting",

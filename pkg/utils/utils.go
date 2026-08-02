@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/rand"
 	"math/big"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -47,4 +48,24 @@ func GenerateCode(n int) (string, error) {
 	}
 
 	return string(code), nil
+}
+
+func ParseInt16Ptr(s string) *int16 {
+	if s == "" {
+		return nil
+	}
+
+	v, err := strconv.ParseInt(s, 10, 16)
+	if err != nil {
+		return nil
+	}
+
+	return new(int16(v))
+}
+
+func StringPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

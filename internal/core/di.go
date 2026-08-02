@@ -17,6 +17,7 @@ import (
 	"go-shop-backend/pkg/crypto"
 	"go-shop-backend/pkg/database"
 	"go-shop-backend/pkg/hasher"
+	"go-shop-backend/pkg/httpclient"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/notification"
 	"go-shop-backend/pkg/paymentprovider"
@@ -29,6 +30,7 @@ import (
 	"go-shop-backend/pkg/totp"
 	"go-shop-backend/pkg/validator"
 	"log/slog"
+	"net/http"
 	"sync"
 )
 
@@ -66,17 +68,19 @@ type Container struct {
 	templateManager      Lazy[template.Manager]
 	notificationRegistry Lazy[notification.SenderRegistry]
 	metricsFactory       Lazy[*metrics.Factory]
+	httpClient           Lazy[*http.Client]
 
 	// repositories
-	userRepository         Lazy[repository.UserRepository]
-	productRepository      Lazy[repository.ProductRepository]
-	categoryRepository     Lazy[repository.CategoryRepository]
-	uploadRepository       Lazy[repository.UploadRepository]
-	orderRepository        Lazy[repository.OrderRepository]
-	orderItemRepository    Lazy[repository.OrderItemRepository]
-	wishlistRepository     Lazy[repository.WishlistRepository]
-	wishlistItemRepository Lazy[repository.WishlistItemRepository]
-	addressRepository      Lazy[repository.AddressRepository]
+	userRepository              Lazy[repository.UserRepository]
+	productRepository           Lazy[repository.ProductRepository]
+	categoryRepository          Lazy[repository.CategoryRepository]
+	uploadRepository            Lazy[repository.UploadRepository]
+	orderRepository             Lazy[repository.OrderRepository]
+	orderItemRepository         Lazy[repository.OrderItemRepository]
+	wishlistRepository          Lazy[repository.WishlistRepository]
+	wishlistItemRepository      Lazy[repository.WishlistItemRepository]
+	addressRepository           Lazy[repository.AddressRepository]
+	userPaymentMethodRepository Lazy[repository.UserPaymentMethodRepository]
 
 	// services
 	userService         Lazy[service.UserService]
@@ -211,7 +215,7 @@ func (c *Container) PaymentProvider() paymentprovider.Provider {
 			c.Config().Yookassa.ReturnURL,
 		)
 
-		paymentProvider, err := yookassa.New(yookassaConfig)
+		paymentProvider, err := yookassa.New(c.HTTPClient(), yookassaConfig)
 		if err != nil {
 			logger.Fatal(c.Logger(), "failed to create payment provider", err)
 		}
@@ -293,6 +297,17 @@ func (c *Container) MetricsFactory() *metrics.Factory {
 	})
 }
 
+func (c *Container) HTTPClient() *http.Client {
+	return c.httpClient.Get(func() *http.Client {
+		return httpclient.New(httpclient.Config{
+			RetryMax:     c.Config().HTTPClient.RetryMax,
+			RetryWaitMin: c.Config().HTTPClient.RetryWaitMin,
+			RetryWaitMax: c.Config().HTTPClient.RetryWaitMax,
+			Timeout:      c.Config().HTTPClient.Timeout,
+		})
+	})
+}
+
 func (c *Container) UserRepo() repository.UserRepository {
 	return c.userRepository.Get(func() repository.UserRepository {
 		return gormRepo.NewUserRepository(c.DB())
@@ -344,6 +359,12 @@ func (c *Container) WishlistItemRepo() repository.WishlistItemRepository {
 func (c *Container) AddressRepo() repository.AddressRepository {
 	return c.addressRepository.Get(func() repository.AddressRepository {
 		return gormRepo.NewAddressRepository(c.DB())
+	})
+}
+
+func (c *Container) UserPaymentMethodRepo() repository.UserPaymentMethodRepository {
+	return c.userPaymentMethodRepository.Get(func() repository.UserPaymentMethodRepository {
+		return gormRepo.NewUserPaymentMethodRepository(c.DB())
 	})
 }
 
@@ -428,7 +449,9 @@ func (c *Container) PaymentService() service.PaymentService {
 			c.PaymentProvider(),
 			c.OrderRepo(),
 			c.OrderService(),
+			c.UserPaymentMethodRepo(),
 			c.TxManager(),
+			c.Logger(),
 		)
 	})
 }

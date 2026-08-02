@@ -46,7 +46,7 @@ type OrderResponse struct {
 	CanceledAt   *time.Time          `json:"canceled_at"`
 	CompletedAt  *time.Time          `json:"completed_at"`
 	IsGuestOrder bool                `json:"is_guest_order"`
-	Address      *AddressResponse    `json:"address"`
+	Address      *AddressResponse    `json:"address,omitempty"`
 }
 
 type ListOrderRequest struct {

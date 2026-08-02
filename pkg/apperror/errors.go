@@ -42,6 +42,7 @@ var (
 	ErrOrderExpired       = New(http.StatusForbidden, "order is expired")
 
 	ErrPaymentAlreadyCreated = New(http.StatusConflict, "payment already created for this order")
+	ErrPaymentMethodNotFound = New(http.StatusNotFound, "payment method not found")
 
 	Err2FAAlreadyEnabled = New(http.StatusConflict, "2FA is already enabled; disable it first to reconfigure")
 	Err2FANotEnabled     = New(http.StatusBadRequest, "2FA is not enabled")

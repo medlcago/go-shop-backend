@@ -12,9 +12,9 @@ import (
 func SetupApp(container *core.Container) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:         container.Config().AppName,
-		ReadTimeout:     container.Config().HttpServer.ReadTimeout,
-		WriteTimeout:    container.Config().HttpServer.WriteTimeout,
-		IdleTimeout:     container.Config().HttpServer.IdleTimeout,
+		ReadTimeout:     container.Config().HTTPServer.ReadTimeout,
+		WriteTimeout:    container.Config().HTTPServer.WriteTimeout,
+		IdleTimeout:     container.Config().HTTPServer.IdleTimeout,
 		ErrorHandler:    middleware.ErrorHandler(container.Logger()),
 		StructValidator: container.Validator(),
 	})

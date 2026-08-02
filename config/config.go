@@ -19,7 +19,8 @@ type Config struct {
 	OrderCancelDelay        time.Duration `env:"ORDER_CANCEL_DELAY" env-default:"10m"`
 	MasterKey               string        `env:"MASTER_KEY" env-required:"true"`
 
-	HttpServer HttpServer `env-prefix:"HTTP_"`
+	HTTPServer HTTPServer `env-prefix:"HTTP_SERVER_"`
+	HTTPClient HTTPClient `env-prefix:"HTTP_CLIENT_"`
 	Cors       Cors       `env-prefix:"CORS_"`
 	Database   Database   `env-prefix:"DB_"`
 	S3         S3         `env-prefix:"S3_"`

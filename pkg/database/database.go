@@ -24,7 +24,7 @@ type Database struct {
 }
 
 func New(uri string, opts ...Option) (*Database, error) {
-	opt := getOption(opts...)
+	opt := applyOptions(opts...)
 
 	logger := gormLogger.NewSlogLogger(opt.Logger, gormLogger.Config{
 		SlowThreshold:             200 * time.Millisecond,

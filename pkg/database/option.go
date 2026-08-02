@@ -51,7 +51,7 @@ func WithLogger(logger *slog.Logger) Option {
 	})
 }
 
-func getOption(opts ...Option) option {
+func applyOptions(opts ...Option) option {
 	opt := option{
 		MaxOpenConns:    100,
 		MaxIdleConns:    50,

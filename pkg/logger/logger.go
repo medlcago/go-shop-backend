@@ -38,6 +38,10 @@ func Err(err error) slog.Attr {
 	return slog.Any("error", err)
 }
 
+func Op(op string) slog.Attr {
+	return slog.String("op", op)
+}
+
 func Fatal(l *slog.Logger, msg string, err error) {
 	l.Error(msg, Err(err))
 	os.Exit(1)

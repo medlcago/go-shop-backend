@@ -20,13 +20,6 @@ func NewOrderItemRepository(db database.Provider) *orderItemRepository {
 	}
 }
 
-func (o *orderItemRepository) AddItem(ctx context.Context, orderItem *models.OrderItem) error {
-	db := o.db.GetDB(ctx)
-
-	err := db.Create(orderItem).Error
-	return repository.HandleError(err)
-}
-
 func (o *orderItemRepository) Upsert(ctx context.Context, orderItem *models.OrderItem) error {
 	db := o.db.GetDB(ctx)
 
