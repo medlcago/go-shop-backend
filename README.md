@@ -4,14 +4,21 @@
 
 ### Auth
 
-| Method | Endpoint                   | Description        |
-|--------|----------------------------|--------------------|
-| POST   | `/api/v1/auth/register`    | Register           |
-| POST   | `/api/v1/auth/login`       | Login              |
-| POST   | `/api/v1/auth/refresh`     | Refresh token      |
-| POST   | `/api/v1/auth/setup-2fa`   | Setup 2FA (auth)   |
-| POST   | `/api/v1/auth/confirm-2fa` | Confirm 2FA (auth) |
-| POST   | `/api/v1/auth/disable-2fa` | Disable 2FA (auth) |
+| Method | Endpoint                                | Description                        |
+|--------|-----------------------------------------|------------------------------------|
+| POST   | `/api/v1/auth/register`                 | Register                           |
+| POST   | `/api/v1/auth/login`                    | Login                              |
+| POST   | `/api/v1/auth/refresh`                  | Refresh token                      |
+| POST   | `/api/v1/auth/setup-2fa`                | Setup 2FA (auth)                   |
+| POST   | `/api/v1/auth/confirm-2fa`              | Confirm 2FA (auth)                 |
+| POST   | `/api/v1/auth/disable-2fa`              | Disable 2FA (auth)                 |
+| POST   | `/api/v1/auth/passkeys/register/begin`  | Begin passkey registration (auth)  |
+| POST   | `/api/v1/auth/passkeys/register/finish` | Finish passkey registration (auth) |
+| POST   | `/api/v1/auth/passkeys/login/begin`     | Begin passkey login                |
+| POST   | `/api/v1/auth/passkeys/login/finish`    | Finish passkey login               |
+| GET    | `/api/v1/auth/passkeys`                 | Get user passkeys (auth)           |
+| PUT    | `/api/v1/auth/passkeys/:id`             | Update passkey name (auth)         |
+| DELETE | `/api/v1/auth/passkeys/:id`             | Delete passkey (auth)              |
 
 ### Users
 
@@ -56,10 +63,13 @@
 
 ### Payments
 
-| Method | Endpoint                            | Description                                       |
-|--------|-------------------------------------|---------------------------------------------------|
-| POST   | `/api/v1/payments`                  | Create payment (auth)                             |
-| GET    | `/api/v1/payments/webhook/yookassa` | Yookassa Webhook (yookassa IP whitelist, no auth) |
+| Method | Endpoint                                    | Description                                       |
+|--------|---------------------------------------------|---------------------------------------------------|
+| POST   | `/api/v1/payments`                          | Create payment (auth)                             |
+| GET    | `/api/v1/payments/user-methods`             | Get user payment methods (auth)                   |
+| PUT    | `/api/v1/payments/user-methods/:id/default` | Set default payment method (auth)                 |
+| DELETE | `/api/v1/payments/user-methods/:id`         | Delete payment method (auth)                      |
+| GET    | `/api/v1/payments/webhook/yookassa`         | Yookassa Webhook (yookassa IP whitelist, no auth) |
 
 ### Wishlists
 
@@ -85,3 +95,10 @@
 | PUT    | `/api/v1/addresses/:addressID`         | Update address (auth)               |
 | DELETE | `/api/v1/addresses/:addressID`         | Delete address (auth)               |
 | PUT    | `/api/v1/addresses/:addressID/default` | Set default address (auth)          |
+
+### Other
+
+| Method | Endpoint   | Description                  |
+|--------|------------|------------------------------|
+| GET    | `/metrics` | Prometheus metrics           |
+| GET    | `/swagger` | Swagger docs (dev mode only) |
