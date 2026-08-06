@@ -86,3 +86,12 @@ type UserPaymentMethodRepository interface {
 	SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
+
+type PasskeyRepository interface {
+	GetListByUser(ctx context.Context, userID uuid.UUID) ([]models.PasskeyCredential, error)
+	GetByCredentialID(ctx context.Context, credentialID []byte) (*models.PasskeyCredential, error)
+	GetByUser(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.PasskeyCredential, error)
+	Create(ctx context.Context, credential *models.PasskeyCredential) error
+	Update(ctx context.Context, credential *models.PasskeyCredential) error
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+}

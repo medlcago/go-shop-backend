@@ -18,6 +18,44 @@ func RegisterRoutes(r fiber.Router, userHandler *Handler) {
 			middleware.RequireTokenType(token.RefreshTokenType),
 			userHandler.RefreshToken,
 		)
+
+		authGroup.Post(
+			"/passkeys/register/begin",
+			middleware.RequireAuth(),
+			middleware.RequireTokenType(token.AccessTokenType),
+			userHandler.BeginPasskeyRegistration,
+		)
+
+		authGroup.Post(
+			"/passkeys/register/finish",
+			middleware.RequireAuth(),
+			middleware.RequireTokenType(token.AccessTokenType),
+			userHandler.FinishPasskeyRegistration,
+		)
+
+		authGroup.Post("/passkeys/login/begin", userHandler.BeginPasskeyLogin)
+		authGroup.Post("/passkeys/login/finish", userHandler.FinishPasskeyLogin)
+
+		authGroup.Get(
+			"/passkeys",
+			middleware.RequireAuth(),
+			middleware.RequireTokenType(token.AccessTokenType),
+			userHandler.GetUserPasskeys,
+		)
+
+		authGroup.Put(
+			"/passkeys/:id<guid>",
+			middleware.RequireAuth(),
+			middleware.RequireTokenType(token.AccessTokenType),
+			userHandler.UpdatePasskeyName,
+		)
+
+		authGroup.Delete(
+			"/passkeys/:id<guid>",
+			middleware.RequireAuth(),
+			middleware.RequireTokenType(token.AccessTokenType),
+			userHandler.DeletePasskey,
+		)
 	}
 
 	protectedAuthGroup := authGroup.Group(

@@ -39,6 +39,136 @@ func (_m *MockUserService) EXPECT() *MockUserService_Expecter {
 	return &MockUserService_Expecter{mock: &_m.Mock}
 }
 
+// BeginPasskeyLogin provides a mock function for the type MockUserService
+func (_mock *MockUserService) BeginPasskeyLogin(ctx context.Context) (*dto.BeginPasskeyDiscoverableLoginResponse, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BeginPasskeyLogin")
+	}
+
+	var r0 *dto.BeginPasskeyDiscoverableLoginResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (*dto.BeginPasskeyDiscoverableLoginResponse, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) *dto.BeginPasskeyDiscoverableLoginResponse); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.BeginPasskeyDiscoverableLoginResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_BeginPasskeyLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BeginPasskeyLogin'
+type MockUserService_BeginPasskeyLogin_Call struct {
+	*mock.Call
+}
+
+// BeginPasskeyLogin is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockUserService_Expecter) BeginPasskeyLogin(ctx interface{}) *MockUserService_BeginPasskeyLogin_Call {
+	return &MockUserService_BeginPasskeyLogin_Call{Call: _e.mock.On("BeginPasskeyLogin", ctx)}
+}
+
+func (_c *MockUserService_BeginPasskeyLogin_Call) Run(run func(ctx context.Context)) *MockUserService_BeginPasskeyLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_BeginPasskeyLogin_Call) Return(beginPasskeyDiscoverableLoginResponse *dto.BeginPasskeyDiscoverableLoginResponse, err error) *MockUserService_BeginPasskeyLogin_Call {
+	_c.Call.Return(beginPasskeyDiscoverableLoginResponse, err)
+	return _c
+}
+
+func (_c *MockUserService_BeginPasskeyLogin_Call) RunAndReturn(run func(ctx context.Context) (*dto.BeginPasskeyDiscoverableLoginResponse, error)) *MockUserService_BeginPasskeyLogin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BeginPasskeyRegistration provides a mock function for the type MockUserService
+func (_mock *MockUserService) BeginPasskeyRegistration(ctx context.Context, userID uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BeginPasskeyRegistration")
+	}
+
+	var r0 *dto.BeginPasskeyRegistrationResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *dto.BeginPasskeyRegistrationResponse); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.BeginPasskeyRegistrationResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_BeginPasskeyRegistration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BeginPasskeyRegistration'
+type MockUserService_BeginPasskeyRegistration_Call struct {
+	*mock.Call
+}
+
+// BeginPasskeyRegistration is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *MockUserService_Expecter) BeginPasskeyRegistration(ctx interface{}, userID interface{}) *MockUserService_BeginPasskeyRegistration_Call {
+	return &MockUserService_BeginPasskeyRegistration_Call{Call: _e.mock.On("BeginPasskeyRegistration", ctx, userID)}
+}
+
+func (_c *MockUserService_BeginPasskeyRegistration_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *MockUserService_BeginPasskeyRegistration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_BeginPasskeyRegistration_Call) Return(beginPasskeyRegistrationResponse *dto.BeginPasskeyRegistrationResponse, err error) *MockUserService_BeginPasskeyRegistration_Call {
+	_c.Call.Return(beginPasskeyRegistrationResponse, err)
+	return _c
+}
+
+func (_c *MockUserService_BeginPasskeyRegistration_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error)) *MockUserService_BeginPasskeyRegistration_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ChangePassword provides a mock function for the type MockUserService
 func (_mock *MockUserService) ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error {
 	ret := _mock.Called(ctx, userID, req)
@@ -239,6 +369,69 @@ func (_c *MockUserService_ConfirmEmail_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
+// DeletePasskey provides a mock function for the type MockUserService
+func (_mock *MockUserService) DeletePasskey(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID) error {
+	ret := _mock.Called(ctx, passkeyID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeletePasskey")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, passkeyID, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserService_DeletePasskey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePasskey'
+type MockUserService_DeletePasskey_Call struct {
+	*mock.Call
+}
+
+// DeletePasskey is a helper method to define mock.On call
+//   - ctx context.Context
+//   - passkeyID uuid.UUID
+//   - userID uuid.UUID
+func (_e *MockUserService_Expecter) DeletePasskey(ctx interface{}, passkeyID interface{}, userID interface{}) *MockUserService_DeletePasskey_Call {
+	return &MockUserService_DeletePasskey_Call{Call: _e.mock.On("DeletePasskey", ctx, passkeyID, userID)}
+}
+
+func (_c *MockUserService_DeletePasskey_Call) Run(run func(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID)) *MockUserService_DeletePasskey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_DeletePasskey_Call) Return(err error) *MockUserService_DeletePasskey_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUserService_DeletePasskey_Call) RunAndReturn(run func(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID) error) *MockUserService_DeletePasskey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Disable2FA provides a mock function for the type MockUserService
 func (_mock *MockUserService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error {
 	ret := _mock.Called(ctx, userID, req)
@@ -298,6 +491,149 @@ func (_c *MockUserService_Disable2FA_Call) Return(err error) *MockUserService_Di
 }
 
 func (_c *MockUserService_Disable2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error) *MockUserService_Disable2FA_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FinishPasskeyLogin provides a mock function for the type MockUserService
+func (_mock *MockUserService) FinishPasskeyLogin(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error) {
+	ret := _mock.Called(ctx, sessionID, response)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FinishPasskeyLogin")
+	}
+
+	var r0 *dto.UserTokenResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []byte) (*dto.UserTokenResponse, error)); ok {
+		return returnFunc(ctx, sessionID, response)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []byte) *dto.UserTokenResponse); ok {
+		r0 = returnFunc(ctx, sessionID, response)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.UserTokenResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []byte) error); ok {
+		r1 = returnFunc(ctx, sessionID, response)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_FinishPasskeyLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FinishPasskeyLogin'
+type MockUserService_FinishPasskeyLogin_Call struct {
+	*mock.Call
+}
+
+// FinishPasskeyLogin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID string
+//   - response []byte
+func (_e *MockUserService_Expecter) FinishPasskeyLogin(ctx interface{}, sessionID interface{}, response interface{}) *MockUserService_FinishPasskeyLogin_Call {
+	return &MockUserService_FinishPasskeyLogin_Call{Call: _e.mock.On("FinishPasskeyLogin", ctx, sessionID, response)}
+}
+
+func (_c *MockUserService_FinishPasskeyLogin_Call) Run(run func(ctx context.Context, sessionID string, response []byte)) *MockUserService_FinishPasskeyLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []byte
+		if args[2] != nil {
+			arg2 = args[2].([]byte)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_FinishPasskeyLogin_Call) Return(userTokenResponse *dto.UserTokenResponse, err error) *MockUserService_FinishPasskeyLogin_Call {
+	_c.Call.Return(userTokenResponse, err)
+	return _c
+}
+
+func (_c *MockUserService_FinishPasskeyLogin_Call) RunAndReturn(run func(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error)) *MockUserService_FinishPasskeyLogin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FinishPasskeyRegistration provides a mock function for the type MockUserService
+func (_mock *MockUserService) FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error {
+	ret := _mock.Called(ctx, userID, sessionID, response)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FinishPasskeyRegistration")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, []byte) error); ok {
+		r0 = returnFunc(ctx, userID, sessionID, response)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserService_FinishPasskeyRegistration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FinishPasskeyRegistration'
+type MockUserService_FinishPasskeyRegistration_Call struct {
+	*mock.Call
+}
+
+// FinishPasskeyRegistration is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - sessionID string
+//   - response []byte
+func (_e *MockUserService_Expecter) FinishPasskeyRegistration(ctx interface{}, userID interface{}, sessionID interface{}, response interface{}) *MockUserService_FinishPasskeyRegistration_Call {
+	return &MockUserService_FinishPasskeyRegistration_Call{Call: _e.mock.On("FinishPasskeyRegistration", ctx, userID, sessionID, response)}
+}
+
+func (_c *MockUserService_FinishPasskeyRegistration_Call) Run(run func(ctx context.Context, userID uuid.UUID, sessionID string, response []byte)) *MockUserService_FinishPasskeyRegistration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []byte
+		if args[3] != nil {
+			arg3 = args[3].([]byte)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_FinishPasskeyRegistration_Call) Return(err error) *MockUserService_FinishPasskeyRegistration_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUserService_FinishPasskeyRegistration_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error) *MockUserService_FinishPasskeyRegistration_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -366,6 +702,74 @@ func (_c *MockUserService_GetUserByID_Call) Return(userResponse *dto.UserRespons
 }
 
 func (_c *MockUserService_GetUserByID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error)) *MockUserService_GetUserByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserPasskeys provides a mock function for the type MockUserService
+func (_mock *MockUserService) GetUserPasskeys(ctx context.Context, userID uuid.UUID) ([]*dto.PasskeyResponse, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserPasskeys")
+	}
+
+	var r0 []*dto.PasskeyResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*dto.PasskeyResponse, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*dto.PasskeyResponse); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*dto.PasskeyResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserService_GetUserPasskeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserPasskeys'
+type MockUserService_GetUserPasskeys_Call struct {
+	*mock.Call
+}
+
+// GetUserPasskeys is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *MockUserService_Expecter) GetUserPasskeys(ctx interface{}, userID interface{}) *MockUserService_GetUserPasskeys_Call {
+	return &MockUserService_GetUserPasskeys_Call{Call: _e.mock.On("GetUserPasskeys", ctx, userID)}
+}
+
+func (_c *MockUserService_GetUserPasskeys_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *MockUserService_GetUserPasskeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_GetUserPasskeys_Call) Return(userPasskeyResponses []*dto.PasskeyResponse, err error) *MockUserService_GetUserPasskeys_Call {
+	_c.Call.Return(userPasskeyResponses, err)
+	return _c
+}
+
+func (_c *MockUserService_GetUserPasskeys_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]*dto.PasskeyResponse, error)) *MockUserService_GetUserPasskeys_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -706,6 +1110,75 @@ func (_c *MockUserService_Setup2FA_Call) Return(setup2FAResponse *dto.Setup2FARe
 }
 
 func (_c *MockUserService_Setup2FA_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error)) *MockUserService_Setup2FA_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdatePasskeyName provides a mock function for the type MockUserService
+func (_mock *MockUserService) UpdatePasskeyName(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID, req dto.UpdatePasskeyNameRequest) error {
+	ret := _mock.Called(ctx, passkeyID, userID, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdatePasskeyName")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, dto.UpdatePasskeyNameRequest) error); ok {
+		r0 = returnFunc(ctx, passkeyID, userID, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserService_UpdatePasskeyName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePasskeyName'
+type MockUserService_UpdatePasskeyName_Call struct {
+	*mock.Call
+}
+
+// UpdatePasskeyName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - passkeyID uuid.UUID
+//   - userID uuid.UUID
+//   - req dto.UpdatePasskeyNameRequest
+func (_e *MockUserService_Expecter) UpdatePasskeyName(ctx interface{}, passkeyID interface{}, userID interface{}, req interface{}) *MockUserService_UpdatePasskeyName_Call {
+	return &MockUserService_UpdatePasskeyName_Call{Call: _e.mock.On("UpdatePasskeyName", ctx, passkeyID, userID, req)}
+}
+
+func (_c *MockUserService_UpdatePasskeyName_Call) Run(run func(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID, req dto.UpdatePasskeyNameRequest)) *MockUserService_UpdatePasskeyName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		var arg3 dto.UpdatePasskeyNameRequest
+		if args[3] != nil {
+			arg3 = args[3].(dto.UpdatePasskeyNameRequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserService_UpdatePasskeyName_Call) Return(err error) *MockUserService_UpdatePasskeyName_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUserService_UpdatePasskeyName_Call) RunAndReturn(run func(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID, req dto.UpdatePasskeyNameRequest) error) *MockUserService_UpdatePasskeyName_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -8,6 +8,7 @@ import (
 	"go-shop-backend/pkg/response"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -313,4 +314,117 @@ func (h *Handler) ChangePassword(ctx fiber.Ctx) error {
 	}
 
 	return response.JSON(ctx, fiber.StatusOK, "OK")
+}
+
+func (h *Handler) BeginPasskeyRegistration(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	resp, err := h.userService.BeginPasskeyRegistration(ctx.Context(), *userCtx.UserID)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) FinishPasskeyRegistration(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	sid, err := getPasskeySessionID(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := h.userService.FinishPasskeyRegistration(ctx.Context(), *userCtx.UserID, sid, ctx.Body()); err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, "OK")
+}
+
+func (h *Handler) BeginPasskeyLogin(ctx fiber.Ctx) error {
+	resp, err := h.userService.BeginPasskeyLogin(ctx.Context())
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) FinishPasskeyLogin(ctx fiber.Ctx) error {
+	sid, err := getPasskeySessionID(ctx)
+	if err != nil {
+		return err
+	}
+
+	resp, err := h.userService.FinishPasskeyLogin(ctx.Context(), sid, ctx.Body())
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) GetUserPasskeys(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	resp, err := h.userService.GetUserPasskeys(ctx.Context(), *userCtx.UserID)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
+func (h *Handler) UpdatePasskeyName(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	id := uuid.MustParse(ctx.Params("id"))
+
+	var req dto.UpdatePasskeyNameRequest
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return err
+	}
+
+	if err := h.userService.UpdatePasskeyName(ctx.Context(), id, *userCtx.UserID, req); err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, "OK")
+}
+
+func (h *Handler) DeletePasskey(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	id := uuid.MustParse(ctx.Params("id"))
+
+	if err := h.userService.DeletePasskey(ctx.Context(), id, *userCtx.UserID); err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+func getPasskeySessionID(ctx fiber.Ctx) (string, error) {
+	sid := fiber.GetReqHeader[string](ctx, "Passkey-Session-ID")
+	if sid == "" {
+		return "", apperror.ErrInvalidPasskeySessionID
+	}
+
+	return sid, nil
 }

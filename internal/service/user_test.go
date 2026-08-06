@@ -16,6 +16,9 @@ import (
 	cacheMocks "go-shop-backend/pkg/cache/mocks"
 	cryptoMocks "go-shop-backend/pkg/crypto/mocks"
 	hasherMocks "go-shop-backend/pkg/hasher/mocks"
+	"go-shop-backend/pkg/passkey"
+	passkeyMocks "go-shop-backend/pkg/passkey/mocks"
+	"go-shop-backend/pkg/testutils"
 	"go-shop-backend/pkg/token"
 	tokenMocks "go-shop-backend/pkg/token/mocks"
 	"go-shop-backend/pkg/totp"
@@ -40,10 +43,13 @@ type UserServiceTestSuite struct {
 	notificationTask  *tasksMocks.MockNotificationTask
 	cache             *cacheMocks.MockCache
 	userEmailConfig   *UserEmailConfig
+	passkeyManager    *passkeyMocks.MockManager
+	passkeyRepo       *repoMocks.MockPasskeyRepository
 	userService       *userService
 
-	ctx    context.Context
-	userID uuid.UUID
+	ctx       context.Context
+	userID    uuid.UUID
+	passkeyID uuid.UUID
 }
 
 func (suite *UserServiceTestSuite) SetupTest() {
@@ -58,6 +64,8 @@ func (suite *UserServiceTestSuite) SetupTest() {
 		EmailConfirmationCodeLength: 6,
 		EmailConfirmationCodeTTL:    2 * time.Minute,
 	}
+	suite.passkeyManager = passkeyMocks.NewMockManager(suite.T())
+	suite.passkeyRepo = repoMocks.NewMockPasskeyRepository(suite.T())
 	suite.userService = NewUserService(
 		suite.userRepo,
 		suite.tokenManager,
@@ -67,10 +75,14 @@ func (suite *UserServiceTestSuite) SetupTest() {
 		suite.notificationTask,
 		suite.cache,
 		suite.userEmailConfig,
+		suite.passkeyManager,
+		suite.passkeyRepo,
+		testutils.NewSlogLogger(),
 	)
 
 	suite.ctx = context.Background()
 	suite.userID = uuid.New()
+	suite.passkeyID = uuid.New()
 }
 
 func TestUserServiceTestSuite(t *testing.T) {
@@ -1452,4 +1464,191 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserProfileDeleted() {
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
 	suite.ErrorContains(err, "userService.RefreshToken")
+}
+
+// ==================== BeginPasskeyRegistration Tests ====================
+
+func (suite *UserServiceTestSuite) TestBeginPasskeyRegistration_Success() {
+	user := &models.User{
+		ID: suite.userID,
+	}
+
+	sid := "test123"
+
+	credentialCreation := &passkey.CredentialCreation{}
+
+	passkeys := []models.PasskeyCredential{{ID: suite.passkeyID}}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	suite.passkeyRepo.EXPECT().GetListByUser(suite.ctx, suite.userID).
+		Return(passkeys, nil).Once()
+
+	suite.passkeyManager.EXPECT().BeginRegistration(suite.ctx, user).
+		Return(credentialCreation, sid, nil).Once()
+
+	response, err := suite.userService.BeginPasskeyRegistration(suite.ctx, suite.userID)
+
+	suite.NoError(err)
+	suite.NotNil(response)
+	suite.Equal(sid, response.SessionID)
+	suite.Equal(user.Passkeys, passkeys)
+}
+
+// ==================== FinishPasskeyRegistration Tests ====================
+
+func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_Success() {
+	user := &models.User{
+		ID: suite.userID,
+	}
+
+	sid := "test123"
+
+	credential := &passkey.Credential{
+		ID: []byte{1, 2, 3},
+	}
+
+	passkeys := []models.PasskeyCredential{{ID: suite.passkeyID}}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
+	suite.passkeyRepo.EXPECT().GetListByUser(suite.ctx, suite.userID).
+		Return(passkeys, nil).Once()
+
+	suite.passkeyManager.EXPECT().FinishRegistration(suite.ctx, user, sid, mock.AnythingOfType("[]uint8")).
+		Return(credential, nil).Once()
+
+	suite.passkeyRepo.EXPECT().Create(suite.ctx, mock.MatchedBy(func(passkeyCredential *models.PasskeyCredential) bool {
+		return suite.Equal(passkeyCredential.UserID, user.ID) &&
+			suite.Equal(passkeyCredential.CredentialID, credential.ID) &&
+			suite.Equal(passkeyCredential.Credential, *credential) &&
+			suite.NotNil(passkeyCredential.LastUsedAt)
+	})).Return(nil).Once()
+
+	err := suite.userService.FinishPasskeyRegistration(suite.ctx, suite.userID, sid, []byte("test"))
+
+	suite.NoError(err)
+	suite.Equal(user.Passkeys, passkeys)
+}
+
+// ==================== BeginPasskeyLogin Tests ====================
+
+func (suite *UserServiceTestSuite) TestBeginPasskeyLogin_Success() {
+	credential := &passkey.CredentialAssertion{}
+
+	sid := "test123"
+
+	suite.passkeyManager.EXPECT().BeginDiscoverableLogin(suite.ctx).
+		Return(credential, sid, nil).Once()
+
+	response, err := suite.userService.BeginPasskeyLogin(suite.ctx)
+
+	suite.NoError(err)
+	suite.NotNil(response)
+	suite.Equal(sid, response.SessionID)
+}
+
+// ==================== FinishPasskeyLogin Tests ====================
+
+func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_Success() {
+	validatedCredential := &passkey.Credential{
+		ID: []byte{1, 2, 3},
+	}
+
+	user := &models.User{
+		ID: suite.userID,
+	}
+
+	passkeyCredential := &models.PasskeyCredential{
+		ID: suite.passkeyID,
+	}
+
+	sid := "test123"
+
+	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+
+	payload := token.Payload{
+		UserID:         user.ID.String(),
+		UserRole:       string(user.Role),
+		EmailConfirmed: user.EmailConfirmed(),
+	}
+
+	suite.passkeyManager.EXPECT().
+		FinishDiscoverableLogin(suite.ctx, mock.AnythingOfType("webauthn.DiscoverableUserHandler"), sid, mock.AnythingOfType("[]uint8")).
+		Return(user, validatedCredential, nil).Once()
+
+	suite.passkeyRepo.EXPECT().GetByCredentialID(suite.ctx, validatedCredential.ID).
+		Return(passkeyCredential, nil).Once()
+
+	suite.passkeyRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(passkey *models.PasskeyCredential) bool {
+		return suite.Equal(passkey.Credential, *validatedCredential) && suite.NotNil(passkey.LastUsedAt)
+	})).Return(nil).Once()
+
+	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
+		Return("accessToken", claims, nil)
+
+	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
+		Return("refreshToken", claims, nil)
+
+	response, err := suite.userService.FinishPasskeyLogin(suite.ctx, sid, []byte("test"))
+
+	suite.NoError(err)
+	suite.NotNil(response)
+	suite.NotNil(response.User)
+	suite.Equal(response.User.ID, suite.userID)
+}
+
+// ==================== UpdatePasskeyName Tests ====================
+
+func (suite *UserServiceTestSuite) TestUpdatePasskeyName_Success() {
+	req := dto.UpdatePasskeyNameRequest{
+		Name: "test  Windows Hello    123",
+	}
+
+	userPasskey := &models.PasskeyCredential{
+		ID:     suite.passkeyID,
+		UserID: suite.userID,
+	}
+
+	suite.passkeyRepo.EXPECT().GetByUser(suite.ctx, suite.passkeyID, suite.userID).
+		Return(userPasskey, nil).Once()
+
+	suite.passkeyRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(passkey *models.PasskeyCredential) bool {
+		return passkey.Name != nil && *passkey.Name == "TEST WINDOWS HELLO 123"
+	})).Return(nil).Once()
+
+	err := suite.userService.UpdatePasskeyName(suite.ctx, suite.passkeyID, suite.userID, req)
+	suite.NoError(err)
+}
+
+func (suite *UserServiceTestSuite) TestUpdatePasskeyName_UserNotOwner() {
+	suite.passkeyRepo.EXPECT().GetByUser(suite.ctx, suite.passkeyID, suite.userID).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	err := suite.userService.UpdatePasskeyName(suite.ctx, suite.passkeyID, suite.userID, dto.UpdatePasskeyNameRequest{Name: "test"})
+
+	suite.ErrorIs(err, apperror.ErrForbidden)
+	suite.ErrorContains(err, "userService.UpdatePasskeyName")
+}
+
+// ==================== DeletePasskey Tests ====================
+
+func (suite *UserServiceTestSuite) TestDeletePasskey_Success() {
+	suite.passkeyRepo.EXPECT().Delete(suite.ctx, suite.passkeyID, suite.userID).
+		Return(nil).Once()
+
+	err := suite.userService.DeletePasskey(suite.ctx, suite.passkeyID, suite.userID)
+	suite.NoError(err)
+}
+
+func (suite *UserServiceTestSuite) TestDeletePasskey_UserNotOwner() {
+	suite.passkeyRepo.EXPECT().Delete(suite.ctx, suite.passkeyID, suite.userID).
+		Return(repository.ErrRecordNotFound).Once()
+
+	err := suite.userService.DeletePasskey(suite.ctx, suite.passkeyID, suite.userID)
+
+	suite.ErrorIs(err, apperror.ErrForbidden)
+	suite.ErrorContains(err, "userService.DeletePasskey")
 }

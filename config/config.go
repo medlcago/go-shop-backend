@@ -19,6 +19,10 @@ type Config struct {
 	OrderCancelDelay        time.Duration `env:"ORDER_CANCEL_DELAY" env-default:"10m"`
 	MasterKey               string        `env:"MASTER_KEY" env-required:"true"`
 
+	PasskeySessionTTL time.Duration `env:"PASSKEY_SESSION_TTL" env-default:"5m"`
+	PasskeyRPID       string        `env:"PASSKEY_RPID" env-required:"true"`
+	PasskeyRPOrigins  []string      `env:"PASSKEY_RP_ORIGINS" validate:"required,min=1"`
+
 	HTTPServer HTTPServer `env-prefix:"HTTP_SERVER_"`
 	HTTPClient HTTPClient `env-prefix:"HTTP_CLIENT_"`
 	Cors       Cors       `env-prefix:"CORS_"`

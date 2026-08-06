@@ -20,6 +20,7 @@ import (
 	"go-shop-backend/pkg/httpclient"
 	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/notification"
+	"go-shop-backend/pkg/passkey"
 	"go-shop-backend/pkg/paymentprovider"
 	"go-shop-backend/pkg/paymentprovider/yookassa"
 	"go-shop-backend/pkg/redis"
@@ -69,6 +70,7 @@ type Container struct {
 	notificationRegistry Lazy[notification.SenderRegistry]
 	metricsFactory       Lazy[*metrics.Factory]
 	httpClient           Lazy[*http.Client]
+	passkeyManager       Lazy[passkey.Manager]
 
 	// repositories
 	userRepository              Lazy[repository.UserRepository]
@@ -81,6 +83,7 @@ type Container struct {
 	wishlistItemRepository      Lazy[repository.WishlistItemRepository]
 	addressRepository           Lazy[repository.AddressRepository]
 	userPaymentMethodRepository Lazy[repository.UserPaymentMethodRepository]
+	passkeyRepository           Lazy[repository.PasskeyRepository]
 
 	// services
 	userService         Lazy[service.UserService]
@@ -308,6 +311,24 @@ func (c *Container) HTTPClient() *http.Client {
 	})
 }
 
+func (c *Container) PasskeyManager() passkey.Manager {
+	return c.passkeyManager.Get(func() passkey.Manager {
+		passkeySessionStore := passkey.NewSessionStore(c.RedisClient().RDB(), c.Config().PasskeySessionTTL)
+		passkeyConfig := passkey.Config{
+			RPDisplayName: c.Config().AppName,
+			RPID:          c.Config().PasskeyRPID,
+			RPOrigins:     c.Config().PasskeyRPOrigins,
+		}
+
+		manager, err := passkey.NewService(passkeyConfig, passkeySessionStore)
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to create passkey manager", err)
+		}
+
+		return manager
+	})
+}
+
 func (c *Container) UserRepo() repository.UserRepository {
 	return c.userRepository.Get(func() repository.UserRepository {
 		return gormRepo.NewUserRepository(c.DB())
@@ -368,6 +389,12 @@ func (c *Container) UserPaymentMethodRepo() repository.UserPaymentMethodReposito
 	})
 }
 
+func (c *Container) PasskeyRepo() repository.PasskeyRepository {
+	return c.passkeyRepository.Get(func() repository.PasskeyRepository {
+		return gormRepo.NewPasskeyRepository(c.DB())
+	})
+}
+
 func (c *Container) UserService() service.UserService {
 	return c.userService.Get(func() service.UserService {
 		userService := service.NewUserService(
@@ -382,6 +409,9 @@ func (c *Container) UserService() service.UserService {
 				EmailConfirmationCodeLength: c.Config().Email.ConfirmationCodeLength,
 				EmailConfirmationCodeTTL:    c.Config().Email.ConfirmationCodeTTL,
 			},
+			c.PasskeyManager(),
+			c.PasskeyRepo(),
+			c.Logger(),
 		)
 
 		return userService

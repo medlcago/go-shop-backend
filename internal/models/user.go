@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -31,9 +32,37 @@ type User struct {
 	TwoFASecret      *string    `gorm:"varchar(255)"`
 	TwoFAConfirmedAt *time.Time `gorm:"type:timestamptz"`
 
+	Passkeys []PasskeyCredential `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+
 	Addresses []Address `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 func (u *User) EmailConfirmed() bool {
 	return u.EmailConfirmedAt != nil
+}
+
+func (u *User) WebAuthnID() []byte {
+	return u.ID[:]
+}
+
+func (u *User) WebAuthnName() string {
+	return u.Email
+}
+
+func (u *User) WebAuthnDisplayName() string {
+	if u.FullName != nil {
+		return *u.FullName
+	}
+
+	return u.Email
+}
+
+func (u *User) WebAuthnCredentials() []webauthn.Credential {
+	credentials := make([]webauthn.Credential, 0, len(u.Passkeys))
+
+	for _, passkey := range u.Passkeys {
+		credentials = append(credentials, passkey.Credential)
+	}
+
+	return credentials
 }

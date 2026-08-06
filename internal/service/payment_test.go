@@ -681,7 +681,7 @@ func (suite *PaymentServiceTestSuite) TestDeletePaymentMethod_Success() {
 	suite.NoError(err)
 }
 
-func (suite *PaymentServiceTestSuite) TestDeletePaymentMethod_PaymentMethodNotFoundd() {
+func (suite *PaymentServiceTestSuite) TestDeletePaymentMethod_PaymentMethodNotFound() {
 	suite.userPaymentRepo.EXPECT().Delete(suite.ctx, suite.paymentMethodID, suite.userID).
 		Return(repository.ErrRecordNotFound).Once()
 

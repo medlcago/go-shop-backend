@@ -60,3 +60,7 @@ packages:
   go-shop-backend/pkg/notification:
     config:
       all: true
+
+  go-shop-backend/pkg/passkey:
+    config:
+      all: true

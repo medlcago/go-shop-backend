@@ -12,10 +12,14 @@ import (
 	"go-shop-backend/pkg/cache"
 	"go-shop-backend/pkg/crypto"
 	"go-shop-backend/pkg/hasher"
+	"go-shop-backend/pkg/logger"
 	"go-shop-backend/pkg/mapper"
+	"go-shop-backend/pkg/passkey"
 	"go-shop-backend/pkg/token"
 	"go-shop-backend/pkg/totp"
 	"go-shop-backend/pkg/utils"
+	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,6 +39,9 @@ type userService struct {
 	notificationTask  tasks.NotificationTask
 	cache             cache.Cache
 	userEmailConfig   *UserEmailConfig
+	passkeyManager    passkey.Manager
+	passkeyRepo       repository.PasskeyRepository
+	logger            *slog.Logger
 }
 
 func NewUserService(
@@ -46,6 +53,9 @@ func NewUserService(
 	notificationTask tasks.NotificationTask,
 	cache cache.Cache,
 	userEmailConfig *UserEmailConfig,
+	passkeyManager passkey.Manager,
+	passkeyRepo repository.PasskeyRepository,
+	logger *slog.Logger,
 ) *userService {
 	if userEmailConfig == nil {
 		panic("userService: userEmailConfig is nil")
@@ -60,6 +70,9 @@ func NewUserService(
 		notificationTask:  notificationTask,
 		cache:             cache,
 		userEmailConfig:   userEmailConfig,
+		passkeyManager:    passkeyManager,
+		passkeyRepo:       passkeyRepo,
+		logger:            logger,
 	}
 }
 
@@ -396,6 +409,208 @@ func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dt
 	return buildUserTokenResponse(user, tokens), nil
 }
 
+func (u *userService) BeginPasskeyRegistration(ctx context.Context, userID uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error) {
+	const op = "userService.BeginPasskeyRegistration"
+
+	user, err := u.getUserByID(ctx, userID)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	userPasskeys, err := u.passkeyRepo.GetListByUser(ctx, userID)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+	user.Passkeys = userPasskeys
+
+	credential, sid, err := u.passkeyManager.BeginRegistration(ctx, user)
+	if err != nil {
+		u.logger.ErrorContext(
+			ctx,
+			"failed to begin passkey registration",
+			logger.Err(err),
+			logger.Op(op),
+		)
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return &dto.BeginPasskeyRegistrationResponse{
+		CredentialCreation: credential,
+		SessionID:          sid,
+	}, nil
+}
+
+func (u *userService) FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error {
+	const op = "userService.FinishPasskeyRegistration"
+
+	user, err := u.getUserByID(ctx, userID)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	userPasskeys, err := u.passkeyRepo.GetListByUser(ctx, userID)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+	user.Passkeys = userPasskeys
+
+	credential, err := u.passkeyManager.FinishRegistration(ctx, user, sessionID, response)
+	if err != nil {
+		u.logger.ErrorContext(
+			ctx,
+			"failed to finish passkey registration",
+			logger.Err(err),
+			logger.Op(op),
+		)
+
+		return apperror.Wrap(op, err)
+	}
+
+	passkeyCredential := &models.PasskeyCredential{
+		UserID:       userID,
+		CredentialID: credential.ID,
+		Credential:   *credential,
+		LastUsedAt:   new(time.Now().UTC()),
+	}
+
+	if err := u.passkeyRepo.Create(ctx, passkeyCredential); err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	return nil
+}
+
+func (u *userService) BeginPasskeyLogin(ctx context.Context) (*dto.BeginPasskeyDiscoverableLoginResponse, error) {
+	const op = "userService.BeginPasskeyLogin"
+
+	credential, sid, err := u.passkeyManager.BeginDiscoverableLogin(ctx)
+	if err != nil {
+		u.logger.ErrorContext(
+			ctx,
+			"failed to begin passkey login",
+			logger.Err(err),
+			logger.Op(op),
+		)
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return &dto.BeginPasskeyDiscoverableLoginResponse{
+		CredentialAssertion: credential,
+		SessionID:           sid,
+	}, nil
+}
+
+func (u *userService) FinishPasskeyLogin(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error) {
+	const op = "userService.FinishPasskeyLogin"
+
+	validatedUser, validatedCredential, err := u.passkeyManager.FinishDiscoverableLogin(ctx, func(rawID, userHandle []byte) (passkey.User, error) {
+		userID, err := uuid.FromBytes(userHandle)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse user handle: %w", err)
+		}
+
+		user, err := u.getUserByID(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user by id: %w", err)
+		}
+
+		userPasskeys, err := u.passkeyRepo.GetListByUser(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user passkeys: %w", err)
+		}
+		user.Passkeys = userPasskeys
+
+		return user, nil
+	}, sessionID, response)
+
+	if err != nil {
+		u.logger.ErrorContext(
+			ctx,
+			"failed to finish passkey login",
+			logger.Err(err),
+			logger.Op(op),
+		)
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	user, ok := validatedUser.(*models.User)
+	if !ok {
+		return nil, apperror.Wrap(op, apperror.ErrInvalidCredentials)
+	}
+
+	passkeyCredential, err := u.passkeyRepo.GetByCredentialID(ctx, validatedCredential.ID)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	passkeyCredential.Credential = *validatedCredential
+	passkeyCredential.LastUsedAt = new(time.Now().UTC())
+
+	if err := u.passkeyRepo.Update(ctx, passkeyCredential); err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	tokens, err := u.createTokens(user)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return buildUserTokenResponse(user, tokens), nil
+}
+
+func (u *userService) GetUserPasskeys(ctx context.Context, userID uuid.UUID) ([]*dto.PasskeyResponse, error) {
+	const op = "userService.GetUserPasskeys"
+
+	userPasskeys, err := u.passkeyRepo.GetListByUser(ctx, userID)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	response, err := u.mapUserPasskeys(userPasskeys)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return response, nil
+}
+
+func (u *userService) UpdatePasskeyName(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID, req dto.UpdatePasskeyNameRequest) error {
+	const op = "userService.UpdatePasskeyName"
+
+	userPasskey, err := u.passkeyRepo.GetByUser(ctx, passkeyID, userID)
+	if err != nil {
+		if repository.IsRecordNotFound(err) {
+			return apperror.Wrap(op, apperror.ErrForbidden)
+		}
+
+		return apperror.Wrap(op, err)
+	}
+
+	userPasskey.Name = new(strings.ToUpper(strings.Join(strings.Fields(req.Name), " ")))
+	if err := u.passkeyRepo.Update(ctx, userPasskey); err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	return nil
+}
+
+func (u *userService) DeletePasskey(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID) error {
+	const op = "userService.DeletePasskey"
+
+	if err := u.passkeyRepo.Delete(ctx, passkeyID, userID); err != nil {
+		if repository.IsRecordNotFound(err) {
+			return apperror.Wrap(op, apperror.ErrForbidden)
+		}
+
+		return apperror.Wrap(op, err)
+	}
+
+	return nil
+}
+
 func (u *userService) createTokens(user *models.User) (*dto.TokenResponse, error) {
 	const (
 		op        = "userService.createTokens"
@@ -540,6 +755,17 @@ func (u *userService) mapUser(user *models.User) (*dto.UserResponse, error) {
 	const op = "userService.mapUser"
 
 	response, err := mapper.MapOne[*models.User, dto.UserResponse](user)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return response, nil
+}
+
+func (u *userService) mapUserPasskeys(userPasskeys []models.PasskeyCredential) ([]*dto.PasskeyResponse, error) {
+	const op = "userService.mapUserPasskeys"
+
+	response, err := mapper.MapList[models.PasskeyCredential, *dto.PasskeyResponse](userPasskeys)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}

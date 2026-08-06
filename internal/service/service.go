@@ -20,6 +20,16 @@ type UserService interface {
 	ConfirmEmail(ctx context.Context, userID uuid.UUID, req dto.ConfirmEmailRequest) (*dto.ConfirmEmailResponse, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error
 	RefreshToken(ctx context.Context, tokenString string) (*dto.UserTokenResponse, error)
+
+	BeginPasskeyRegistration(ctx context.Context, userID uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error)
+	FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error
+
+	BeginPasskeyLogin(ctx context.Context) (*dto.BeginPasskeyDiscoverableLoginResponse, error)
+	FinishPasskeyLogin(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error)
+
+	GetUserPasskeys(ctx context.Context, userID uuid.UUID) ([]*dto.PasskeyResponse, error)
+	UpdatePasskeyName(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID, req dto.UpdatePasskeyNameRequest) error
+	DeletePasskey(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID) error
 }
 
 type ProductService interface {
