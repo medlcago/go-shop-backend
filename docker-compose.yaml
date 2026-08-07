@@ -8,7 +8,7 @@ services:
       - minio
     volumes:
       - ./.env.docker:/app/.env:ro
-    restart: on-failure
+    restart: always
     networks:
       - internal
 
@@ -25,7 +25,7 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: on-failure
+    restart: always
     networks:
       - internal
 
@@ -37,8 +37,8 @@ services:
     env_file:
       - .env.docker
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -75,6 +75,7 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    restart: always
     networks:
       - internal
 
@@ -85,8 +86,13 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     depends_on:
       - app
+    restart: always
     networks:
       - internal
 
@@ -94,10 +100,55 @@ services:
     image: hibiken/asynqmon:latest
     container_name: asynq_monitor
     ports:
-      - "3000:3000"
-    command: [ "-redis-url=redis://:${REDIS_PASSWORD}@redis:6379/0", "-port=3000" ]
+      - "3030:3030"
+    command: [ "-redis-url=redis://:${REDIS_PASSWORD}@redis:6379/0", "-port=3030" ]
     depends_on:
       - redis
+    restart: always
+    networks:
+      - internal
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    env_file:
+      - .env.docker
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    command:
+      - "-config.file=/etc/loki/loki-config.yaml"
+      - "-config.expand-env=true"
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: always
+    networks:
+      - internal
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: run --server.http.listen-addr=0.0.0.0:12345 /etc/alloy/config.alloy
+    depends_on:
+      - loki
+    restart: always
+    networks:
+      - internal
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - grafana_data:/var/lib/grafana
     restart: always
     networks:
       - internal
@@ -107,6 +158,9 @@ volumes:
   redis_data:
   minio_data:
   nginx_cache:
+  grafana_data:
+  loki_data:
+  prometheus_data:
 
 
 networks:

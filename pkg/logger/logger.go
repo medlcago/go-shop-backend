@@ -25,7 +25,7 @@ func NewSlog(env Env) *slog.Logger {
 	}
 
 	handler := &RequestIDHandler{
-		Handler: slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+		Handler: slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level:     level,
 			AddSource: env == EnvDevelopment,
 		}).WithAttrs([]slog.Attr{
