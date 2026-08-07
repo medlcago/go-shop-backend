@@ -37,7 +37,9 @@ func Logger(log *slog.Logger) fiber.Handler {
 			slog.String("user_agent", ctx.Get("User-Agent")),
 		)
 
-		entry.Info("request completed",
+		entry.InfoContext(
+			ctx.Context(),
+			"request completed",
 			slog.Int("bytes", len(ctx.Response().Body())),
 			slog.Int("status_code", ctx.Response().StatusCode()),
 			slog.Duration("duration", time.Since(start)),

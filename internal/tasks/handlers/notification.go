@@ -35,7 +35,8 @@ func (h *NotificationTaskHandler) SendEmailConfirmationCode(ctx context.Context,
 	}
 
 	if err := h.notification.SendEmailConfirmationCode(ctx, payload.Email, payload.Code, notification.ChannelEmail); err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			ctx,
 			"failed to send email confirmation code",
 			logger.Err(err),
 		)

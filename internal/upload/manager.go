@@ -226,10 +226,11 @@ func (m *uploadManager) delete(ctx context.Context, objectKey string) {
 	const op = "uploadManager.delete"
 
 	if err := m.storage.Delete(ctx, objectKey); err != nil {
-		m.logger.Error(
+		m.logger.ErrorContext(
+			ctx,
 			"failed to delete object from storage",
 			logger.Err(err),
-			slog.String("op", op),
+			logger.Op(op),
 		)
 	}
 }

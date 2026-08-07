@@ -60,7 +60,8 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 			message = http.StatusText(status)
 		}
 
-		log.Error(
+		log.ErrorContext(
+			ctx.Context(),
 			"request error",
 			slog.Int("status", status),
 			logger.Err(err),

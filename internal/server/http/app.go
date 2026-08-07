@@ -26,6 +26,7 @@ func SetupApp(container *core.Container) *fiber.App {
 	})
 
 	app.Use(recover.New())
+	app.Use(middleware.RequestID)
 	app.Use(middleware.Logger(container.Logger()))
 	app.Use(cors.New(cors.Config{
 		AllowMethods:        container.Config().Cors.AllowMethods,

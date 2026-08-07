@@ -52,7 +52,8 @@ func (h *OrderTaskHandler) CancelOrder(ctx context.Context, task *asynq.Task) er
 	}
 
 	if err := h.orderStatusUpdater.UpdateOrderStatus(ctx, payload.OrderID, models.OrderStatusCanceled); err != nil {
-		h.logger.Error(
+		h.logger.ErrorContext(
+			ctx,
 			"failed to cancel order",
 			slog.String("order_id", payload.OrderID.String()),
 			logger.Err(err),

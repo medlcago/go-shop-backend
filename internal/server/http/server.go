@@ -55,7 +55,8 @@ func (s *Server) Start(ctx context.Context) error {
 
 	addr := fmt.Sprintf(":%d", s.container.Config().HTTPServer.Port)
 
-	s.logger.Info(
+	s.logger.InfoContext(
+		ctx,
 		"HTTP server starting",
 		slog.String("addr", addr),
 	)
@@ -68,7 +69,7 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	s.logger.Info("Stopping HTTP server")
+	s.logger.InfoContext(ctx, "Stopping HTTP server")
 	return s.app.ShutdownWithContext(ctx)
 }
 
