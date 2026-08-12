@@ -44,7 +44,7 @@ func RegisterRoutes(r fiber.Router, userHandler *Handler) {
 		)
 
 		authGroup.Put(
-			"/passkeys/:id<guid>",
+			"/passkeys/:id<guid>/name",
 			middleware.RequireAuth(),
 			middleware.RequireTokenType(token.AccessTokenType),
 			userHandler.UpdatePasskeyName,

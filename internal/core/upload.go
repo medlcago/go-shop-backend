@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	productImagePolicy = upload.FilePolicy{
+	productImagePolicy = upload.Policy{
 		MinSize: 5 << 10, // 5 KB
 		MaxSize: 5 << 20, // 5 MB
 		AllowedFormats: []upload.Format{
@@ -20,8 +20,8 @@ var (
 	}
 )
 
-func NewUploadPolicyRegistry() upload.PolicyRegistry {
-	registry := upload.NewPolicyRegistry()
+func NewUploadRegistry() upload.Registry {
+	registry := upload.NewRegistry()
 	registry.Register(
 		service.ProductImageType,
 		productImagePolicy,

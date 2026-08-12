@@ -39,27 +39,27 @@ func (_m *MockProductService) EXPECT() *MockProductService_Expecter {
 	return &MockProductService_Expecter{mock: &_m.Mock}
 }
 
-// ConfirmUploadImage provides a mock function for the type MockProductService
-func (_mock *MockProductService) ConfirmUploadImage(ctx context.Context, productID uuid.UUID, req dto.ConfirmUploadProductImageRequest) (*dto.UploadResponse, error) {
+// AttachImage provides a mock function for the type MockProductService
+func (_mock *MockProductService) AttachImage(ctx context.Context, productID uuid.UUID, req dto.AttachProductImageRequest) (*dto.UploadResponse, error) {
 	ret := _mock.Called(ctx, productID, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ConfirmUploadImage")
+		panic("no return value specified for AttachImage")
 	}
 
 	var r0 *dto.UploadResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.ConfirmUploadProductImageRequest) (*dto.UploadResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.AttachProductImageRequest) (*dto.UploadResponse, error)); ok {
 		return returnFunc(ctx, productID, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.ConfirmUploadProductImageRequest) *dto.UploadResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.AttachProductImageRequest) *dto.UploadResponse); ok {
 		r0 = returnFunc(ctx, productID, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dto.UploadResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, dto.ConfirmUploadProductImageRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, dto.AttachProductImageRequest) error); ok {
 		r1 = returnFunc(ctx, productID, req)
 	} else {
 		r1 = ret.Error(1)
@@ -67,20 +67,20 @@ func (_mock *MockProductService) ConfirmUploadImage(ctx context.Context, product
 	return r0, r1
 }
 
-// MockProductService_ConfirmUploadImage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConfirmUploadImage'
-type MockProductService_ConfirmUploadImage_Call struct {
+// MockProductService_AttachImage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AttachImage'
+type MockProductService_AttachImage_Call struct {
 	*mock.Call
 }
 
-// ConfirmUploadImage is a helper method to define mock.On call
+// AttachImage is a helper method to define mock.On call
 //   - ctx context.Context
 //   - productID uuid.UUID
-//   - req dto.ConfirmUploadProductImageRequest
-func (_e *MockProductService_Expecter) ConfirmUploadImage(ctx interface{}, productID interface{}, req interface{}) *MockProductService_ConfirmUploadImage_Call {
-	return &MockProductService_ConfirmUploadImage_Call{Call: _e.mock.On("ConfirmUploadImage", ctx, productID, req)}
+//   - req dto.AttachProductImageRequest
+func (_e *MockProductService_Expecter) AttachImage(ctx interface{}, productID interface{}, req interface{}) *MockProductService_AttachImage_Call {
+	return &MockProductService_AttachImage_Call{Call: _e.mock.On("AttachImage", ctx, productID, req)}
 }
 
-func (_c *MockProductService_ConfirmUploadImage_Call) Run(run func(ctx context.Context, productID uuid.UUID, req dto.ConfirmUploadProductImageRequest)) *MockProductService_ConfirmUploadImage_Call {
+func (_c *MockProductService_AttachImage_Call) Run(run func(ctx context.Context, productID uuid.UUID, req dto.AttachProductImageRequest)) *MockProductService_AttachImage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -90,9 +90,9 @@ func (_c *MockProductService_ConfirmUploadImage_Call) Run(run func(ctx context.C
 		if args[1] != nil {
 			arg1 = args[1].(uuid.UUID)
 		}
-		var arg2 dto.ConfirmUploadProductImageRequest
+		var arg2 dto.AttachProductImageRequest
 		if args[2] != nil {
-			arg2 = args[2].(dto.ConfirmUploadProductImageRequest)
+			arg2 = args[2].(dto.AttachProductImageRequest)
 		}
 		run(
 			arg0,
@@ -103,12 +103,12 @@ func (_c *MockProductService_ConfirmUploadImage_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockProductService_ConfirmUploadImage_Call) Return(uploadResponse *dto.UploadResponse, err error) *MockProductService_ConfirmUploadImage_Call {
+func (_c *MockProductService_AttachImage_Call) Return(uploadResponse *dto.UploadResponse, err error) *MockProductService_AttachImage_Call {
 	_c.Call.Return(uploadResponse, err)
 	return _c
 }
 
-func (_c *MockProductService_ConfirmUploadImage_Call) RunAndReturn(run func(ctx context.Context, productID uuid.UUID, req dto.ConfirmUploadProductImageRequest) (*dto.UploadResponse, error)) *MockProductService_ConfirmUploadImage_Call {
+func (_c *MockProductService_AttachImage_Call) RunAndReturn(run func(ctx context.Context, productID uuid.UUID, req dto.AttachProductImageRequest) (*dto.UploadResponse, error)) *MockProductService_AttachImage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -472,26 +472,26 @@ func (_c *MockProductService_UpdateProduct_Call) RunAndReturn(run func(ctx conte
 }
 
 // UploadImage provides a mock function for the type MockProductService
-func (_mock *MockProductService) UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageRequest) (*dto.UploadSignURLResponse, error) {
+func (_mock *MockProductService) UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageSignURLRequest) (*dto.GeneratePresignedURLResponse, error) {
 	ret := _mock.Called(ctx, productID, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UploadImage")
 	}
 
-	var r0 *dto.UploadSignURLResponse
+	var r0 *dto.GeneratePresignedURLResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.UploadProductImageRequest) (*dto.UploadSignURLResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.UploadProductImageSignURLRequest) (*dto.GeneratePresignedURLResponse, error)); ok {
 		return returnFunc(ctx, productID, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.UploadProductImageRequest) *dto.UploadSignURLResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.UploadProductImageSignURLRequest) *dto.GeneratePresignedURLResponse); ok {
 		r0 = returnFunc(ctx, productID, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.UploadSignURLResponse)
+			r0 = ret.Get(0).(*dto.GeneratePresignedURLResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, dto.UploadProductImageRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, dto.UploadProductImageSignURLRequest) error); ok {
 		r1 = returnFunc(ctx, productID, req)
 	} else {
 		r1 = ret.Error(1)
@@ -507,12 +507,12 @@ type MockProductService_UploadImage_Call struct {
 // UploadImage is a helper method to define mock.On call
 //   - ctx context.Context
 //   - productID uuid.UUID
-//   - req dto.UploadProductImageRequest
+//   - req dto.UploadProductImageSignURLRequest
 func (_e *MockProductService_Expecter) UploadImage(ctx interface{}, productID interface{}, req interface{}) *MockProductService_UploadImage_Call {
 	return &MockProductService_UploadImage_Call{Call: _e.mock.On("UploadImage", ctx, productID, req)}
 }
 
-func (_c *MockProductService_UploadImage_Call) Run(run func(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageRequest)) *MockProductService_UploadImage_Call {
+func (_c *MockProductService_UploadImage_Call) Run(run func(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageSignURLRequest)) *MockProductService_UploadImage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -522,9 +522,9 @@ func (_c *MockProductService_UploadImage_Call) Run(run func(ctx context.Context,
 		if args[1] != nil {
 			arg1 = args[1].(uuid.UUID)
 		}
-		var arg2 dto.UploadProductImageRequest
+		var arg2 dto.UploadProductImageSignURLRequest
 		if args[2] != nil {
-			arg2 = args[2].(dto.UploadProductImageRequest)
+			arg2 = args[2].(dto.UploadProductImageSignURLRequest)
 		}
 		run(
 			arg0,
@@ -535,12 +535,12 @@ func (_c *MockProductService_UploadImage_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockProductService_UploadImage_Call) Return(uploadSignURLResponse *dto.UploadSignURLResponse, err error) *MockProductService_UploadImage_Call {
-	_c.Call.Return(uploadSignURLResponse, err)
+func (_c *MockProductService_UploadImage_Call) Return(generatePresignedURLResponse *dto.GeneratePresignedURLResponse, err error) *MockProductService_UploadImage_Call {
+	_c.Call.Return(generatePresignedURLResponse, err)
 	return _c
 }
 
-func (_c *MockProductService_UploadImage_Call) RunAndReturn(run func(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageRequest) (*dto.UploadSignURLResponse, error)) *MockProductService_UploadImage_Call {
+func (_c *MockProductService_UploadImage_Call) RunAndReturn(run func(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageSignURLRequest) (*dto.GeneratePresignedURLResponse, error)) *MockProductService_UploadImage_Call {
 	_c.Call.Return(run)
 	return _c
 }

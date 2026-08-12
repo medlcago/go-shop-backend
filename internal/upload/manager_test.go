@@ -24,12 +24,12 @@ import (
 
 type ManagerTestSuite struct {
 	suite.Suite
-	storage        *storageMocks.MockStorage
-	uploadRepo     *repoMocks.MockUploadRepository
-	uploadConfig   config.Upload
-	ctDetector     *contenttypeMocks.MockDetector
-	policyRegistry *uploadMocks.MockPolicyRegistry
-	uploadManager  upload.Manager
+	storage       *storageMocks.MockStorage
+	uploadRepo    *repoMocks.MockUploadRepository
+	uploadConfig  config.Upload
+	ctDetector    *contenttypeMocks.MockDetector
+	registry      *uploadMocks.MockRegistry
+	uploadManager upload.Manager
 
 	ctx        context.Context
 	uploadID   uuid.UUID
@@ -45,13 +45,13 @@ func (suite *ManagerTestSuite) SetupTest() {
 		PresignedUrlTTL: time.Minute,
 	}
 	suite.ctDetector = contenttypeMocks.NewMockDetector(suite.T())
-	suite.policyRegistry = uploadMocks.NewMockPolicyRegistry(suite.T())
-	suite.uploadManager = upload.NewManager(
+	suite.registry = uploadMocks.NewMockRegistry(suite.T())
+	suite.uploadManager = upload.New(
 		suite.storage,
 		suite.uploadRepo,
 		suite.uploadConfig,
 		suite.ctDetector,
-		suite.policyRegistry,
+		suite.registry,
 		testutils.NewSlogLogger(),
 	)
 
@@ -68,7 +68,7 @@ func TestManagerTestSuite(t *testing.T) {
 // ==================== SignURL Tests ====================
 
 func (suite *ManagerTestSuite) TestSignURL_Success() {
-	req := dto.UploadSignURLRequest{
+	req := dto.GeneratePresignedURLRequest{
 		ContentType: "image/png",
 		Entity:      dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
 		Ext:         "png",
@@ -82,7 +82,7 @@ func (suite *ManagerTestSuite) TestSignURL_Success() {
 		},
 	}
 
-	filePolicy := upload.FilePolicy{
+	filePolicy := upload.Policy{
 		MinSize: 5 << 10,
 		MaxSize: 1 << 20,
 		AllowedFormats: []upload.Format{
@@ -92,7 +92,7 @@ func (suite *ManagerTestSuite) TestSignURL_Success() {
 		},
 	}
 
-	suite.policyRegistry.EXPECT().Get(suite.uploadType).
+	suite.registry.EXPECT().Get(suite.uploadType).
 		Return(filePolicy, nil).Once()
 
 	suite.storage.EXPECT().TemporaryUploadURL(suite.ctx, mock.MatchedBy(func(opts storage.TemporaryUploadURLOptions) bool {
@@ -112,18 +112,29 @@ func (suite *ManagerTestSuite) TestSignURL_Success() {
 	suite.Equal("image/png", response.ContentType)
 }
 
+func (suite *ManagerTestSuite) TestSignURL_InvalidUploadType() {
+	suite.registry.EXPECT().Get(suite.uploadType).
+		Return(upload.Policy{}, upload.ErrPolicyNotFound).Once()
+
+	response, err := suite.uploadManager.SignURL(suite.ctx, dto.GeneratePresignedURLRequest{}, suite.uploadType)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrInvalidUploadType)
+	suite.ErrorContains(err, "uploadManager.SignURL")
+}
+
 func (suite *ManagerTestSuite) TestSignURL_ContentTypeMismatch() {
-	constraints := upload.FilePolicy{
+	constraints := upload.Policy{
 		AllowedFormats: []upload.Format{
 			{Extensions: []string{"png"}, ContentType: "image/png"},
 			{Extensions: []string{"jpg", "jpeg"}, ContentType: "image/jpeg"},
 		},
 	}
 
-	suite.policyRegistry.EXPECT().Get(suite.uploadType).
+	suite.registry.EXPECT().Get(suite.uploadType).
 		Return(constraints, nil).Once()
 
-	response, err := suite.uploadManager.SignURL(suite.ctx, dto.UploadSignURLRequest{
+	response, err := suite.uploadManager.SignURL(suite.ctx, dto.GeneratePresignedURLRequest{
 		ContentType: "video/mp4",
 		Ext:         "mp4",
 	}, suite.uploadType)
@@ -135,29 +146,29 @@ func (suite *ManagerTestSuite) TestSignURL_ContentTypeMismatch() {
 
 func (suite *ManagerTestSuite) TestSignURL_UnknownPolicy() {
 	policyErr := errors.New("unknown policy")
-	suite.policyRegistry.EXPECT().Get(upload.Type("test")).
-		Return(upload.FilePolicy{}, policyErr).Once()
+	suite.registry.EXPECT().Get(upload.Type("test")).
+		Return(upload.Policy{}, policyErr).Once()
 
-	response, err := suite.uploadManager.SignURL(suite.ctx, dto.UploadSignURLRequest{}, "test")
+	response, err := suite.uploadManager.SignURL(suite.ctx, dto.GeneratePresignedURLRequest{}, "test")
 
 	suite.Nil(response)
 	suite.ErrorIs(err, policyErr)
 }
 
 func (suite *ManagerTestSuite) TestSignURL_StorageError() {
-	req := dto.UploadSignURLRequest{
+	req := dto.GeneratePresignedURLRequest{
 		Ext:         "png",
 		ContentType: "image/png",
 		Entity:      dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
 	}
 
-	filePolicy := upload.FilePolicy{
+	filePolicy := upload.Policy{
 		AllowedFormats: []upload.Format{
 			{Extensions: []string{"png"}, ContentType: "image/png"},
 		},
 	}
 
-	suite.policyRegistry.EXPECT().Get(suite.uploadType).
+	suite.registry.EXPECT().Get(suite.uploadType).
 		Return(filePolicy, nil).Once()
 
 	expectedErr := errors.New("storage error")
@@ -172,14 +183,14 @@ func (suite *ManagerTestSuite) TestSignURL_StorageError() {
 
 // ==================== Save Tests ====================
 
-func (suite *ManagerTestSuite) TestSave_Success() {
-	req := dto.UploadSaveRequest{
+func (suite *ManagerTestSuite) TestAttach_Success() {
+	req := dto.AttachFileRequest{
 		UploadID:  suite.uploadID,
 		ObjectKey: "products/123/img.png",
 		Entity:    dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
 	}
 
-	filePolicy := upload.FilePolicy{
+	filePolicy := upload.Policy{
 		MaxSize: 5 << 20,
 		AllowedFormats: []upload.Format{
 			{Extensions: []string{"png"}, ContentType: "image/png"},
@@ -202,13 +213,13 @@ func (suite *ManagerTestSuite) TestSave_Success() {
 	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objectInfo, nil).Once()
 
+	suite.registry.EXPECT().Get(suite.uploadType).
+		Return(filePolicy, nil).Once()
+
 	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.policyRegistry.EXPECT().Get(suite.uploadType).
-		Return(filePolicy, nil).Once()
-
-	suite.storage.EXPECT().Open(suite.ctx, req.ObjectKey).
+	suite.storage.EXPECT().Get(suite.ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
 	detectedCT := "image/png"
@@ -228,7 +239,7 @@ func (suite *ManagerTestSuite) TestSave_Success() {
 	suite.storage.EXPECT().PublicURL(req.ObjectKey).
 		Return(url).Once()
 
-	response, err := suite.uploadManager.Save(suite.ctx, req, suite.uploadType)
+	response, err := suite.uploadManager.Attach(suite.ctx, req, suite.uploadType)
 
 	suite.NoError(err)
 	suite.NotNil(response)
@@ -236,8 +247,26 @@ func (suite *ManagerTestSuite) TestSave_Success() {
 	suite.Equal(detectedCT, *response.ContentType)
 }
 
-func (suite *ManagerTestSuite) TestSave_NotFound() {
-	req := dto.UploadSaveRequest{
+func (suite *ManagerTestSuite) TestAttach_InvalidUploadType() {
+	req := dto.AttachFileRequest{
+		ObjectKey: "test",
+	}
+
+	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
+		Return(&storage.ObjectInfo{}, nil).Once()
+
+	suite.registry.EXPECT().Get(suite.uploadType).
+		Return(upload.Policy{}, upload.ErrPolicyNotFound).Once()
+
+	response, err := suite.uploadManager.Attach(suite.ctx, req, suite.uploadType)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrInvalidUploadType)
+	suite.ErrorContains(err, "uploadManager.Attach")
+}
+
+func (suite *ManagerTestSuite) TestAttach_NotFound() {
+	req := dto.AttachFileRequest{
 		UploadID:  suite.uploadID,
 		ObjectKey: "products/123/img.png",
 		Entity:    dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
@@ -246,14 +275,14 @@ func (suite *ManagerTestSuite) TestSave_NotFound() {
 	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(nil, errors.New("error")).Once()
 
-	response, err := suite.uploadManager.Save(suite.ctx, req, suite.uploadType)
+	response, err := suite.uploadManager.Attach(suite.ctx, req, suite.uploadType)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrNotFound)
 }
 
-func (suite *ManagerTestSuite) TestSave_FileAlreadyUploaded() {
-	req := dto.UploadSaveRequest{
+func (suite *ManagerTestSuite) TestAttach_FileAlreadyUploaded() {
+	req := dto.AttachFileRequest{
 		ObjectKey: "key",
 		Entity:    dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
 		UploadID:  suite.uploadID,
@@ -272,23 +301,26 @@ func (suite *ManagerTestSuite) TestSave_FileAlreadyUploaded() {
 	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
+	suite.registry.EXPECT().Get(suite.uploadType).
+		Return(upload.Policy{}, nil).Once()
+
 	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(true, nil).Once()
 
-	response, err := suite.uploadManager.Save(suite.ctx, req, suite.uploadType)
+	response, err := suite.uploadManager.Attach(suite.ctx, req, suite.uploadType)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrFileAlreadyUploaded)
 }
 
-func (suite *ManagerTestSuite) TestSave_InvalidDetectedContentType() {
-	req := dto.UploadSaveRequest{
+func (suite *ManagerTestSuite) TestAttach_InvalidDetectedContentType() {
+	req := dto.AttachFileRequest{
 		ObjectKey: "key",
 		Entity:    dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
 		UploadID:  suite.uploadID,
 	}
 
-	filePolicy := upload.FilePolicy{
+	filePolicy := upload.Policy{
 		MaxSize: 5 << 20,
 		AllowedFormats: []upload.Format{
 			{Extensions: []string{"png"}, ContentType: "image/png"},
@@ -313,10 +345,10 @@ func (suite *ManagerTestSuite) TestSave_InvalidDetectedContentType() {
 	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.policyRegistry.EXPECT().Get(suite.uploadType).
+	suite.registry.EXPECT().Get(suite.uploadType).
 		Return(filePolicy, nil).Once()
 
-	suite.storage.EXPECT().Open(suite.ctx, req.ObjectKey).
+	suite.storage.EXPECT().Get(suite.ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
 	suite.ctDetector.EXPECT().Detect(obj).
@@ -325,14 +357,14 @@ func (suite *ManagerTestSuite) TestSave_InvalidDetectedContentType() {
 	suite.storage.EXPECT().Delete(suite.ctx, req.ObjectKey).
 		Return(nil).Once()
 
-	response, err := suite.uploadManager.Save(suite.ctx, req, suite.uploadType)
+	response, err := suite.uploadManager.Attach(suite.ctx, req, suite.uploadType)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidFileType)
 }
 
-func (suite *ManagerTestSuite) TestSave_RepositoryError() {
-	req := dto.UploadSaveRequest{
+func (suite *ManagerTestSuite) TestAttach_RepositoryError() {
+	req := dto.AttachFileRequest{
 		ObjectKey: "key",
 		UploadID:  suite.uploadID,
 		Entity:    dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
@@ -344,7 +376,7 @@ func (suite *ManagerTestSuite) TestSave_RepositoryError() {
 		"Entity-Type": string(models.EntityTypeProduct),
 	}
 
-	filePolicy := upload.FilePolicy{
+	filePolicy := upload.Policy{
 		MaxSize: 5 << 20,
 		AllowedFormats: []upload.Format{
 			{Extensions: []string{"jpg"}, ContentType: "image/jpeg"},
@@ -363,10 +395,10 @@ func (suite *ManagerTestSuite) TestSave_RepositoryError() {
 	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
-	suite.policyRegistry.EXPECT().Get(suite.uploadType).
+	suite.registry.EXPECT().Get(suite.uploadType).
 		Return(filePolicy, nil).Once()
 
-	suite.storage.EXPECT().Open(suite.ctx, req.ObjectKey).
+	suite.storage.EXPECT().Get(suite.ctx, req.ObjectKey).
 		Return(obj, nil).Once()
 
 	suite.ctDetector.EXPECT().Detect(obj).
@@ -379,7 +411,7 @@ func (suite *ManagerTestSuite) TestSave_RepositoryError() {
 	suite.storage.EXPECT().Delete(suite.ctx, req.ObjectKey).
 		Return(nil).Once()
 
-	response, err := suite.uploadManager.Save(suite.ctx, req, suite.uploadType)
+	response, err := suite.uploadManager.Attach(suite.ctx, req, suite.uploadType)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, expectedErr)

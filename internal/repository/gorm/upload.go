@@ -5,6 +5,8 @@ import (
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/pkg/database"
+
+	"github.com/google/uuid"
 )
 
 type uploadRepository struct {
@@ -33,4 +35,14 @@ func (u *uploadRepository) Exists(ctx context.Context, objectKey string) (bool, 
 	}
 
 	return exists, nil
+}
+
+func (u *uploadRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	db := u.db.GetDB(ctx)
+
+	if err := db.Where("id = ?", id).Delete(&models.Upload{}).Error; err != nil {
+		return repository.HandleError(err)
+	}
+
+	return nil
 }

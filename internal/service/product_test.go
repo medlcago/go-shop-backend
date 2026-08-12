@@ -483,12 +483,12 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() 
 // ==================== UploadImage Tests ====================
 
 func (suite *ProductServiceTestSuite) TestUploadImage_Success() {
-	req := dto.UploadProductImageRequest{
+	req := dto.UploadProductImageSignURLRequest{
 		ContentType: "image/jpeg",
 		Ext:         "jpg",
 	}
 
-	signRequest := dto.UploadSignURLRequest{
+	signRequest := dto.GeneratePresignedURLRequest{
 		ContentType: req.ContentType,
 		Entity:      dto.NewUploadEntity(suite.productID, string(models.EntityTypeProduct)),
 		Ext:         req.Ext,
@@ -500,7 +500,7 @@ func (suite *ProductServiceTestSuite) TestUploadImage_Success() {
 		Return(true, nil).Once()
 
 	suite.uploadManager.EXPECT().SignURL(suite.ctx, signRequest, ProductImageType).
-		Return(&dto.UploadSignURLResponse{UploadID: uploadID}, nil).Once()
+		Return(&dto.GeneratePresignedURLResponse{UploadID: uploadID}, nil).Once()
 
 	response, err := suite.productService.UploadImage(suite.ctx, suite.productID, req)
 
@@ -511,7 +511,7 @@ func (suite *ProductServiceTestSuite) TestUploadImage_Success() {
 }
 
 func (suite *ProductServiceTestSuite) TestUploadImage_ProductNotFound() {
-	req := dto.UploadProductImageRequest{
+	req := dto.UploadProductImageSignURLRequest{
 		ContentType: "image/jpeg",
 		Ext:         "jpg",
 	}
@@ -525,30 +525,29 @@ func (suite *ProductServiceTestSuite) TestUploadImage_ProductNotFound() {
 	suite.ErrorIs(err, apperror.ErrProductNotFound)
 }
 
-// ==================== ConfirmUploadImage Tests ====================
+// ==================== AttachImage Tests ====================
 
 func (suite *ProductServiceTestSuite) TestConfirmUploadImage_Success() {
-	req := dto.ConfirmUploadProductImageRequest{
+	req := dto.AttachProductImageRequest{
 		UploadID:  uuid.New(),
 		ObjectKey: "key",
 	}
 
 	url := "https://example.com/"
 
-	saveRequest := dto.UploadSaveRequest{
+	attachRequest := dto.AttachFileRequest{
 		UploadID:  req.UploadID,
 		ObjectKey: req.ObjectKey,
 		Entity:    dto.NewUploadEntity(suite.productID, string(models.EntityTypeProduct)),
-		IsMain:    false,
 	}
 
 	suite.productRepo.EXPECT().Exists(suite.ctx, suite.productID).
 		Return(true, nil).Once()
 
-	suite.uploadManager.EXPECT().Save(suite.ctx, saveRequest, ProductImageType).
+	suite.uploadManager.EXPECT().Attach(suite.ctx, attachRequest, ProductImageType).
 		Return(&dto.UploadResponse{URL: url}, nil).Once()
 
-	response, err := suite.productService.ConfirmUploadImage(suite.ctx, suite.productID, req)
+	response, err := suite.productService.AttachImage(suite.ctx, suite.productID, req)
 
 	suite.NotNil(response)
 	suite.NoError(err)
@@ -556,7 +555,7 @@ func (suite *ProductServiceTestSuite) TestConfirmUploadImage_Success() {
 }
 
 func (suite *ProductServiceTestSuite) TestConfirmUploadImage_ProductNotFound() {
-	req := dto.ConfirmUploadProductImageRequest{
+	req := dto.AttachProductImageRequest{
 		UploadID:  uuid.New(),
 		ObjectKey: "key",
 	}
@@ -564,7 +563,7 @@ func (suite *ProductServiceTestSuite) TestConfirmUploadImage_ProductNotFound() {
 	suite.productRepo.EXPECT().Exists(suite.ctx, suite.productID).
 		Return(false, nil).Once()
 
-	response, err := suite.productService.ConfirmUploadImage(suite.ctx, suite.productID, req)
+	response, err := suite.productService.AttachImage(suite.ctx, suite.productID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrProductNotFound)

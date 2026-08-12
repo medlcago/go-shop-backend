@@ -1,19 +1,57 @@
 package notification
 
-import "context"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"sync"
+)
+
+var (
+	ErrSenderNotFound           = errors.New("sender not found")
+	ErrChannelAlreadyRegistered = errors.New("channel already registered")
+)
 
 type Sender interface {
 	Channel() Channel
 	Send(ctx context.Context, n Notification) error
 }
 
-type SenderRegistry interface {
-	For(ch Channel) (Sender, bool)
+type Registry interface {
+	Get(ch Channel) (Sender, error)
+	Register(ch Channel, s Sender)
 }
 
-type MapRegistry map[Channel]Sender
+type registry struct {
+	senders map[Channel]Sender
+	mu      sync.RWMutex
+}
 
-func (r MapRegistry) For(ch Channel) (Sender, bool) {
-	s, ok := r[ch]
-	return s, ok
+func NewRegistry() *registry {
+	return &registry{
+		senders: make(map[Channel]Sender),
+	}
+}
+
+func (r *registry) Get(ch Channel) (Sender, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	sender, ok := r.senders[ch]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrSenderNotFound, ch)
+	}
+
+	return sender, nil
+}
+
+func (r *registry) Register(ch Channel, s Sender) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.senders[ch]; ok {
+		panic(fmt.Errorf("%w: %s", ErrChannelAlreadyRegistered, ch))
+	}
+
+	r.senders[ch] = s
 }

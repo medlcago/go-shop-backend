@@ -9,12 +9,12 @@ import (
 )
 
 type notificationService struct {
-	registry        notification.SenderRegistry
+	registry        notification.Registry
 	templateManager tmpl.Manager
 }
 
 func NewNotificationService(
-	registry notification.SenderRegistry,
+	registry notification.Registry,
 	templateManager tmpl.Manager,
 ) *notificationService {
 	return &notificationService{
@@ -35,9 +35,9 @@ func (n *notificationService) SendEmailConfirmationCode(
 		return apperror.Wrap(op, fmt.Errorf("to is empty"))
 	}
 
-	sender, ok := n.registry.For(channel)
-	if !ok {
-		return apperror.Wrap(op, fmt.Errorf("no sender for channel %q", channel))
+	sender, err := n.registry.Get(channel)
+	if err != nil {
+		return apperror.Wrap(op, err)
 	}
 
 	data := map[string]string{

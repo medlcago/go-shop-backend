@@ -1,49 +1,58 @@
 package upload
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
 )
 
+var (
+	ErrPolicyNotFound        = errors.New("upload policy not found")
+	ErrTypeAlreadyRegistered = errors.New("upload type already registered")
+)
+
 type Type string
 
-type PolicyRegistry interface {
-	Get(t Type) (FilePolicy, error)
-	Register(t Type, filePolicy FilePolicy)
+type Registry interface {
+	Get(t Type) (Policy, error)
+	Register(t Type, policy Policy)
 }
 
-type policyRegistry struct {
-	policies map[Type]FilePolicy
+type registry struct {
+	policies map[Type]Policy
 	mu       sync.RWMutex
 }
 
-func NewPolicyRegistry() *policyRegistry {
-	return &policyRegistry{
-		policies: make(map[Type]FilePolicy),
+func NewRegistry() *registry {
+	r := &registry{
+		policies: make(map[Type]Policy),
 	}
-}
-func (p *policyRegistry) Get(t Type) (FilePolicy, error) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
 
-	policy, ok := p.policies[t]
+	return r
+}
+
+func (r *registry) Get(t Type) (Policy, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	policy, ok := r.policies[t]
 	if !ok {
-		return FilePolicy{}, fmt.Errorf("upload policy %q not found", t)
+		return Policy{}, fmt.Errorf("%w: %s", ErrPolicyNotFound, t)
 	}
 
 	return policy, nil
 }
 
-func (p *policyRegistry) Register(t Type, policy FilePolicy) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+func (r *registry) Register(t Type, policy Policy) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	if _, ok := p.policies[t]; ok {
-		panic(fmt.Sprintf("upload policy %q already registered", t))
+	if _, ok := r.policies[t]; ok {
+		panic(fmt.Errorf("%w: %s", ErrTypeAlreadyRegistered, t))
 	}
 
-	p.policies[t] = policy
+	r.policies[t] = policy
 }
 
 type Format struct {
@@ -51,14 +60,18 @@ type Format struct {
 	ContentType string
 }
 
-type FilePolicy struct {
+type Policy struct {
 	MinSize        int64
 	MaxSize        int64
 	AllowedFormats []Format
 }
 
-func (f *FilePolicy) IsValidExt(ext, ct string) bool {
-	for _, f := range f.AllowedFormats {
+func (p *Policy) CalculateEffectiveMaxSize(maxSize int64) int64 {
+	return min(p.MaxSize, maxSize)
+}
+
+func (p *Policy) IsValidExt(ext, ct string) bool {
+	for _, f := range p.AllowedFormats {
 		if f.ContentType == ct {
 			return slices.Contains(f.Extensions, ext)
 		}
@@ -66,8 +79,8 @@ func (f *FilePolicy) IsValidExt(ext, ct string) bool {
 	return false
 }
 
-func (f *FilePolicy) IsValidContentType(ct string) bool {
-	for _, f := range f.AllowedFormats {
+func (p *Policy) IsValidContentType(ct string) bool {
+	for _, f := range p.AllowedFormats {
 		if f.ContentType == ct {
 			return true
 		}

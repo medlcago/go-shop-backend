@@ -3,6 +3,7 @@ package dto
 import (
 	"time"
 
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/google/uuid"
 )
 
@@ -16,4 +17,14 @@ type PasskeyResponse struct {
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 	LastUsedAt *time.Time `json:"last_used_at"`
+}
+
+type BeginPasskeyRegistrationResponse struct {
+	*protocol.CredentialCreation
+	SessionID string `json:"session_id"`
+}
+
+type BeginPasskeyDiscoverableLoginResponse struct {
+	*protocol.CredentialAssertion
+	SessionID string `json:"session_id"`
 }

@@ -154,6 +154,74 @@ func (_c *MockStorage_Exists_Call) RunAndReturn(run func(ctx context.Context, ob
 	return _c
 }
 
+// Get provides a mock function for the type MockStorage
+func (_mock *MockStorage) Get(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
+	ret := _mock.Called(ctx, objectKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
+
+	var r0 io.ReadSeekCloser
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (io.ReadSeekCloser, error)); ok {
+		return returnFunc(ctx, objectKey)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) io.ReadSeekCloser); ok {
+		r0 = returnFunc(ctx, objectKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(io.ReadSeekCloser)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, objectKey)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStorage_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MockStorage_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectKey string
+func (_e *MockStorage_Expecter) Get(ctx interface{}, objectKey interface{}) *MockStorage_Get_Call {
+	return &MockStorage_Get_Call{Call: _e.mock.On("Get", ctx, objectKey)}
+}
+
+func (_c *MockStorage_Get_Call) Run(run func(ctx context.Context, objectKey string)) *MockStorage_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorage_Get_Call) Return(readSeekCloser io.ReadSeekCloser, err error) *MockStorage_Get_Call {
+	_c.Call.Return(readSeekCloser, err)
+	return _c
+}
+
+func (_c *MockStorage_Get_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (io.ReadSeekCloser, error)) *MockStorage_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetObjectInfo provides a mock function for the type MockStorage
 func (_mock *MockStorage) GetObjectInfo(ctx context.Context, objectKey string) (*storage.ObjectInfo, error) {
 	ret := _mock.Called(ctx, objectKey)
@@ -218,74 +286,6 @@ func (_c *MockStorage_GetObjectInfo_Call) Return(objectInfo *storage.ObjectInfo,
 }
 
 func (_c *MockStorage_GetObjectInfo_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (*storage.ObjectInfo, error)) *MockStorage_GetObjectInfo_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Open provides a mock function for the type MockStorage
-func (_mock *MockStorage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
-	ret := _mock.Called(ctx, objectKey)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Open")
-	}
-
-	var r0 io.ReadSeekCloser
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (io.ReadSeekCloser, error)); ok {
-		return returnFunc(ctx, objectKey)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) io.ReadSeekCloser); ok {
-		r0 = returnFunc(ctx, objectKey)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(io.ReadSeekCloser)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, objectKey)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockStorage_Open_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Open'
-type MockStorage_Open_Call struct {
-	*mock.Call
-}
-
-// Open is a helper method to define mock.On call
-//   - ctx context.Context
-//   - objectKey string
-func (_e *MockStorage_Expecter) Open(ctx interface{}, objectKey interface{}) *MockStorage_Open_Call {
-	return &MockStorage_Open_Call{Call: _e.mock.On("Open", ctx, objectKey)}
-}
-
-func (_c *MockStorage_Open_Call) Run(run func(ctx context.Context, objectKey string)) *MockStorage_Open_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockStorage_Open_Call) Return(readSeekCloser io.ReadSeekCloser, err error) *MockStorage_Open_Call {
-	_c.Call.Return(readSeekCloser, err)
-	return _c
-}
-
-func (_c *MockStorage_Open_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (io.ReadSeekCloser, error)) *MockStorage_Open_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -26,6 +26,7 @@ var (
 	ErrInvalidUploadID     = New(http.StatusBadRequest, "invalid upload id")
 	ErrInvalidEntityID     = New(http.StatusBadRequest, "invalid entity id")
 	ErrInvalidEntityType   = New(http.StatusBadRequest, "invalid entity type")
+	ErrInvalidUploadType   = New(http.StatusBadRequest, "invalid upload type")
 	ErrFileAlreadyUploaded = New(http.StatusConflict, "file already uploaded")
 	ErrFileTooLarge        = New(http.StatusRequestEntityTooLarge, "file too large")
 

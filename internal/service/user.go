@@ -102,24 +102,19 @@ func (u *userService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto
 		return nil, apperror.Wrap(op, apperror.ErrUserProfileDeleted)
 	}
 
-	tokens, err := u.createTokens(user)
+	response, err := u.buildUserTokenResponse(user)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	return buildUserTokenResponse(user, tokens), nil
+	return response, nil
 }
 
 func (u *userService) Register(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserTokenResponse, error) {
 	const op = "userService.Register"
 
-	exists, err := u.userRepo.ExistsByEmail(ctx, req.Email)
-	if err != nil {
+	if err := u.checkEmail(ctx, req.Email); err != nil {
 		return nil, apperror.Wrap(op, err)
-	}
-
-	if exists {
-		return nil, apperror.Wrap(op, apperror.ErrEmailTaken)
 	}
 
 	passwordHash, err := u.hasher.Hash(req.Password)
@@ -137,12 +132,12 @@ func (u *userService) Register(ctx context.Context, req dto.UserRegisterRequest)
 		return nil, apperror.Wrap(op, err)
 	}
 
-	tokens, err := u.createTokens(user)
+	response, err := u.buildUserTokenResponse(user)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	return buildUserTokenResponse(user, tokens), nil
+	return response, nil
 }
 
 func (u *userService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error) {
@@ -332,7 +327,7 @@ func (u *userService) ConfirmEmail(ctx context.Context, userID uuid.UUID, req dt
 
 	return &dto.ConfirmEmailResponse{
 		OK:               true,
-		EmailConfirmedAt: now.UTC().Format(time.RFC3339),
+		EmailConfirmedAt: now.Format(time.RFC3339),
 	}, nil
 }
 
@@ -401,12 +396,12 @@ func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dt
 		return nil, apperror.Wrap(op, apperror.ErrUserProfileDeleted)
 	}
 
-	tokens, err := u.createTokens(user)
+	response, err := u.buildUserTokenResponse(user)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	return buildUserTokenResponse(user, tokens), nil
+	return response, nil
 }
 
 func (u *userService) BeginPasskeyRegistration(ctx context.Context, userID uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error) {
@@ -441,7 +436,7 @@ func (u *userService) BeginPasskeyRegistration(ctx context.Context, userID uuid.
 	}, nil
 }
 
-func (u *userService) FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error {
+func (u *userService) FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, data []byte) error {
 	const op = "userService.FinishPasskeyRegistration"
 
 	user, err := u.getUserByID(ctx, userID)
@@ -455,7 +450,7 @@ func (u *userService) FinishPasskeyRegistration(ctx context.Context, userID uuid
 	}
 	user.Passkeys = userPasskeys
 
-	credential, err := u.passkeyManager.FinishRegistration(ctx, user, sessionID, response)
+	credential, err := u.passkeyManager.FinishRegistration(ctx, user, sessionID, data)
 	if err != nil {
 		u.logger.ErrorContext(
 			ctx,
@@ -502,7 +497,7 @@ func (u *userService) BeginPasskeyLogin(ctx context.Context) (*dto.BeginPasskeyD
 	}, nil
 }
 
-func (u *userService) FinishPasskeyLogin(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error) {
+func (u *userService) FinishPasskeyLogin(ctx context.Context, sessionID string, data []byte) (*dto.UserTokenResponse, error) {
 	const op = "userService.FinishPasskeyLogin"
 
 	validatedUser, validatedCredential, err := u.passkeyManager.FinishDiscoverableLogin(ctx, func(rawID, userHandle []byte) (passkey.User, error) {
@@ -523,7 +518,7 @@ func (u *userService) FinishPasskeyLogin(ctx context.Context, sessionID string, 
 		user.Passkeys = userPasskeys
 
 		return user, nil
-	}, sessionID, response)
+	}, sessionID, data)
 
 	if err != nil {
 		u.logger.ErrorContext(
@@ -553,12 +548,12 @@ func (u *userService) FinishPasskeyLogin(ctx context.Context, sessionID string, 
 		return nil, apperror.Wrap(op, err)
 	}
 
-	tokens, err := u.createTokens(user)
+	response, err := u.buildUserTokenResponse(user)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	return buildUserTokenResponse(user, tokens), nil
+	return response, nil
 }
 
 func (u *userService) GetUserPasskeys(ctx context.Context, userID uuid.UUID) ([]*dto.PasskeyResponse, error) {
@@ -751,6 +746,21 @@ func (u *userService) getUserByIDIncludingDeleted(ctx context.Context, userID uu
 	return user, nil
 }
 
+func (u *userService) checkEmail(ctx context.Context, email string) error {
+	const op = "userService.checkEmail"
+
+	exists, err := u.userRepo.ExistsByEmail(ctx, email)
+	if err != nil {
+		return apperror.Wrap(op, err)
+	}
+
+	if exists {
+		return apperror.Wrap(op, apperror.ErrEmailTaken)
+	}
+
+	return nil
+}
+
 func (u *userService) mapUser(user *models.User) (*dto.UserResponse, error) {
 	const op = "userService.mapUser"
 
@@ -773,9 +783,16 @@ func (u *userService) mapUserPasskeys(userPasskeys []models.PasskeyCredential) (
 	return response, nil
 }
 
-func buildUserTokenResponse(user *models.User, token *dto.TokenResponse) *dto.UserTokenResponse {
+func (u *userService) buildUserTokenResponse(user *models.User) (*dto.UserTokenResponse, error) {
+	const op = "userService.buildUserTokenResponse"
+
+	tokens, err := u.createTokens(user)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
 	response := &dto.UserTokenResponse{
-		TokenResponse: token,
+		TokenResponse: tokens,
 	}
 
 	response.User = &dto.UserResponse{
@@ -787,5 +804,5 @@ func buildUserTokenResponse(user *models.User, token *dto.TokenResponse) *dto.Us
 		EmailConfirmed: user.EmailConfirmed(),
 	}
 
-	return response
+	return response, nil
 }

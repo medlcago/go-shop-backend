@@ -26,7 +26,7 @@ type SessionStore interface {
 
 type Manager interface {
 	BeginRegistration(ctx context.Context, user User) (*CredentialCreation, string, error)
-	FinishRegistration(ctx context.Context, user User, sessionID string, response []byte) (*Credential, error)
+	FinishRegistration(ctx context.Context, user User, sessionID string, data []byte) (*Credential, error)
 	BeginDiscoverableLogin(ctx context.Context) (*CredentialAssertion, string, error)
-	FinishDiscoverableLogin(ctx context.Context, handler DiscoverableUserHandler, sessionID string, response []byte) (User, *Credential, error)
+	FinishDiscoverableLogin(ctx context.Context, handler DiscoverableUserHandler, sessionID string, data []byte) (User, *Credential, error)
 }

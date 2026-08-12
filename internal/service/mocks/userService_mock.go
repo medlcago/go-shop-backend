@@ -496,8 +496,8 @@ func (_c *MockUserService_Disable2FA_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // FinishPasskeyLogin provides a mock function for the type MockUserService
-func (_mock *MockUserService) FinishPasskeyLogin(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error) {
-	ret := _mock.Called(ctx, sessionID, response)
+func (_mock *MockUserService) FinishPasskeyLogin(ctx context.Context, sessionID string, data []byte) (*dto.UserTokenResponse, error) {
+	ret := _mock.Called(ctx, sessionID, data)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FinishPasskeyLogin")
@@ -506,17 +506,17 @@ func (_mock *MockUserService) FinishPasskeyLogin(ctx context.Context, sessionID 
 	var r0 *dto.UserTokenResponse
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []byte) (*dto.UserTokenResponse, error)); ok {
-		return returnFunc(ctx, sessionID, response)
+		return returnFunc(ctx, sessionID, data)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []byte) *dto.UserTokenResponse); ok {
-		r0 = returnFunc(ctx, sessionID, response)
+		r0 = returnFunc(ctx, sessionID, data)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dto.UserTokenResponse)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []byte) error); ok {
-		r1 = returnFunc(ctx, sessionID, response)
+		r1 = returnFunc(ctx, sessionID, data)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -531,12 +531,12 @@ type MockUserService_FinishPasskeyLogin_Call struct {
 // FinishPasskeyLogin is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID string
-//   - response []byte
-func (_e *MockUserService_Expecter) FinishPasskeyLogin(ctx interface{}, sessionID interface{}, response interface{}) *MockUserService_FinishPasskeyLogin_Call {
-	return &MockUserService_FinishPasskeyLogin_Call{Call: _e.mock.On("FinishPasskeyLogin", ctx, sessionID, response)}
+//   - data []byte
+func (_e *MockUserService_Expecter) FinishPasskeyLogin(ctx interface{}, sessionID interface{}, data interface{}) *MockUserService_FinishPasskeyLogin_Call {
+	return &MockUserService_FinishPasskeyLogin_Call{Call: _e.mock.On("FinishPasskeyLogin", ctx, sessionID, data)}
 }
 
-func (_c *MockUserService_FinishPasskeyLogin_Call) Run(run func(ctx context.Context, sessionID string, response []byte)) *MockUserService_FinishPasskeyLogin_Call {
+func (_c *MockUserService_FinishPasskeyLogin_Call) Run(run func(ctx context.Context, sessionID string, data []byte)) *MockUserService_FinishPasskeyLogin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -564,7 +564,7 @@ func (_c *MockUserService_FinishPasskeyLogin_Call) Return(userTokenResponse *dto
 	return _c
 }
 
-func (_c *MockUserService_FinishPasskeyLogin_Call) RunAndReturn(run func(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error)) *MockUserService_FinishPasskeyLogin_Call {
+func (_c *MockUserService_FinishPasskeyLogin_Call) RunAndReturn(run func(ctx context.Context, sessionID string, data []byte) (*dto.UserTokenResponse, error)) *MockUserService_FinishPasskeyLogin_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -764,8 +764,8 @@ func (_c *MockUserService_GetUserPasskeys_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockUserService_GetUserPasskeys_Call) Return(userPasskeyResponses []*dto.PasskeyResponse, err error) *MockUserService_GetUserPasskeys_Call {
-	_c.Call.Return(userPasskeyResponses, err)
+func (_c *MockUserService_GetUserPasskeys_Call) Return(passkeyResponses []*dto.PasskeyResponse, err error) *MockUserService_GetUserPasskeys_Call {
+	_c.Call.Return(passkeyResponses, err)
 	return _c
 }
 

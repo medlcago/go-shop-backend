@@ -8,7 +8,7 @@ import (
 )
 
 func TestFilePolicy_IsValidExt(t *testing.T) {
-	filePolicy := upload.FilePolicy{
+	policy := upload.Policy{
 		AllowedFormats: []upload.Format{
 			{
 				ContentType: "image/jpeg",
@@ -73,14 +73,14 @@ func TestFilePolicy_IsValidExt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := filePolicy.IsValidExt(tt.ext, tt.ct)
+			got := policy.IsValidExt(tt.ext, tt.ct)
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func TestFilePolicy_IsValidType(t *testing.T) {
-	filePolicy := upload.FilePolicy{
+	policy := upload.Policy{
 		AllowedFormats: []upload.Format{
 			{
 				ContentType: "image/jpeg",
@@ -122,7 +122,7 @@ func TestFilePolicy_IsValidType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := filePolicy.IsValidContentType(tt.ct)
+			got := policy.IsValidContentType(tt.ct)
 			assert.Equal(t, tt.want, got)
 		})
 	}

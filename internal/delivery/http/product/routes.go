@@ -26,6 +26,6 @@ func RegisterRoutes(r fiber.Router, productHandler *Handler) {
 		protectedProductGroup.Post("/", productHandler.CreateProduct)
 		protectedProductGroup.Patch("/:id<guid>", productHandler.UpdateProduct)
 		protectedProductGroup.Post("/:id<guid>/images/upload-url", productHandler.UploadImage)
-		protectedProductGroup.Post("/:id<guid>/images", productHandler.ConfirmUploadImage)
+		protectedProductGroup.Post("/:id<guid>/images/attach", productHandler.AttachImage)
 	}
 }

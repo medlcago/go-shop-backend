@@ -22,10 +22,10 @@ type UserService interface {
 	RefreshToken(ctx context.Context, tokenString string) (*dto.UserTokenResponse, error)
 
 	BeginPasskeyRegistration(ctx context.Context, userID uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error)
-	FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error
+	FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, data []byte) error
 
 	BeginPasskeyLogin(ctx context.Context) (*dto.BeginPasskeyDiscoverableLoginResponse, error)
-	FinishPasskeyLogin(ctx context.Context, sessionID string, response []byte) (*dto.UserTokenResponse, error)
+	FinishPasskeyLogin(ctx context.Context, sessionID string, data []byte) (*dto.UserTokenResponse, error)
 
 	GetUserPasskeys(ctx context.Context, userID uuid.UUID) ([]*dto.PasskeyResponse, error)
 	UpdatePasskeyName(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID, req dto.UpdatePasskeyNameRequest) error
@@ -38,8 +38,8 @@ type ProductService interface {
 	CreateProduct(ctx context.Context, req dto.ProductCreateRequest) (*dto.ProductResponse, error)
 	UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error)
 	Search(ctx context.Context, req dto.SearchProductRequest) ([]*dto.ProductResponse, int64, error)
-	UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageRequest) (*dto.UploadSignURLResponse, error)
-	ConfirmUploadImage(ctx context.Context, productID uuid.UUID, req dto.ConfirmUploadProductImageRequest) (*dto.UploadResponse, error)
+	UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageSignURLRequest) (*dto.GeneratePresignedURLResponse, error)
+	AttachImage(ctx context.Context, productID uuid.UUID, req dto.AttachProductImageRequest) (*dto.UploadResponse, error)
 }
 
 type CategoryService interface {

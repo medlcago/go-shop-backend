@@ -18,6 +18,6 @@ type Storage interface {
 	TemporaryUploadURL(ctx context.Context, opts TemporaryUploadURLOptions) (*TemporaryUploadURL, error)
 	PublicURL(objectKey string) string
 	Exists(ctx context.Context, objectKey string) error
-	Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error)
+	Get(ctx context.Context, objectKey string) (io.ReadSeekCloser, error)
 	GetObjectInfo(ctx context.Context, objectKey string) (*ObjectInfo, error)
 }

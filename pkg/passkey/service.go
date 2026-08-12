@@ -84,7 +84,7 @@ func (s *Service) FinishRegistration(
 	ctx context.Context,
 	user User,
 	sessionID string,
-	response []byte,
+	data []byte,
 ) (*Credential, error) {
 	session, err := s.sessions.GetSession(ctx, sessionID)
 	if err != nil {
@@ -95,7 +95,7 @@ func (s *Service) FinishRegistration(
 		_ = s.sessions.DeleteSession(ctx, sessionID)
 	}()
 
-	parsed, err := protocol.ParseCredentialCreationResponseBytes(response)
+	parsed, err := protocol.ParseCredentialCreationResponseBytes(data)
 	if err != nil {
 		return nil, fmt.Errorf("passkey: parse credential response: %w", err)
 	}
@@ -130,7 +130,7 @@ func (s *Service) FinishDiscoverableLogin(
 	ctx context.Context,
 	handler DiscoverableUserHandler,
 	sessionID string,
-	response []byte,
+	data []byte,
 ) (User, *Credential, error) {
 	session, err := s.sessions.GetSession(ctx, sessionID)
 	if err != nil {
@@ -141,7 +141,7 @@ func (s *Service) FinishDiscoverableLogin(
 		_ = s.sessions.DeleteSession(ctx, sessionID)
 	}()
 
-	parsed, err := protocol.ParseCredentialRequestResponseBytes(response)
+	parsed, err := protocol.ParseCredentialRequestResponseBytes(data)
 	if err != nil {
 		return nil, nil, fmt.Errorf("passkey: parse credential response: %w", err)
 	}

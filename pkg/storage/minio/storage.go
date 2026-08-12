@@ -151,8 +151,8 @@ func (s *Storage) Exists(ctx context.Context, objectKey string) error {
 	return nil
 }
 
-func (s *Storage) Open(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
-	const op = "minio.Storage.Open"
+func (s *Storage) Get(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
+	const op = "minio.Storage.Get"
 
 	obj, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
 	if err != nil {

@@ -63,11 +63,11 @@ type Container struct {
 	storage              Lazy[storage.Storage]
 	redisClient          Lazy[*redis.Client]
 	contentTypeDetector  Lazy[contenttype.Detector]
-	uploadPolicyRegistry Lazy[upload.PolicyRegistry]
+	uploadRegistry       Lazy[upload.Registry]
 	uploadManager        Lazy[upload.Manager]
 	cache                Lazy[cache.Cache]
 	templateManager      Lazy[template.Manager]
-	notificationRegistry Lazy[notification.SenderRegistry]
+	notificationRegistry Lazy[notification.Registry]
 	metricsFactory       Lazy[*metrics.Factory]
 	httpClient           Lazy[*http.Client]
 	passkeyManager       Lazy[passkey.Manager]
@@ -250,20 +250,20 @@ func (c *Container) TaskFactory() *tasks.Factory {
 	})
 }
 
-func (c *Container) UploadPolicyRegistry() upload.PolicyRegistry {
-	return c.uploadPolicyRegistry.Get(func() upload.PolicyRegistry {
-		return NewUploadPolicyRegistry()
+func (c *Container) UploadRegistry() upload.Registry {
+	return c.uploadRegistry.Get(func() upload.Registry {
+		return NewUploadRegistry()
 	})
 }
 
 func (c *Container) UploadManager() upload.Manager {
 	return c.uploadManager.Get(func() upload.Manager {
-		uploadManager := upload.NewManager(
+		uploadManager := upload.New(
 			c.Storage(),
 			c.UploadRepo(),
 			c.Config().Upload,
 			c.ContentTypeDetector(),
-			c.UploadPolicyRegistry(),
+			c.UploadRegistry(),
 			c.Logger(),
 		)
 
@@ -288,8 +288,8 @@ func (c *Container) TemplateManager() template.Manager {
 	})
 }
 
-func (c *Container) NotificationRegistry() notification.SenderRegistry {
-	return c.notificationRegistry.Get(func() notification.SenderRegistry {
+func (c *Container) NotificationRegistry() notification.Registry {
+	return c.notificationRegistry.Get(func() notification.Registry {
 		return NewNotificationRegistry(c.Config())
 	})
 }

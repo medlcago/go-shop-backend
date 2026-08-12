@@ -197,7 +197,7 @@ func (h *Handler) Search(ctx fiber.Ctx) error {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			id		path		string							true	"Product ID"	Format(uuid)
-//	@Param			request	body		dto.UploadProductImageRequest	true	"Image upload request"
+//	@Param			request	body		dto.UploadProductImageSignURLRequest	true	"Image upload request"
 //	@Success		200		{object}	response.Response[dto.SignURLResponse]
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		401		{object}	response.Response[any]
@@ -213,7 +213,7 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 
 	productID := uuid.MustParse(ctx.Params("id"))
 
-	var req dto.UploadProductImageRequest
+	var req dto.UploadProductImageSignURLRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
 		return err
 	}
@@ -226,16 +226,16 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
-// ConfirmUploadImage godoc
+// AttachImage godoc
 //
-//	@Summary		Confirm image upload
+//	@Summary		Attach the image to the product
 //	@Description	Confirm successful image upload and attach the image to the product. After uploading to the presigned URL, call this endpoint to finalize the process.
 //	@Tags			Products
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			id		path		string									true	"Product ID"	Format(uuid)
-//	@Param			request	body		dto.ConfirmUploadProductImageRequest	true	"Image confirmation request"
+//	@Param			request	body		dto.AttachProductImageRequest	true	"Image attach request"
 //	@Success		200		{object}	response.Response[dto.UploadResponse]
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		401		{object}	response.Response[any]
@@ -244,7 +244,7 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 //	@Failure		409		{object}	response.Response[any]
 //	@Failure		500		{object}	response.Response[any]
 //	@Router			/products/{id}/images/confirm [post]
-func (h *Handler) ConfirmUploadImage(ctx fiber.Ctx) error {
+func (h *Handler) AttachImage(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
 		return apperror.ErrInvalidCredentials
@@ -252,12 +252,12 @@ func (h *Handler) ConfirmUploadImage(ctx fiber.Ctx) error {
 
 	productID := uuid.MustParse(ctx.Params("id"))
 
-	var req dto.ConfirmUploadProductImageRequest
+	var req dto.AttachProductImageRequest
 	if err := ctx.Bind().JSON(&req); err != nil {
 		return err
 	}
 
-	resp, err := h.productService.ConfirmUploadImage(ctx.Context(), productID, req)
+	resp, err := h.productService.AttachImage(ctx.Context(), productID, req)
 	if err != nil {
 		return err
 	}

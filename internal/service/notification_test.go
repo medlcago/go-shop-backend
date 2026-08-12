@@ -16,7 +16,7 @@ import (
 type NotificationServiceTestSuite struct {
 	suite.Suite
 
-	registry            *notificationMocks.MockSenderRegistry
+	registry            *notificationMocks.MockRegistry
 	sender              *notificationMocks.MockSender
 	templateManager     *templateMocks.MockManager
 	notificationService *notificationService
@@ -28,7 +28,7 @@ type NotificationServiceTestSuite struct {
 }
 
 func (suite *NotificationServiceTestSuite) SetupTest() {
-	suite.registry = notificationMocks.NewMockSenderRegistry(suite.T())
+	suite.registry = notificationMocks.NewMockRegistry(suite.T())
 	suite.sender = notificationMocks.NewMockSender(suite.T())
 	suite.templateManager = templateMocks.NewMockManager(suite.T())
 	suite.notificationService = NewNotificationService(
@@ -53,8 +53,8 @@ func (suite *NotificationServiceTestSuite) TestSendEmailConfirmationCode_Success
 		"Code": suite.code,
 	}
 
-	suite.registry.EXPECT().For(notification.ChannelEmail).
-		Return(suite.sender, true).Once()
+	suite.registry.EXPECT().Get(notification.ChannelEmail).
+		Return(suite.sender, nil).Once()
 
 	suite.templateManager.EXPECT().Render("email_confirmation_code.gohtml", data).
 		Return("test html body", nil).Once()
@@ -75,14 +75,14 @@ func (suite *NotificationServiceTestSuite) TestSendEmailConfirmationCode_ToIsEmp
 }
 
 func (suite *NotificationServiceTestSuite) TestSendEmailConfirmationCode_NoSenderForChannel() {
-	suite.registry.EXPECT().For(notification.Channel("unknown")).
-		Return(nil, false).Once()
+	suite.registry.EXPECT().Get(notification.Channel("unknown")).
+		Return(nil, notification.ErrSenderNotFound).Once()
 
 	err := suite.notificationService.SendEmailConfirmationCode(suite.ctx, suite.to, suite.code, "unknown")
 
 	suite.Error(err)
 	suite.ErrorContains(err, "notificationService.SendEmailConfirmationCode")
-	suite.ErrorContains(err, "no sender for channel")
+	suite.ErrorIs(err, notification.ErrSenderNotFound)
 }
 
 func (suite *NotificationServiceTestSuite) TestSendEmailConfirmationCode_RenderTemplateError() {
@@ -92,8 +92,8 @@ func (suite *NotificationServiceTestSuite) TestSendEmailConfirmationCode_RenderT
 
 	renderErr := errors.New("render error")
 
-	suite.registry.EXPECT().For(notification.ChannelEmail).
-		Return(suite.sender, true).Once()
+	suite.registry.EXPECT().Get(notification.ChannelEmail).
+		Return(suite.sender, nil).Once()
 
 	suite.templateManager.EXPECT().Render("email_confirmation_code.gohtml", data).
 		Return("", renderErr).Once()
@@ -111,8 +111,8 @@ func (suite *NotificationServiceTestSuite) TestSendEmailConfirmationCode_SendNot
 
 	internalErr := errors.New("internal error")
 
-	suite.registry.EXPECT().For(notification.ChannelEmail).
-		Return(suite.sender, true).Once()
+	suite.registry.EXPECT().Get(notification.ChannelEmail).
+		Return(suite.sender, nil).Once()
 
 	suite.templateManager.EXPECT().Render("email_confirmation_code.gohtml", data).
 		Return("test html body", nil).Once()

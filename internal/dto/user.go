@@ -3,7 +3,6 @@ package dto
 import (
 	"time"
 
-	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/google/uuid"
 )
 
@@ -64,14 +63,4 @@ type ChangePasswordRequest struct {
 	Password    string `json:"password" validate:"required"`
 	NewPassword string `json:"new_password" validate:"required,min=6,max=60"`
 	Code        string `json:"code" validate:"omitempty,required"`
-}
-
-type BeginPasskeyRegistrationResponse struct {
-	*protocol.CredentialCreation
-	SessionID string `json:"session_id"`
-}
-
-type BeginPasskeyDiscoverableLoginResponse struct {
-	*protocol.CredentialAssertion
-	SessionID string `json:"session_id"`
 }

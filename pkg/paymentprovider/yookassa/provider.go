@@ -188,6 +188,7 @@ func (p *Provider) ParseWebhook(body []byte) (*paymentprovider.WebhookEvent, err
 
 	return webhookEvent, nil
 }
+
 func (p *Provider) GetName() string {
 	return ProviderName
 }

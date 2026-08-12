@@ -136,15 +136,15 @@ func (p *productService) Search(ctx context.Context, req dto.SearchProductReques
 func (p *productService) UploadImage(
 	ctx context.Context,
 	productID uuid.UUID,
-	req dto.UploadProductImageRequest,
-) (*dto.UploadSignURLResponse, error) {
-	const op = "productService.UploadProductImage"
+	req dto.UploadProductImageSignURLRequest,
+) (*dto.GeneratePresignedURLResponse, error) {
+	const op = "productService.UploadImage"
 
 	if err := p.productExists(ctx, productID); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	signRequest := dto.UploadSignURLRequest{
+	signRequest := dto.GeneratePresignedURLRequest{
 		ContentType: req.ContentType,
 		Entity:      dto.NewUploadEntity(productID, string(models.EntityTypeProduct)),
 		Ext:         req.Ext,
@@ -158,25 +158,24 @@ func (p *productService) UploadImage(
 	return response, nil
 }
 
-func (p *productService) ConfirmUploadImage(
+func (p *productService) AttachImage(
 	ctx context.Context,
 	productID uuid.UUID,
-	req dto.ConfirmUploadProductImageRequest,
+	req dto.AttachProductImageRequest,
 ) (*dto.UploadResponse, error) {
-	const op = "productService.ConfirmUploadImage"
+	const op = "productService.AttachImage"
 
 	if err := p.productExists(ctx, productID); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	saveRequest := dto.UploadSaveRequest{
+	attachRequest := dto.AttachFileRequest{
 		UploadID:  req.UploadID,
 		ObjectKey: req.ObjectKey,
 		Entity:    dto.NewUploadEntity(productID, string(models.EntityTypeProduct)),
-		IsMain:    false,
 	}
 
-	response, err := p.uploadManager.Save(ctx, saveRequest, ProductImageType)
+	response, err := p.uploadManager.Attach(ctx, attachRequest, ProductImageType)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}

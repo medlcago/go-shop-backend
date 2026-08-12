@@ -181,8 +181,8 @@ func (_c *MockManager_BeginRegistration_Call) RunAndReturn(run func(ctx context.
 }
 
 // FinishDiscoverableLogin provides a mock function for the type MockManager
-func (_mock *MockManager) FinishDiscoverableLogin(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, response []byte) (passkey.User, *passkey.Credential, error) {
-	ret := _mock.Called(ctx, handler, sessionID, response)
+func (_mock *MockManager) FinishDiscoverableLogin(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, data []byte) (passkey.User, *passkey.Credential, error) {
+	ret := _mock.Called(ctx, handler, sessionID, data)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FinishDiscoverableLogin")
@@ -192,24 +192,24 @@ func (_mock *MockManager) FinishDiscoverableLogin(ctx context.Context, handler p
 	var r1 *passkey.Credential
 	var r2 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, passkey.DiscoverableUserHandler, string, []byte) (passkey.User, *passkey.Credential, error)); ok {
-		return returnFunc(ctx, handler, sessionID, response)
+		return returnFunc(ctx, handler, sessionID, data)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, passkey.DiscoverableUserHandler, string, []byte) passkey.User); ok {
-		r0 = returnFunc(ctx, handler, sessionID, response)
+		r0 = returnFunc(ctx, handler, sessionID, data)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(passkey.User)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, passkey.DiscoverableUserHandler, string, []byte) *passkey.Credential); ok {
-		r1 = returnFunc(ctx, handler, sessionID, response)
+		r1 = returnFunc(ctx, handler, sessionID, data)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*passkey.Credential)
 		}
 	}
 	if returnFunc, ok := ret.Get(2).(func(context.Context, passkey.DiscoverableUserHandler, string, []byte) error); ok {
-		r2 = returnFunc(ctx, handler, sessionID, response)
+		r2 = returnFunc(ctx, handler, sessionID, data)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -225,12 +225,12 @@ type MockManager_FinishDiscoverableLogin_Call struct {
 //   - ctx context.Context
 //   - handler passkey.DiscoverableUserHandler
 //   - sessionID string
-//   - response []byte
-func (_e *MockManager_Expecter) FinishDiscoverableLogin(ctx interface{}, handler interface{}, sessionID interface{}, response interface{}) *MockManager_FinishDiscoverableLogin_Call {
-	return &MockManager_FinishDiscoverableLogin_Call{Call: _e.mock.On("FinishDiscoverableLogin", ctx, handler, sessionID, response)}
+//   - data []byte
+func (_e *MockManager_Expecter) FinishDiscoverableLogin(ctx interface{}, handler interface{}, sessionID interface{}, data interface{}) *MockManager_FinishDiscoverableLogin_Call {
+	return &MockManager_FinishDiscoverableLogin_Call{Call: _e.mock.On("FinishDiscoverableLogin", ctx, handler, sessionID, data)}
 }
 
-func (_c *MockManager_FinishDiscoverableLogin_Call) Run(run func(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, response []byte)) *MockManager_FinishDiscoverableLogin_Call {
+func (_c *MockManager_FinishDiscoverableLogin_Call) Run(run func(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, data []byte)) *MockManager_FinishDiscoverableLogin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -263,14 +263,14 @@ func (_c *MockManager_FinishDiscoverableLogin_Call) Return(v passkey.User, v1 *p
 	return _c
 }
 
-func (_c *MockManager_FinishDiscoverableLogin_Call) RunAndReturn(run func(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, response []byte) (passkey.User, *passkey.Credential, error)) *MockManager_FinishDiscoverableLogin_Call {
+func (_c *MockManager_FinishDiscoverableLogin_Call) RunAndReturn(run func(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, data []byte) (passkey.User, *passkey.Credential, error)) *MockManager_FinishDiscoverableLogin_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FinishRegistration provides a mock function for the type MockManager
-func (_mock *MockManager) FinishRegistration(ctx context.Context, user passkey.User, sessionID string, response []byte) (*passkey.Credential, error) {
-	ret := _mock.Called(ctx, user, sessionID, response)
+func (_mock *MockManager) FinishRegistration(ctx context.Context, user passkey.User, sessionID string, data []byte) (*passkey.Credential, error) {
+	ret := _mock.Called(ctx, user, sessionID, data)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FinishRegistration")
@@ -279,17 +279,17 @@ func (_mock *MockManager) FinishRegistration(ctx context.Context, user passkey.U
 	var r0 *passkey.Credential
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, passkey.User, string, []byte) (*passkey.Credential, error)); ok {
-		return returnFunc(ctx, user, sessionID, response)
+		return returnFunc(ctx, user, sessionID, data)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, passkey.User, string, []byte) *passkey.Credential); ok {
-		r0 = returnFunc(ctx, user, sessionID, response)
+		r0 = returnFunc(ctx, user, sessionID, data)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*passkey.Credential)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, passkey.User, string, []byte) error); ok {
-		r1 = returnFunc(ctx, user, sessionID, response)
+		r1 = returnFunc(ctx, user, sessionID, data)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -305,12 +305,12 @@ type MockManager_FinishRegistration_Call struct {
 //   - ctx context.Context
 //   - user passkey.User
 //   - sessionID string
-//   - response []byte
-func (_e *MockManager_Expecter) FinishRegistration(ctx interface{}, user interface{}, sessionID interface{}, response interface{}) *MockManager_FinishRegistration_Call {
-	return &MockManager_FinishRegistration_Call{Call: _e.mock.On("FinishRegistration", ctx, user, sessionID, response)}
+//   - data []byte
+func (_e *MockManager_Expecter) FinishRegistration(ctx interface{}, user interface{}, sessionID interface{}, data interface{}) *MockManager_FinishRegistration_Call {
+	return &MockManager_FinishRegistration_Call{Call: _e.mock.On("FinishRegistration", ctx, user, sessionID, data)}
 }
 
-func (_c *MockManager_FinishRegistration_Call) Run(run func(ctx context.Context, user passkey.User, sessionID string, response []byte)) *MockManager_FinishRegistration_Call {
+func (_c *MockManager_FinishRegistration_Call) Run(run func(ctx context.Context, user passkey.User, sessionID string, data []byte)) *MockManager_FinishRegistration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -343,7 +343,7 @@ func (_c *MockManager_FinishRegistration_Call) Return(v *passkey.Credential, err
 	return _c
 }
 
-func (_c *MockManager_FinishRegistration_Call) RunAndReturn(run func(ctx context.Context, user passkey.User, sessionID string, response []byte) (*passkey.Credential, error)) *MockManager_FinishRegistration_Call {
+func (_c *MockManager_FinishRegistration_Call) RunAndReturn(run func(ctx context.Context, user passkey.User, sessionID string, data []byte) (*passkey.Credential, error)) *MockManager_FinishRegistration_Call {
 	_c.Call.Return(run)
 	return _c
 }

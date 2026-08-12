@@ -8,6 +8,7 @@ import (
 	"context"
 	"go-shop-backend/internal/models"
 
+	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -95,6 +96,63 @@ func (_c *MockUploadRepository_Create_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// Delete provides a mock function for the type MockUploadRepository
+func (_mock *MockUploadRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUploadRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockUploadRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *MockUploadRepository_Expecter) Delete(ctx interface{}, id interface{}) *MockUploadRepository_Delete_Call {
+	return &MockUploadRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
+}
+
+func (_c *MockUploadRepository_Delete_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUploadRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUploadRepository_Delete_Call) Return(err error) *MockUploadRepository_Delete_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUploadRepository_Delete_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockUploadRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Exists provides a mock function for the type MockUploadRepository
 func (_mock *MockUploadRepository) Exists(ctx context.Context, objectKey string) (bool, error) {
 	ret := _mock.Called(ctx, objectKey)
@@ -157,6 +215,74 @@ func (_c *MockUploadRepository_Exists_Call) Return(b bool, err error) *MockUploa
 }
 
 func (_c *MockUploadRepository_Exists_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (bool, error)) *MockUploadRepository_Exists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetByObjectKey provides a mock function for the type MockUploadRepository
+func (_mock *MockUploadRepository) GetByObjectKey(ctx context.Context, objectKey string) (*models.Upload, error) {
+	ret := _mock.Called(ctx, objectKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByObjectKey")
+	}
+
+	var r0 *models.Upload
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.Upload, error)); ok {
+		return returnFunc(ctx, objectKey)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.Upload); ok {
+		r0 = returnFunc(ctx, objectKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Upload)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, objectKey)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUploadRepository_GetByObjectKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByObjectKey'
+type MockUploadRepository_GetByObjectKey_Call struct {
+	*mock.Call
+}
+
+// GetByObjectKey is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectKey string
+func (_e *MockUploadRepository_Expecter) GetByObjectKey(ctx interface{}, objectKey interface{}) *MockUploadRepository_GetByObjectKey_Call {
+	return &MockUploadRepository_GetByObjectKey_Call{Call: _e.mock.On("GetByObjectKey", ctx, objectKey)}
+}
+
+func (_c *MockUploadRepository_GetByObjectKey_Call) Run(run func(ctx context.Context, objectKey string)) *MockUploadRepository_GetByObjectKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUploadRepository_GetByObjectKey_Call) Return(upload *models.Upload, err error) *MockUploadRepository_GetByObjectKey_Call {
+	_c.Call.Return(upload, err)
+	return _c
+}
+
+func (_c *MockUploadRepository_GetByObjectKey_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (*models.Upload, error)) *MockUploadRepository_GetByObjectKey_Call {
 	_c.Call.Return(run)
 	return _c
 }

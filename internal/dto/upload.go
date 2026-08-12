@@ -7,8 +7,8 @@ import (
 )
 
 type UploadEntity struct {
-	ID   uuid.UUID
-	Type string
+	ID   uuid.UUID `json:"id" validate:"required"`
+	Type string    `json:"type" validate:"required"`
 }
 
 func NewUploadEntity(id uuid.UUID, entityType string) UploadEntity {
@@ -18,13 +18,13 @@ func NewUploadEntity(id uuid.UUID, entityType string) UploadEntity {
 	}
 }
 
-type UploadSignURLRequest struct {
-	ContentType string
-	Entity      UploadEntity
-	Ext         string
+type GeneratePresignedURLRequest struct {
+	ContentType string       `json:"content_type" validate:"required"`
+	Entity      UploadEntity `json:"entity" validate:"required"`
+	Ext         string       `json:"ext" validate:"required"`
 }
 
-type UploadSignURLResponse struct {
+type GeneratePresignedURLResponse struct {
 	UploadID    uuid.UUID `json:"upload_id"`
 	UploadURL   string    `json:"upload_url"`
 	Filename    string    `json:"filename"`
@@ -34,14 +34,14 @@ type UploadSignURLResponse struct {
 	FormData map[string]string `json:"form_data,omitempty"`
 }
 
-type UploadSaveRequest struct {
-	UploadID  uuid.UUID
-	ObjectKey string
-	Entity    UploadEntity
-	IsMain    bool
+type AttachFileRequest struct {
+	UploadID  uuid.UUID    `json:"upload_id" validate:"required"`
+	ObjectKey string       `json:"object_key" validate:"required"`
+	Entity    UploadEntity `json:"entity" validate:"required"`
 }
 
 type UploadResponse struct {
+	ID          uuid.UUID `json:"id"`
 	URL         string    `json:"url"`
 	ContentType *string   `json:"content_type"`
 	MediaType   string    `json:"media_type"`
