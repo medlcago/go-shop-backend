@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,6 +91,15 @@ func TestErrorHandler(t *testing.T) {
 		{
 			name:           "Binding Error",
 			isBindingError: true,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   response.NewError(http.StatusText(http.StatusBadRequest)),
+		},
+		{
+			name: "invalid uuid",
+			err: func() error {
+				_, err := uuid.Parse("invalid-uuid")
+				return err
+			}(),
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   response.NewError(http.StatusText(http.StatusBadRequest)),
 		},

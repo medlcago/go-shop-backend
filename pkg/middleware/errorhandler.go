@@ -49,7 +49,7 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 		}
 
 		// Handling binding errors
-		if strings.Contains(err.Error(), "bind:") {
+		if _, ok := errors.AsType[*fiber.BindError](err); ok {
 			status = http.StatusBadRequest
 			message = http.StatusText(status)
 		}
