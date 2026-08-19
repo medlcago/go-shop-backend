@@ -13,12 +13,6 @@ const (
 	UploadMediaTypeDefault UploadMediaType = "default"
 )
 
-type UploadVariant string
-
-const (
-	UploadVariantOriginal UploadVariant = "original"
-)
-
 type EntityType string
 
 const (
@@ -37,7 +31,6 @@ type Upload struct {
 	ContentType *string `gorm:"type:varchar(255)"`
 
 	MediaType UploadMediaType `gorm:"type:varchar(100);not null;default:'default';index:idx_uploads_entity_media_type,priority:3,where:deleted_at IS NULL"`
-	Variant   UploadVariant   `gorm:"type:varchar(50);not null;default:'original'"`
 
 	CreatedAt time.Time      `gorm:"type:timestamptz;default:now();not null;index:idx_uploads_entity_created_at,priority:3,sort:desc,where:deleted_at IS NULL"`
 	UpdatedAt time.Time      `gorm:"type:timestamptz;default:now();not null"`

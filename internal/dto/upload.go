@@ -45,7 +45,6 @@ type UploadResponse struct {
 	URL         string    `json:"url"`
 	ContentType *string   `json:"content_type"`
 	MediaType   string    `json:"media_type"`
-	Variant     string    `json:"variant"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
