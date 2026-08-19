@@ -141,7 +141,6 @@ func (m *uploadManager) Attach(ctx context.Context, req dto.AttachFileRequest, u
 		FileSize:    obj.Size,
 		ContentType: &contentType,
 		MediaType:   models.UploadMediaTypeDefault,
-		Variant:     models.UploadVariantOriginal,
 	}
 
 	if err := m.uploadRepo.Create(ctx, upload); err != nil {
@@ -156,7 +155,6 @@ func (m *uploadManager) Attach(ctx context.Context, req dto.AttachFileRequest, u
 		URL:         url,
 		ContentType: upload.ContentType,
 		MediaType:   string(upload.MediaType),
-		Variant:     string(upload.Variant),
 		CreatedAt:   upload.CreatedAt,
 		UpdatedAt:   upload.UpdatedAt,
 	}
