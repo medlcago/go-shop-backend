@@ -17,7 +17,7 @@
 | POST   | `/api/v1/auth/passkeys/login/begin`     | Begin passkey login                |
 | POST   | `/api/v1/auth/passkeys/login/finish`    | Finish passkey login               |
 | GET    | `/api/v1/auth/passkeys`                 | Get user passkeys (auth)           |
-| PUT    | `/api/v1/auth/passkeys/:id`             | Update passkey name (auth)         |
+| PUT    | `/api/v1/auth/passkeys/:id/name`        | Update passkey name (auth)         |
 | DELETE | `/api/v1/auth/passkeys/:id`             | Delete passkey (auth)              |
 
 ### Users
@@ -39,7 +39,7 @@
 | POST   | `/api/v1/products`                       | Create product (auth)       |
 | PATCH  | `/api/v1/products/:id`                   | Update product (auth)       |
 | POST   | `/api/v1/products/:id/images/upload-url` | Upload product image (auth) |
-| POST   | `/api/v1/products/:id/images`            | Confirm image upload (auth) |
+| POST   | `/api/v1/products/:id/images/attach`     | Attach image (auth)         |
 
 ### Orders
 
