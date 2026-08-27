@@ -58,6 +58,18 @@ func (h *Handler) CreatePayment(ctx fiber.Ctx) error {
 
 }
 
+// HandleYookassaWebhook godoc
+//
+//	@Summary		Yookassa webhook callback
+//	@Description	Process incoming webhook events from Yookassa payment gateway
+//	@Tags			Payments
+//	@Accept			json
+//	@Produce		plain
+//	@Param			request	body	object	true	"Yookassa Event Payload"
+//	@Success		200		"OK"
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/payments/webhook/yookassa [post]
 func (h *Handler) HandleYookassaWebhook(ctx fiber.Ctx) error {
 	err := h.paymentService.HandleWebhook(ctx.Context(), ctx.Body())
 	if err != nil {
@@ -67,6 +79,17 @@ func (h *Handler) HandleYookassaWebhook(ctx fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
+// GetUserPaymentMethods godoc
+//
+//	@Summary		Get user payment methods
+//	@Description	Retrieve saved payment methods for current authenticated user
+//	@Tags			Payments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Success		200	{object}	response.PaginatedResponse[[]dto.UserPaymentMethodResponse]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/payments/user-methods [get]
 func (h *Handler) GetUserPaymentMethods(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -81,6 +104,19 @@ func (h *Handler) GetUserPaymentMethods(ctx fiber.Ctx) error {
 	return response.PaginatedJSON(ctx, fiber.StatusOK, resp, total)
 }
 
+// SetDefaultPaymentMethod godoc
+//
+//	@Summary		Set default payment method
+//	@Description	Set a specific payment method as default for the user
+//	@Tags			Payments
+//	@Security		BearerAuth
+//	@Param			id	path	string	true	"Payment Method UUID"	format(uuid)
+//	@Success		200	"OK"
+//	@Failure		400	{object}	response.Response[any]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		404	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/payments/user-methods/{id}/default [put]
 func (h *Handler) SetDefaultPaymentMethod(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -96,6 +132,19 @@ func (h *Handler) SetDefaultPaymentMethod(ctx fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
+// DeletePaymentMethod godoc
+//
+//	@Summary		Delete payment method
+//	@Description	Remove a saved payment method by its ID
+//	@Tags			Payments
+//	@Security		BearerAuth
+//	@Param			id	path	string	true	"Payment Method UUID"	format(uuid)
+//	@Success		204	"No Content"
+//	@Failure		400	{object}	response.Response[any]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		404	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/payments/methods/{id} [delete]
 func (h *Handler) DeletePaymentMethod(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {

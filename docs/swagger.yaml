@@ -52,6 +52,34 @@ definitions:
       updated_at:
         type: string
     type: object
+  go-shop-backend_internal_dto.AttachProductImageRequest:
+    properties:
+      object_key:
+        type: string
+      upload_id:
+        type: string
+    required:
+    - object_key
+    - upload_id
+    type: object
+  go-shop-backend_internal_dto.BeginPasskeyDiscoverableLoginResponse:
+    properties:
+      mediation:
+        $ref: '#/definitions/protocol.CredentialMediationRequirement'
+      publicKey:
+        $ref: '#/definitions/protocol.PublicKeyCredentialRequestOptions'
+      session_id:
+        type: string
+    type: object
+  go-shop-backend_internal_dto.BeginPasskeyRegistrationResponse:
+    properties:
+      mediation:
+        $ref: '#/definitions/protocol.CredentialMediationRequirement'
+      publicKey:
+        $ref: '#/definitions/protocol.PublicKeyCredentialCreationOptions'
+      session_id:
+        type: string
+    type: object
   go-shop-backend_internal_dto.CategoryResponse:
     properties:
       description:
@@ -113,28 +141,66 @@ definitions:
       ok:
         type: boolean
     type: object
-  go-shop-backend_internal_dto.ConfirmUploadProductImageRequest:
+  go-shop-backend_internal_dto.CreateAddressRequest:
     properties:
-      object_key:
+      apartment:
+        maxLength: 50
+        minLength: 1
         type: string
-      upload_id:
+      city:
+        maxLength: 255
+        minLength: 1
+        type: string
+      comment:
+        maxLength: 500
+        minLength: 1
+        type: string
+      country:
+        maxLength: 100
+        minLength: 1
+        type: string
+      entrance:
+        maxLength: 50
+        minLength: 1
+        type: string
+      floor:
+        maxLength: 50
+        minLength: 1
+        type: string
+      house:
+        maxLength: 50
+        minLength: 1
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      street:
+        maxLength: 255
+        minLength: 1
         type: string
     required:
-    - object_key
-    - upload_id
+    - city
+    - country
+    - house
+    - name
+    - street
     type: object
   go-shop-backend_internal_dto.CreatePaymentRequest:
     properties:
       order_id:
         type: string
-      type:
+      payment_method_id:
+        type: string
+      payment_type:
         enum:
         - redirect
         - embedded
         type: string
+      save_payment_method:
+        type: boolean
     required:
     - order_id
-    - type
     type: object
   go-shop-backend_internal_dto.CreateWishlistRequest:
     properties:
@@ -156,6 +222,23 @@ definitions:
     required:
     - code
     - password
+    type: object
+  go-shop-backend_internal_dto.GeneratePresignedURLResponse:
+    properties:
+      content_type:
+        type: string
+      expire_date:
+        type: string
+      filename:
+        type: string
+      form_data:
+        additionalProperties:
+          type: string
+        type: object
+      upload_id:
+        type: string
+      upload_url:
+        type: string
     type: object
   go-shop-backend_internal_dto.OrderCheckoutRequest:
     properties:
@@ -224,11 +307,26 @@ definitions:
       updated_at:
         type: string
     type: object
+  go-shop-backend_internal_dto.PasskeyResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      last_used_at:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
   go-shop-backend_internal_dto.PaymentResponse:
     properties:
       confirmation_token:
         type: string
       confirmation_url:
+        type: string
+      status:
         type: string
     type: object
   go-shop-backend_internal_dto.ProductCategoryResponse:
@@ -325,22 +423,59 @@ definitions:
       secret:
         type: string
     type: object
-  go-shop-backend_internal_dto.SignURLResponse:
+  go-shop-backend_internal_dto.UpdateAddressRequest:
     properties:
-      content_type:
+      apartment:
+        maxLength: 50
+        minLength: 1
         type: string
-      expire_date:
+      city:
+        maxLength: 255
+        minLength: 1
         type: string
-      filename:
+      comment:
+        maxLength: 500
+        minLength: 1
         type: string
-      form_data:
-        additionalProperties:
-          type: string
-        type: object
-      upload_id:
+      country:
+        maxLength: 100
+        minLength: 1
         type: string
-      upload_url:
+      entrance:
+        maxLength: 50
+        minLength: 1
         type: string
+      floor:
+        maxLength: 50
+        minLength: 1
+        type: string
+      house:
+        maxLength: 50
+        minLength: 1
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      street:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - city
+    - country
+    - house
+    - name
+    - street
+    type: object
+  go-shop-backend_internal_dto.UpdatePasskeyNameRequest:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 3
+        type: string
+    required:
+    - name
     type: object
   go-shop-backend_internal_dto.UpdateWishlistItemRequest:
     properties:
@@ -361,7 +496,7 @@ definitions:
         minLength: 1
         type: string
     type: object
-  go-shop-backend_internal_dto.UploadProductImageRequest:
+  go-shop-backend_internal_dto.UploadProductImageSignURLRequest:
     properties:
       content_type:
         type: string
@@ -380,13 +515,13 @@ definitions:
         type: string
       created_at:
         type: string
+      id:
+        type: string
       media_type:
         type: string
       updated_at:
         type: string
       url:
-        type: string
-      variant:
         type: string
     type: object
   go-shop-backend_internal_dto.UserLoginRequest:
@@ -401,6 +536,39 @@ definitions:
     - code
     - email
     - password
+    type: object
+  go-shop-backend_internal_dto.UserPaymentMethodResponse:
+    properties:
+      brand:
+        type: string
+      created_at:
+        type: string
+      exp_month:
+        type: integer
+      exp_year:
+        type: integer
+      id:
+        type: string
+      is_default:
+        type: boolean
+      last_used_at:
+        type: string
+      last4:
+        type: string
+      provider:
+        type: string
+      provider_customer_id:
+        type: string
+      provider_payment_method_id:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
     type: object
   go-shop-backend_internal_dto.UserRegisterRequest:
     properties:
@@ -525,6 +693,15 @@ definitions:
       total:
         type: integer
     type: object
+  go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_UserPaymentMethodResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UserPaymentMethodResponse'
+        type: array
+      total:
+        type: integer
+    type: object
   go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse:
     properties:
       data:
@@ -541,6 +718,50 @@ definitions:
         type: string
       result: {}
     type: object
+  go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_AddressResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.AddressResponse'
+        type: array
+    type: object
+  go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_PasskeyResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.PasskeyResponse'
+        type: array
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.AddressResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyDiscoverableLoginResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.BeginPasskeyDiscoverableLoginResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyRegistrationResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.BeginPasskeyRegistrationResponse'
+    type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ConfirmEmailResponse:
     properties:
       details: {}
@@ -548,6 +769,14 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.ConfirmEmailResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.GeneratePresignedURLResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse:
     properties:
@@ -589,14 +818,6 @@ definitions:
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.Setup2FAResponse'
     type: object
-  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse:
-    properties:
-      details: {}
-      error:
-        type: string
-      result:
-        $ref: '#/definitions/go-shop-backend_internal_dto.SignURLResponse'
-    type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse:
     properties:
       details: {}
@@ -604,6 +825,14 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.UploadResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserResponse:
+    properties:
+      details: {}
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.UserResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
@@ -661,14 +890,6 @@ definitions:
       result:
         $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse'
     type: object
-  go-shop-backend_pkg_response.Response-internal_dto_UserResponse:
-    properties:
-      details: {}
-      error:
-        type: string
-      result:
-        $ref: '#/definitions/internal_dto.UserResponse'
-    type: object
   go-shop-backend_pkg_response.Response-string:
     properties:
       details: {}
@@ -677,27 +898,531 @@ definitions:
       result:
         type: string
     type: object
-  internal_dto.UserResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      email_confirmed:
-        type: boolean
-      id:
-        type: string
-      role:
-        type: string
-      two_fa_enabled:
-        type: boolean
+  protocol.AttestationFormat:
+    enum:
+    - packed
+    - tpm
+    - android-key
+    - android-safetynet
+    - fido-u2f
+    - apple
+    - compound
+    - none
+    type: string
+    x-enum-varnames:
+    - AttestationFormatPacked
+    - AttestationFormatTPM
+    - AttestationFormatAndroidKey
+    - AttestationFormatAndroidSafetyNet
+    - AttestationFormatFIDOUniversalSecondFactor
+    - AttestationFormatApple
+    - AttestationFormatCompound
+    - AttestationFormatNone
+  protocol.AuthenticationExtensions:
+    additionalProperties: {}
     type: object
+  protocol.AuthenticatorAttachment:
+    enum:
+    - platform
+    - cross-platform
+    type: string
+    x-enum-varnames:
+    - Platform
+    - CrossPlatform
+  protocol.AuthenticatorSelection:
+    properties:
+      authenticatorAttachment:
+        allOf:
+        - $ref: '#/definitions/protocol.AuthenticatorAttachment'
+        description: |-
+          AuthenticatorAttachment If this member is present, eligible authenticators are filtered to only
+          authenticators attached with the specified AuthenticatorAttachment enum.
+      requireResidentKey:
+        description: |-
+          RequireResidentKey this member describes the Relying Party's requirements regarding resident
+          credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident
+          public key credential source when creating a public key credential.
+        type: boolean
+      residentKey:
+        allOf:
+        - $ref: '#/definitions/protocol.ResidentKeyRequirement'
+        description: |-
+          ResidentKey this member describes the Relying Party's requirements regarding resident
+          credentials per Webauthn Level 2.
+      userVerification:
+        allOf:
+        - $ref: '#/definitions/protocol.UserVerificationRequirement'
+        description: |-
+          UserVerification This member describes the Relying Party's requirements regarding user verification for
+          the create() operation. Eligible authenticators are filtered to only those capable of satisfying this
+          requirement.
+    type: object
+  protocol.AuthenticatorTransport:
+    enum:
+    - usb
+    - nfc
+    - ble
+    - smart-card
+    - hybrid
+    - internal
+    type: string
+    x-enum-varnames:
+    - USB
+    - NFC
+    - BLE
+    - SmartCard
+    - Hybrid
+    - Internal
+  protocol.ConveyancePreference:
+    enum:
+    - none
+    - indirect
+    - direct
+    - enterprise
+    type: string
+    x-enum-varnames:
+    - PreferNoAttestation
+    - PreferIndirectAttestation
+    - PreferDirectAttestation
+    - PreferEnterpriseAttestation
+  protocol.CredentialDescriptor:
+    properties:
+      id:
+        description: CredentialID The ID of a credential to allow/disallow.
+        items:
+          type: integer
+        type: array
+      transports:
+        description: The authenticator transports that can be used.
+        items:
+          $ref: '#/definitions/protocol.AuthenticatorTransport'
+        type: array
+      type:
+        allOf:
+        - $ref: '#/definitions/protocol.CredentialType'
+        description: The valid credential types.
+    type: object
+  protocol.CredentialMediationRequirement:
+    enum:
+    - ""
+    - silent
+    - optional
+    - conditional
+    - required
+    type: string
+    x-enum-varnames:
+    - MediationDefault
+    - MediationSilent
+    - MediationOptional
+    - MediationConditional
+    - MediationRequired
+  protocol.CredentialParameter:
+    properties:
+      alg:
+        $ref: '#/definitions/webauthncose.COSEAlgorithmIdentifier'
+      type:
+        $ref: '#/definitions/protocol.CredentialType'
+    type: object
+  protocol.CredentialType:
+    enum:
+    - public-key
+    type: string
+    x-enum-varnames:
+    - PublicKeyCredentialType
+  protocol.PublicKeyCredentialCreationOptions:
+    properties:
+      attestation:
+        $ref: '#/definitions/protocol.ConveyancePreference'
+      attestationFormats:
+        items:
+          $ref: '#/definitions/protocol.AttestationFormat'
+        type: array
+      authenticatorSelection:
+        $ref: '#/definitions/protocol.AuthenticatorSelection'
+      challenge:
+        items:
+          type: integer
+        type: array
+      excludeCredentials:
+        items:
+          $ref: '#/definitions/protocol.CredentialDescriptor'
+        type: array
+      extensions:
+        $ref: '#/definitions/protocol.AuthenticationExtensions'
+      hints:
+        items:
+          $ref: '#/definitions/protocol.PublicKeyCredentialHints'
+        type: array
+      pubKeyCredParams:
+        items:
+          $ref: '#/definitions/protocol.CredentialParameter'
+        type: array
+      rp:
+        $ref: '#/definitions/protocol.RelyingPartyEntity'
+      timeout:
+        type: integer
+      user:
+        $ref: '#/definitions/protocol.UserEntity'
+    type: object
+  protocol.PublicKeyCredentialHints:
+    enum:
+    - security-key
+    - client-device
+    - hybrid
+    type: string
+    x-enum-varnames:
+    - PublicKeyCredentialHintSecurityKey
+    - PublicKeyCredentialHintClientDevice
+    - PublicKeyCredentialHintHybrid
+  protocol.PublicKeyCredentialRequestOptions:
+    properties:
+      allowCredentials:
+        items:
+          $ref: '#/definitions/protocol.CredentialDescriptor'
+        type: array
+      challenge:
+        items:
+          type: integer
+        type: array
+      extensions:
+        $ref: '#/definitions/protocol.AuthenticationExtensions'
+      hints:
+        items:
+          $ref: '#/definitions/protocol.PublicKeyCredentialHints'
+        type: array
+      rpId:
+        type: string
+      timeout:
+        type: integer
+      userVerification:
+        $ref: '#/definitions/protocol.UserVerificationRequirement'
+    type: object
+  protocol.RelyingPartyEntity:
+    properties:
+      id:
+        description: A unique identifier for the Relying Party entity, which sets
+          the RP ID.
+        type: string
+      name:
+        description: |-
+          A human-palatable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
+
+          When inherited by PublicKeyCredentialRpEntity it is a human-palatable identifier for the Relying Party,
+          intended only for display. For example, "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
+
+          When inherited by PublicKeyCredentialUserEntity, it is a human-palatable identifier for a user account. It is
+          intended only for display, i.e., aiding the user in determining the difference between user accounts with similar
+          displayNames. For example, "alexm", "alex.p.mueller@example.com" or "+14255551234".
+        type: string
+    type: object
+  protocol.ResidentKeyRequirement:
+    enum:
+    - discouraged
+    - preferred
+    - required
+    type: string
+    x-enum-varnames:
+    - ResidentKeyRequirementDiscouraged
+    - ResidentKeyRequirementPreferred
+    - ResidentKeyRequirementRequired
+  protocol.UserEntity:
+    properties:
+      displayName:
+        description: |-
+          A human-palatable name for the user account, intended only for display.
+          For example, "Alex P. Müller" or "田中 倫". The Relying Party SHOULD let
+          the user choose this, and SHOULD NOT restrict the choice more than necessary.
+        type: string
+      id:
+        description: |-
+          ID is the user handle of the user account entity. To ensure secure operation,
+          authentication and authorization decisions MUST be made on the basis of this id
+          member, not the displayName nor name members. See Section 6.1 of
+          [RFC8266](https://www.w3.org/TR/webauthn/#biblio-rfc8266).
+      name:
+        description: |-
+          A human-palatable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
+
+          When inherited by PublicKeyCredentialRpEntity it is a human-palatable identifier for the Relying Party,
+          intended only for display. For example, "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
+
+          When inherited by PublicKeyCredentialUserEntity, it is a human-palatable identifier for a user account. It is
+          intended only for display, i.e., aiding the user in determining the difference between user accounts with similar
+          displayNames. For example, "alexm", "alex.p.mueller@example.com" or "+14255551234".
+        type: string
+    type: object
+  protocol.UserVerificationRequirement:
+    enum:
+    - required
+    - preferred
+    - discouraged
+    type: string
+    x-enum-comments:
+      VerificationPreferred: This is the default.
+    x-enum-descriptions:
+    - ""
+    - This is the default.
+    - ""
+    x-enum-varnames:
+    - VerificationRequired
+    - VerificationPreferred
+    - VerificationDiscouraged
+  webauthncose.COSEAlgorithmIdentifier:
+    enum:
+    - -7
+    - -8
+    - -9
+    - -19
+    - -35
+    - -36
+    - -37
+    - -38
+    - -39
+    - -47
+    - -48
+    - -49
+    - -50
+    - -51
+    - -52
+    - -257
+    - -258
+    - -259
+    - -65535
+    type: integer
+    x-enum-varnames:
+    - AlgES256
+    - AlgEdDSA
+    - AlgESP256
+    - AlgEd25519
+    - AlgES384
+    - AlgES512
+    - AlgPS256
+    - AlgPS384
+    - AlgPS512
+    - AlgES256K
+    - AlgMLDSA44
+    - AlgMLDSA65
+    - AlgMLDSA87
+    - AlgESP384
+    - AlgESP512
+    - AlgRS256
+    - AlgRS384
+    - AlgRS512
+    - AlgRS1
 host: localhost:8080
 info:
   contact: {}
   title: Go Shop Backend API
   version: "1.0"
 paths:
+  /addresses:
+    get:
+      description: Get all saved addresses for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_AddressResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: List addresses
+      tags:
+      - Addresses
+    post:
+      consumes:
+      - application/json
+      description: Create a new delivery address for the authenticated user
+      parameters:
+      - description: Request body to create address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.CreateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Create address
+      tags:
+      - Addresses
+  /addresses/{addressID}:
+    delete:
+      description: Delete address by ID
+      parameters:
+      - description: Address UUID
+        format: uuid
+        in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Delete address
+      tags:
+      - Addresses
+    get:
+      description: Get address details by ID
+      parameters:
+      - description: Address UUID
+        format: uuid
+        in: path
+        name: addressID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get address
+      tags:
+      - Addresses
+    put:
+      consumes:
+      - application/json
+      description: Update address details by ID
+      parameters:
+      - description: Address UUID
+        format: uuid
+        in: path
+        name: addressID
+        required: true
+        type: string
+      - description: Request body to update address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UpdateAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Update address
+      tags:
+      - Addresses
+  /addresses/{addressID}/default:
+    put:
+      description: Set specific address as default for user
+      parameters:
+      - description: Address UUID
+        format: uuid
+        in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Set default address
+      tags:
+      - Addresses
   /auth/confirm-2fa:
     post:
       consumes:
@@ -775,7 +1500,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Login
+      description: Login with email and password
       parameters:
       - description: Request body for login
         in: body
@@ -805,11 +1530,236 @@ paths:
       summary: Login
       tags:
       - Auth
+  /auth/passkeys:
+    get:
+      description: Get list of all passkeys registered for the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_PasskeyResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get User Passkeys
+      tags:
+      - Auth
+  /auth/passkeys/{id}:
+    delete:
+      description: Remove a passkey registered by the current user
+      parameters:
+      - description: Passkey UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Delete Passkey
+      tags:
+      - Auth
+  /auth/passkeys/{id}/name:
+    put:
+      consumes:
+      - application/json
+      description: Update custom display name of a registered passkey
+      parameters:
+      - description: Passkey UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request body to update passkey name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.UpdatePasskeyNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Update Passkey Name
+      tags:
+      - Auth
+  /auth/passkeys/login/begin:
+    post:
+      description: Start WebAuthn passkey authentication ceremony
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyDiscoverableLoginResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Begin Passkey Login
+      tags:
+      - Auth
+  /auth/passkeys/login/finish:
+    post:
+      consumes:
+      - application/json
+      description: Complete WebAuthn passkey authentication ceremony and issue token
+      parameters:
+      - description: Passkey Session ID obtained during login start
+        in: header
+        name: Passkey-Session-ID
+        required: true
+        type: string
+      - description: WebAuthn Credential Assertion Response JSON
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Finish Passkey Login
+      tags:
+      - Auth
+  /auth/passkeys/register/begin:
+    post:
+      description: Start WebAuthn passkey registration ceremony for authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyRegistrationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Begin Passkey Registration
+      tags:
+      - Auth
+  /auth/passkeys/register/finish:
+    post:
+      consumes:
+      - application/json
+      description: Complete WebAuthn passkey registration ceremony using credential
+        creation response
+      parameters:
+      - description: Passkey Session ID obtained during registration start
+        in: header
+        name: Passkey-Session-ID
+        required: true
+        type: string
+      - description: WebAuthn Credential Creation Response JSON
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Finish Passkey Registration
+      tags:
+      - Auth
   /auth/refresh:
     post:
       consumes:
       - application/json
-      description: Refresh Token
+      description: Refresh access token using a valid refresh token
       produces:
       - application/json
       responses:
@@ -834,7 +1784,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Register
+      description: Register a new user account
       parameters:
       - description: Request body for registration
         in: body
@@ -1413,6 +2363,125 @@ paths:
       summary: Create payment
       tags:
       - Payments
+  /payments/methods/{id}:
+    delete:
+      description: Remove a saved payment method by its ID
+      parameters:
+      - description: Payment Method UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Delete payment method
+      tags:
+      - Payments
+  /payments/user-methods:
+    get:
+      description: Retrieve saved payment methods for current authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_UserPaymentMethodResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Get user payment methods
+      tags:
+      - Payments
+  /payments/user-methods/{id}/default:
+    put:
+      description: Set a specific payment method as default for the user
+      parameters:
+      - description: Payment Method UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Set default payment method
+      tags:
+      - Payments
+  /payments/webhook/yookassa:
+    post:
+      consumes:
+      - application/json
+      description: Process incoming webhook events from Yookassa payment gateway
+      parameters:
+      - description: Yookassa Event Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      summary: Yookassa webhook callback
+      tags:
+      - Payments
   /products:
     post:
       consumes:
@@ -1609,7 +2678,7 @@ paths:
       summary: Update an existing product
       tags:
       - Products
-  /products/{id}/images/confirm:
+  /products/{id}/images/attach:
     post:
       consumes:
       - application/json
@@ -1622,12 +2691,12 @@ paths:
         name: id
         required: true
         type: string
-      - description: Image confirmation request
+      - description: Image attach request
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.ConfirmUploadProductImageRequest'
+          $ref: '#/definitions/go-shop-backend_internal_dto.AttachProductImageRequest'
       produces:
       - application/json
       responses:
@@ -1661,7 +2730,7 @@ paths:
             $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
       security:
       - BearerAuth: []
-      summary: Confirm image upload
+      summary: Attach the image to the product
       tags:
       - Products
   /products/{id}/images/upload-url:
@@ -1682,14 +2751,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.UploadProductImageRequest'
+          $ref: '#/definitions/go-shop-backend_internal_dto.UploadProductImageSignURLRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse'
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse'
         "400":
           description: Bad Request
           schema:
@@ -1760,14 +2829,14 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get Me
+      description: Get current authenticated user profile
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-internal_dto_UserResponse'
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserResponse'
         "401":
           description: Unauthorized
           schema:

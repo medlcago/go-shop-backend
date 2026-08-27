@@ -24,7 +24,7 @@ func NewHandler(userService service.UserService) *Handler {
 // Login godoc
 //
 //	@Summary		Login
-//	@Description	Login
+//	@Description	Login with email and password
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
@@ -51,7 +51,7 @@ func (h *Handler) Login(ctx fiber.Ctx) error {
 // Register godoc
 //
 //	@Summary		Register
-//	@Description	Register
+//	@Description	Register a new user account
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
@@ -172,7 +172,7 @@ func (h *Handler) Disable2FA(ctx fiber.Ctx) error {
 // RefreshToken godoc
 //
 //	@Summary		Refresh Token
-//	@Description	Refresh Token
+//	@Description	Refresh access token using a valid refresh token
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
@@ -195,12 +195,12 @@ func (h *Handler) RefreshToken(ctx fiber.Ctx) error {
 // GetMe godoc
 //
 //	@Summary		Get Me
-//	@Description	Get Me
+//	@Description	Get current authenticated user profile
 //	@Tags			Users
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Success		200	{object}	response.Response[internal_dto.UserResponse]
+//	@Success		200	{object}	response.Response[dto.UserResponse]
 //	@Failure		401	{object}	response.Response[any]
 //	@Failure		404	{object}	response.Response[any]
 //	@Failure		500	{object}	response.Response[any]
@@ -316,6 +316,17 @@ func (h *Handler) ChangePassword(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, "OK")
 }
 
+// BeginPasskeyRegistration godoc
+//
+//	@Summary		Begin Passkey Registration
+//	@Description	Start WebAuthn passkey registration ceremony for authenticated user
+//	@Tags			Auth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.Response[dto.BeginPasskeyRegistrationResponse]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/auth/passkeys/register/begin [post]
 func (h *Handler) BeginPasskeyRegistration(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -330,6 +341,21 @@ func (h *Handler) BeginPasskeyRegistration(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// FinishPasskeyRegistration godoc
+//
+//	@Summary		Finish Passkey Registration
+//	@Description	Complete WebAuthn passkey registration ceremony using credential creation response
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			Passkey-Session-ID	header		string	true	"Passkey Session ID obtained during registration start"
+//	@Param			request				body		object	true	"WebAuthn Credential Creation Response JSON"
+//	@Success		200					{object}	response.Response[string]
+//	@Failure		400					{object}	response.Response[any]
+//	@Failure		401					{object}	response.Response[any]
+//	@Failure		500					{object}	response.Response[any]
+//	@Router			/auth/passkeys/register/finish [post]
 func (h *Handler) FinishPasskeyRegistration(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -348,6 +374,15 @@ func (h *Handler) FinishPasskeyRegistration(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, "OK")
 }
 
+// BeginPasskeyLogin godoc
+//
+//	@Summary		Begin Passkey Login
+//	@Description	Start WebAuthn passkey authentication ceremony
+//	@Tags			Auth
+//	@Produce		json
+//	@Success		200	{object}	response.Response[dto.BeginPasskeyDiscoverableLoginResponse]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/auth/passkeys/login/begin [post]
 func (h *Handler) BeginPasskeyLogin(ctx fiber.Ctx) error {
 	resp, err := h.userService.BeginPasskeyLogin(ctx.Context())
 	if err != nil {
@@ -357,6 +392,20 @@ func (h *Handler) BeginPasskeyLogin(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// FinishPasskeyLogin godoc
+//
+//	@Summary		Finish Passkey Login
+//	@Description	Complete WebAuthn passkey authentication ceremony and issue token
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			Passkey-Session-ID	header		string	true	"Passkey Session ID obtained during login start"
+//	@Param			request				body		object	true	"WebAuthn Credential Assertion Response JSON"
+//	@Success		200					{object}	response.Response[dto.UserTokenResponse]
+//	@Failure		400					{object}	response.Response[any]
+//	@Failure		401					{object}	response.Response[any]
+//	@Failure		500					{object}	response.Response[any]
+//	@Router			/auth/passkeys/login/finish [post]
 func (h *Handler) FinishPasskeyLogin(ctx fiber.Ctx) error {
 	sid, err := getPasskeySessionID(ctx)
 	if err != nil {
@@ -371,6 +420,17 @@ func (h *Handler) FinishPasskeyLogin(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// GetUserPasskeys godoc
+//
+//	@Summary		Get User Passkeys
+//	@Description	Get list of all passkeys registered for the current user
+//	@Tags			Auth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.Response[[]dto.PasskeyResponse]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/auth/passkeys [get]
 func (h *Handler) GetUserPasskeys(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -385,6 +445,22 @@ func (h *Handler) GetUserPasskeys(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// UpdatePasskeyName godoc
+//
+//	@Summary		Update Passkey Name
+//	@Description	Update custom display name of a registered passkey
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string							true	"Passkey UUID"	format(uuid)
+//	@Param			request	body		dto.UpdatePasskeyNameRequest	true	"Request body to update passkey name"
+//	@Success		200		{object}	response.Response[string]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/auth/passkeys/{id}/name [put]
 func (h *Handler) UpdatePasskeyName(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -405,6 +481,19 @@ func (h *Handler) UpdatePasskeyName(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, "OK")
 }
 
+// DeletePasskey godoc
+//
+//	@Summary		Delete Passkey
+//	@Description	Remove a passkey registered by the current user
+//	@Tags			Auth
+//	@Security		BearerAuth
+//	@Param			id	path	string	true	"Passkey UUID"	format(uuid)
+//	@Success		204	"No Content"
+//	@Failure		400	{object}	response.Response[any]
+//	@Failure		401	{object}	response.Response[any]
+//	@Failure		404	{object}	response.Response[any]
+//	@Failure		500	{object}	response.Response[any]
+//	@Router			/auth/passkeys/{id} [delete]
 func (h *Handler) DeletePasskey(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {

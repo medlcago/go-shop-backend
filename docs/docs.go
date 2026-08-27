@@ -15,6 +15,330 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/addresses": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all saved addresses for the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "List addresses",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_AddressResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new delivery address for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Create address",
+                "parameters": [
+                    {
+                        "description": "Request body to create address",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.CreateAddressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/addresses/{addressID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get address details by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Get address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Address UUID",
+                        "name": "addressID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update address details by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Update address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Address UUID",
+                        "name": "addressID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body to update address",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.UpdateAddressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete address by ID",
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Delete address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Address UUID",
+                        "name": "addressID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/addresses/{addressID}/default": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set specific address as default for user",
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Set default address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Address UUID",
+                        "name": "addressID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/confirm-2fa": {
             "post": {
                 "security": [
@@ -131,7 +455,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Login",
+                "description": "Login with email and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -181,6 +505,353 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/passkeys": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get list of all passkeys registered for the current user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get User Passkeys",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_PasskeyResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/passkeys/login/begin": {
+            "post": {
+                "description": "Start WebAuthn passkey authentication ceremony",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Begin Passkey Login",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyDiscoverableLoginResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/passkeys/login/finish": {
+            "post": {
+                "description": "Complete WebAuthn passkey authentication ceremony and issue token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Finish Passkey Login",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Passkey Session ID obtained during login start",
+                        "name": "Passkey-Session-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "WebAuthn Credential Assertion Response JSON",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/passkeys/register/begin": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Start WebAuthn passkey registration ceremony for authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Begin Passkey Registration",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyRegistrationResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/passkeys/register/finish": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Complete WebAuthn passkey registration ceremony using credential creation response",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Finish Passkey Registration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Passkey Session ID obtained during registration start",
+                        "name": "Passkey-Session-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "WebAuthn Credential Creation Response JSON",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/passkeys/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove a passkey registered by the current user",
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Delete Passkey",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Passkey UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/passkeys/{id}/name": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update custom display name of a registered passkey",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Update Passkey Name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Passkey UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body to update passkey name",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.UpdatePasskeyNameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "security": [
@@ -188,7 +859,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Refresh Token",
+                "description": "Refresh access token using a valid refresh token",
                 "consumes": [
                     "application/json"
                 ],
@@ -223,7 +894,7 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Register",
+                "description": "Register a new user account",
                 "consumes": [
                     "application/json"
                 ],
@@ -1093,6 +1764,192 @@ const docTemplate = `{
                 }
             }
         },
+        "/payments/methods/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove a saved payment method by its ID",
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Delete payment method",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Payment Method UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/user-methods": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve saved payment methods for current authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Get user payment methods",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_UserPaymentMethodResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/user-methods/{id}/default": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set a specific payment method as default for the user",
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Set default payment method",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Payment Method UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/webhook/yookassa": {
+            "post": {
+                "description": "Process incoming webhook events from Yookassa payment gateway",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Yookassa webhook callback",
+                "parameters": [
+                    {
+                        "description": "Yookassa Event Payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/products": {
             "post": {
                 "security": [
@@ -1420,7 +2277,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/products/{id}/images/confirm": {
+        "/products/{id}/images/attach": {
             "post": {
                 "security": [
                     {
@@ -1437,7 +2294,7 @@ const docTemplate = `{
                 "tags": [
                     "Products"
                 ],
-                "summary": "Confirm image upload",
+                "summary": "Attach the image to the product",
                 "parameters": [
                     {
                         "type": "string",
@@ -1448,12 +2305,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Image confirmation request",
+                        "description": "Image attach request",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.ConfirmUploadProductImageRequest"
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.AttachProductImageRequest"
                         }
                     }
                 ],
@@ -1536,7 +2393,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_internal_dto.UploadProductImageRequest"
+                            "$ref": "#/definitions/go-shop-backend_internal_dto.UploadProductImageSignURLRequest"
                         }
                     }
                 ],
@@ -1544,7 +2401,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse"
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse"
                         }
                     },
                     "400": {
@@ -1587,7 +2444,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get Me",
+                "description": "Get current authenticated user profile",
                 "consumes": [
                     "application/json"
                 ],
@@ -1602,7 +2459,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-internal_dto_UserResponse"
+                            "$ref": "#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserResponse"
                         }
                     },
                     "401": {
@@ -2511,6 +3368,49 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.AttachProductImageRequest": {
+            "type": "object",
+            "required": [
+                "object_key",
+                "upload_id"
+            ],
+            "properties": {
+                "object_key": {
+                    "type": "string"
+                },
+                "upload_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.BeginPasskeyDiscoverableLoginResponse": {
+            "type": "object",
+            "properties": {
+                "mediation": {
+                    "$ref": "#/definitions/protocol.CredentialMediationRequirement"
+                },
+                "publicKey": {
+                    "$ref": "#/definitions/protocol.PublicKeyCredentialRequestOptions"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.BeginPasskeyRegistrationResponse": {
+            "type": "object",
+            "properties": {
+                "mediation": {
+                    "$ref": "#/definitions/protocol.CredentialMediationRequirement"
+                },
+                "publicKey": {
+                    "$ref": "#/definitions/protocol.PublicKeyCredentialCreationOptions"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.CategoryResponse": {
             "type": "object",
             "properties": {
@@ -2602,37 +3502,84 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_internal_dto.ConfirmUploadProductImageRequest": {
+        "go-shop-backend_internal_dto.CreateAddressRequest": {
             "type": "object",
             "required": [
-                "object_key",
-                "upload_id"
+                "city",
+                "country",
+                "house",
+                "name",
+                "street"
             ],
             "properties": {
-                "object_key": {
-                    "type": "string"
+                "apartment": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
                 },
-                "upload_id": {
-                    "type": "string"
+                "city": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "comment": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 1
+                },
+                "country": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "entrance": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "floor": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "house": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "street": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
                 }
             }
         },
         "go-shop-backend_internal_dto.CreatePaymentRequest": {
             "type": "object",
             "required": [
-                "order_id",
-                "type"
+                "order_id"
             ],
             "properties": {
                 "order_id": {
                     "type": "string"
                 },
-                "type": {
+                "payment_method_id": {
+                    "type": "string"
+                },
+                "payment_type": {
                     "type": "string",
                     "enum": [
                         "redirect",
                         "embedded"
                     ]
+                },
+                "save_payment_method": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2663,6 +3610,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.GeneratePresignedURLResponse": {
+            "type": "object",
+            "properties": {
+                "content_type": {
+                    "type": "string"
+                },
+                "expire_date": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "form_data": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "upload_id": {
+                    "type": "string"
+                },
+                "upload_url": {
                     "type": "string"
                 }
             }
@@ -2770,6 +3743,26 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_internal_dto.PasskeyResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_used_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "go-shop-backend_internal_dto.PaymentResponse": {
             "type": "object",
             "properties": {
@@ -2777,6 +3770,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "confirmation_url": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
@@ -2919,29 +3915,73 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_internal_dto.SignURLResponse": {
+        "go-shop-backend_internal_dto.UpdateAddressRequest": {
             "type": "object",
+            "required": [
+                "city",
+                "country",
+                "house",
+                "name",
+                "street"
+            ],
             "properties": {
-                "content_type": {
-                    "type": "string"
+                "apartment": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
                 },
-                "expire_date": {
-                    "type": "string"
+                "city": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
                 },
-                "filename": {
-                    "type": "string"
+                "comment": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 1
                 },
-                "form_data": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                "country": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
                 },
-                "upload_id": {
-                    "type": "string"
+                "entrance": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
                 },
-                "upload_url": {
-                    "type": "string"
+                "floor": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "house": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "street": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.UpdatePasskeyNameRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
                 }
             }
         },
@@ -2972,7 +4012,7 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_internal_dto.UploadProductImageRequest": {
+        "go-shop-backend_internal_dto.UploadProductImageSignURLRequest": {
             "type": "object",
             "required": [
                 "content_type",
@@ -3000,6 +4040,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "media_type": {
                     "type": "string"
                 },
@@ -3007,9 +4050,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "url": {
-                    "type": "string"
-                },
-                "variant": {
                     "type": "string"
                 }
             }
@@ -3029,6 +4069,56 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-shop-backend_internal_dto.UserPaymentMethodResponse": {
+            "type": "object",
+            "properties": {
+                "brand": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "exp_month": {
+                    "type": "integer"
+                },
+                "exp_year": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "last4": {
+                    "type": "string"
+                },
+                "last_used_at": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "provider_customer_id": {
+                    "type": "string"
+                },
+                "provider_payment_method_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -3221,6 +4311,20 @@ const docTemplate = `{
                 }
             }
         },
+        "go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_UserPaymentMethodResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/go-shop-backend_internal_dto.UserPaymentMethodResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse": {
             "type": "object",
             "properties": {
@@ -3245,6 +4349,72 @@ const docTemplate = `{
                 "result": {}
             }
         },
+        "go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_AddressResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/go-shop-backend_internal_dto.AddressResponse"
+                    }
+                }
+            }
+        },
+        "go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_PasskeyResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/go-shop-backend_internal_dto.PasskeyResponse"
+                    }
+                }
+            }
+        },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.AddressResponse"
+                }
+            }
+        },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyDiscoverableLoginResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.BeginPasskeyDiscoverableLoginResponse"
+                }
+            }
+        },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyRegistrationResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.BeginPasskeyRegistrationResponse"
+                }
+            }
+        },
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ConfirmEmailResponse": {
             "type": "object",
             "properties": {
@@ -3254,6 +4424,18 @@ const docTemplate = `{
                 },
                 "result": {
                     "$ref": "#/definitions/go-shop-backend_internal_dto.ConfirmEmailResponse"
+                }
+            }
+        },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.GeneratePresignedURLResponse"
                 }
             }
         },
@@ -3317,18 +4499,6 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SignURLResponse": {
-            "type": "object",
-            "properties": {
-                "details": {},
-                "error": {
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/definitions/go-shop-backend_internal_dto.SignURLResponse"
-                }
-            }
-        },
         "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse": {
             "type": "object",
             "properties": {
@@ -3338,6 +4508,18 @@ const docTemplate = `{
                 },
                 "result": {
                     "$ref": "#/definitions/go-shop-backend_internal_dto.UploadResponse"
+                }
+            }
+        },
+        "go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/go-shop-backend_internal_dto.UserResponse"
                 }
             }
         },
@@ -3425,18 +4607,6 @@ const docTemplate = `{
                 }
             }
         },
-        "go-shop-backend_pkg_response.Response-internal_dto_UserResponse": {
-            "type": "object",
-            "properties": {
-                "details": {},
-                "error": {
-                    "type": "string"
-                },
-                "result": {
-                    "$ref": "#/definitions/internal_dto.UserResponse"
-                }
-            }
-        },
         "go-shop-backend_pkg_response.Response-string": {
             "type": "object",
             "properties": {
@@ -3449,28 +4619,383 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_dto.UserResponse": {
+        "protocol.AttestationFormat": {
+            "type": "string",
+            "enum": [
+                "packed",
+                "tpm",
+                "android-key",
+                "android-safetynet",
+                "fido-u2f",
+                "apple",
+                "compound",
+                "none"
+            ],
+            "x-enum-varnames": [
+                "AttestationFormatPacked",
+                "AttestationFormatTPM",
+                "AttestationFormatAndroidKey",
+                "AttestationFormatAndroidSafetyNet",
+                "AttestationFormatFIDOUniversalSecondFactor",
+                "AttestationFormatApple",
+                "AttestationFormatCompound",
+                "AttestationFormatNone"
+            ]
+        },
+        "protocol.AuthenticationExtensions": {
+            "type": "object",
+            "additionalProperties": {}
+        },
+        "protocol.AuthenticatorAttachment": {
+            "type": "string",
+            "enum": [
+                "platform",
+                "cross-platform"
+            ],
+            "x-enum-varnames": [
+                "Platform",
+                "CrossPlatform"
+            ]
+        },
+        "protocol.AuthenticatorSelection": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
+                "authenticatorAttachment": {
+                    "description": "AuthenticatorAttachment If this member is present, eligible authenticators are filtered to only\nauthenticators attached with the specified AuthenticatorAttachment enum.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.AuthenticatorAttachment"
+                        }
+                    ]
                 },
-                "email": {
-                    "type": "string"
-                },
-                "email_confirmed": {
+                "requireResidentKey": {
+                    "description": "RequireResidentKey this member describes the Relying Party's requirements regarding resident\ncredentials. If the parameter is set to true, the authenticator MUST create a client-side-resident\npublic key credential source when creating a public key credential.",
                     "type": "boolean"
                 },
-                "id": {
-                    "type": "string"
+                "residentKey": {
+                    "description": "ResidentKey this member describes the Relying Party's requirements regarding resident\ncredentials per Webauthn Level 2.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.ResidentKeyRequirement"
+                        }
+                    ]
                 },
-                "role": {
-                    "type": "string"
-                },
-                "two_fa_enabled": {
-                    "type": "boolean"
+                "userVerification": {
+                    "description": "UserVerification This member describes the Relying Party's requirements regarding user verification for\nthe create() operation. Eligible authenticators are filtered to only those capable of satisfying this\nrequirement.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.UserVerificationRequirement"
+                        }
+                    ]
                 }
             }
+        },
+        "protocol.AuthenticatorTransport": {
+            "type": "string",
+            "enum": [
+                "usb",
+                "nfc",
+                "ble",
+                "smart-card",
+                "hybrid",
+                "internal"
+            ],
+            "x-enum-varnames": [
+                "USB",
+                "NFC",
+                "BLE",
+                "SmartCard",
+                "Hybrid",
+                "Internal"
+            ]
+        },
+        "protocol.ConveyancePreference": {
+            "type": "string",
+            "enum": [
+                "none",
+                "indirect",
+                "direct",
+                "enterprise"
+            ],
+            "x-enum-varnames": [
+                "PreferNoAttestation",
+                "PreferIndirectAttestation",
+                "PreferDirectAttestation",
+                "PreferEnterpriseAttestation"
+            ]
+        },
+        "protocol.CredentialDescriptor": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "CredentialID The ID of a credential to allow/disallow.",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "transports": {
+                    "description": "The authenticator transports that can be used.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AuthenticatorTransport"
+                    }
+                },
+                "type": {
+                    "description": "The valid credential types.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/protocol.CredentialType"
+                        }
+                    ]
+                }
+            }
+        },
+        "protocol.CredentialMediationRequirement": {
+            "type": "string",
+            "enum": [
+                "",
+                "silent",
+                "optional",
+                "conditional",
+                "required"
+            ],
+            "x-enum-varnames": [
+                "MediationDefault",
+                "MediationSilent",
+                "MediationOptional",
+                "MediationConditional",
+                "MediationRequired"
+            ]
+        },
+        "protocol.CredentialParameter": {
+            "type": "object",
+            "properties": {
+                "alg": {
+                    "$ref": "#/definitions/webauthncose.COSEAlgorithmIdentifier"
+                },
+                "type": {
+                    "$ref": "#/definitions/protocol.CredentialType"
+                }
+            }
+        },
+        "protocol.CredentialType": {
+            "type": "string",
+            "enum": [
+                "public-key"
+            ],
+            "x-enum-varnames": [
+                "PublicKeyCredentialType"
+            ]
+        },
+        "protocol.PublicKeyCredentialCreationOptions": {
+            "type": "object",
+            "properties": {
+                "attestation": {
+                    "$ref": "#/definitions/protocol.ConveyancePreference"
+                },
+                "attestationFormats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.AttestationFormat"
+                    }
+                },
+                "authenticatorSelection": {
+                    "$ref": "#/definitions/protocol.AuthenticatorSelection"
+                },
+                "challenge": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "excludeCredentials": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.CredentialDescriptor"
+                    }
+                },
+                "extensions": {
+                    "$ref": "#/definitions/protocol.AuthenticationExtensions"
+                },
+                "hints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.PublicKeyCredentialHints"
+                    }
+                },
+                "pubKeyCredParams": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.CredentialParameter"
+                    }
+                },
+                "rp": {
+                    "$ref": "#/definitions/protocol.RelyingPartyEntity"
+                },
+                "timeout": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/protocol.UserEntity"
+                }
+            }
+        },
+        "protocol.PublicKeyCredentialHints": {
+            "type": "string",
+            "enum": [
+                "security-key",
+                "client-device",
+                "hybrid"
+            ],
+            "x-enum-varnames": [
+                "PublicKeyCredentialHintSecurityKey",
+                "PublicKeyCredentialHintClientDevice",
+                "PublicKeyCredentialHintHybrid"
+            ]
+        },
+        "protocol.PublicKeyCredentialRequestOptions": {
+            "type": "object",
+            "properties": {
+                "allowCredentials": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.CredentialDescriptor"
+                    }
+                },
+                "challenge": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "extensions": {
+                    "$ref": "#/definitions/protocol.AuthenticationExtensions"
+                },
+                "hints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.PublicKeyCredentialHints"
+                    }
+                },
+                "rpId": {
+                    "type": "string"
+                },
+                "timeout": {
+                    "type": "integer"
+                },
+                "userVerification": {
+                    "$ref": "#/definitions/protocol.UserVerificationRequirement"
+                }
+            }
+        },
+        "protocol.RelyingPartyEntity": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "A unique identifier for the Relying Party entity, which sets the RP ID.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "A human-palatable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:\n\nWhen inherited by PublicKeyCredentialRpEntity it is a human-palatable identifier for the Relying Party,\nintended only for display. For example, \"ACME Corporation\", \"Wonderful Widgets, Inc.\" or \"ОАО Примертех\".\n\nWhen inherited by PublicKeyCredentialUserEntity, it is a human-palatable identifier for a user account. It is\nintended only for display, i.e., aiding the user in determining the difference between user accounts with similar\ndisplayNames. For example, \"alexm\", \"alex.p.mueller@example.com\" or \"+14255551234\".",
+                    "type": "string"
+                }
+            }
+        },
+        "protocol.ResidentKeyRequirement": {
+            "type": "string",
+            "enum": [
+                "discouraged",
+                "preferred",
+                "required"
+            ],
+            "x-enum-varnames": [
+                "ResidentKeyRequirementDiscouraged",
+                "ResidentKeyRequirementPreferred",
+                "ResidentKeyRequirementRequired"
+            ]
+        },
+        "protocol.UserEntity": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "description": "A human-palatable name for the user account, intended only for display.\nFor example, \"Alex P. Müller\" or \"田中 倫\". The Relying Party SHOULD let\nthe user choose this, and SHOULD NOT restrict the choice more than necessary.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID is the user handle of the user account entity. To ensure secure operation,\nauthentication and authorization decisions MUST be made on the basis of this id\nmember, not the displayName nor name members. See Section 6.1 of\n[RFC8266](https://www.w3.org/TR/webauthn/#biblio-rfc8266)."
+                },
+                "name": {
+                    "description": "A human-palatable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:\n\nWhen inherited by PublicKeyCredentialRpEntity it is a human-palatable identifier for the Relying Party,\nintended only for display. For example, \"ACME Corporation\", \"Wonderful Widgets, Inc.\" or \"ОАО Примертех\".\n\nWhen inherited by PublicKeyCredentialUserEntity, it is a human-palatable identifier for a user account. It is\nintended only for display, i.e., aiding the user in determining the difference between user accounts with similar\ndisplayNames. For example, \"alexm\", \"alex.p.mueller@example.com\" or \"+14255551234\".",
+                    "type": "string"
+                }
+            }
+        },
+        "protocol.UserVerificationRequirement": {
+            "type": "string",
+            "enum": [
+                "required",
+                "preferred",
+                "discouraged"
+            ],
+            "x-enum-comments": {
+                "VerificationPreferred": "This is the default."
+            },
+            "x-enum-descriptions": [
+                "",
+                "This is the default.",
+                ""
+            ],
+            "x-enum-varnames": [
+                "VerificationRequired",
+                "VerificationPreferred",
+                "VerificationDiscouraged"
+            ]
+        },
+        "webauthncose.COSEAlgorithmIdentifier": {
+            "type": "integer",
+            "enum": [
+                -7,
+                -8,
+                -9,
+                -19,
+                -35,
+                -36,
+                -37,
+                -38,
+                -39,
+                -47,
+                -48,
+                -49,
+                -50,
+                -51,
+                -52,
+                -257,
+                -258,
+                -259,
+                -65535
+            ],
+            "x-enum-varnames": [
+                "AlgES256",
+                "AlgEdDSA",
+                "AlgESP256",
+                "AlgEd25519",
+                "AlgES384",
+                "AlgES512",
+                "AlgPS256",
+                "AlgPS384",
+                "AlgPS512",
+                "AlgES256K",
+                "AlgMLDSA44",
+                "AlgMLDSA65",
+                "AlgMLDSA87",
+                "AlgESP384",
+                "AlgESP512",
+                "AlgRS256",
+                "AlgRS384",
+                "AlgRS512",
+                "AlgRS1"
+            ]
         }
     },
     "securityDefinitions": {

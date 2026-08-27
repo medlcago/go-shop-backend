@@ -196,9 +196,9 @@ func (h *Handler) Search(ctx fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		string							true	"Product ID"	Format(uuid)
+//	@Param			id		path		string									true	"Product ID"	Format(uuid)
 //	@Param			request	body		dto.UploadProductImageSignURLRequest	true	"Image upload request"
-//	@Success		200		{object}	response.Response[dto.SignURLResponse]
+//	@Success		200		{object}	response.Response[dto.GeneratePresignedURLResponse]
 //	@Failure		400		{object}	response.Response[any]
 //	@Failure		401		{object}	response.Response[any]
 //	@Failure		403		{object}	response.Response[any]
@@ -234,7 +234,7 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		string									true	"Product ID"	Format(uuid)
+//	@Param			id		path		string							true	"Product ID"	Format(uuid)
 //	@Param			request	body		dto.AttachProductImageRequest	true	"Image attach request"
 //	@Success		200		{object}	response.Response[dto.UploadResponse]
 //	@Failure		400		{object}	response.Response[any]
@@ -243,7 +243,7 @@ func (h *Handler) UploadImage(ctx fiber.Ctx) error {
 //	@Failure		404		{object}	response.Response[any]
 //	@Failure		409		{object}	response.Response[any]
 //	@Failure		500		{object}	response.Response[any]
-//	@Router			/products/{id}/images/confirm [post]
+//	@Router			/products/{id}/images/attach [post]
 func (h *Handler) AttachImage(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
