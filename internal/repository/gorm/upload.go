@@ -26,7 +26,7 @@ func (u *uploadRepository) Create(ctx context.Context, req *models.Upload) error
 	return repository.HandleError(err)
 }
 
-func (u *uploadRepository) Exists(ctx context.Context, objectKey string) (bool, error) {
+func (u *uploadRepository) ExistsByObjectKey(ctx context.Context, objectKey string) (bool, error) {
 	db := u.db.GetDB(ctx)
 
 	var exists bool
@@ -37,7 +37,7 @@ func (u *uploadRepository) Exists(ctx context.Context, objectKey string) (bool, 
 	return exists, nil
 }
 
-func (u *uploadRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (u *uploadRepository) DeleteByID(ctx context.Context, id uuid.UUID) error {
 	db := u.db.GetDB(ctx)
 
 	if err := db.Where("id = ?", id).Delete(&models.Upload{}).Error; err != nil {

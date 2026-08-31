@@ -86,6 +86,5 @@ func (u *userRepository) Update(ctx context.Context, user *models.User) error {
 	db := u.db.GetDB(ctx)
 
 	err := db.Select("*").Updates(user).Error
-
 	return repository.HandleError(err)
 }

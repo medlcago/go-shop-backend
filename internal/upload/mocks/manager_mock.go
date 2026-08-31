@@ -114,12 +114,12 @@ func (_c *MockManager_Attach_Call) RunAndReturn(run func(ctx context.Context, re
 	return _c
 }
 
-// Delete provides a mock function for the type MockManager
-func (_mock *MockManager) Delete(ctx context.Context, id uuid.UUID) error {
+// DeleteByID provides a mock function for the type MockManager
+func (_mock *MockManager) DeleteByID(ctx context.Context, id uuid.UUID) error {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Delete")
+		panic("no return value specified for DeleteByID")
 	}
 
 	var r0 error
@@ -131,19 +131,19 @@ func (_mock *MockManager) Delete(ctx context.Context, id uuid.UUID) error {
 	return r0
 }
 
-// MockManager_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
-type MockManager_Delete_Call struct {
+// MockManager_DeleteByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByID'
+type MockManager_DeleteByID_Call struct {
 	*mock.Call
 }
 
-// Delete is a helper method to define mock.On call
+// DeleteByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockManager_Expecter) Delete(ctx interface{}, id interface{}) *MockManager_Delete_Call {
-	return &MockManager_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
+func (_e *MockManager_Expecter) DeleteByID(ctx interface{}, id interface{}) *MockManager_DeleteByID_Call {
+	return &MockManager_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
 }
 
-func (_c *MockManager_Delete_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockManager_Delete_Call {
+func (_c *MockManager_DeleteByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockManager_DeleteByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -161,12 +161,12 @@ func (_c *MockManager_Delete_Call) Run(run func(ctx context.Context, id uuid.UUI
 	return _c
 }
 
-func (_c *MockManager_Delete_Call) Return(err error) *MockManager_Delete_Call {
+func (_c *MockManager_DeleteByID_Call) Return(err error) *MockManager_DeleteByID_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockManager_Delete_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockManager_Delete_Call {
+func (_c *MockManager_DeleteByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockManager_DeleteByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

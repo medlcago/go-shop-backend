@@ -159,6 +159,44 @@ func (h *Handler) UpdateProduct(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// UpdateStock godoc
+//
+//	@Summary		Update product stock quantity
+//	@Description	Update the stock quantity of a specific product. Only users with admin or seller roles can update stock.
+//	@Tags			Products
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string							true	"Product ID"	Format(uuid)
+//	@Param			request	body		dto.ProductUpdateStockRequest	true	"Stock update data"
+//	@Success		200		{object}	response.Response[dto.ProductResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		403		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/products/{id}/stock [patch]
+func (h *Handler) UpdateStock(ctx fiber.Ctx) error {
+	userCtx := middleware.GetUserContext(ctx)
+	if userCtx.UserID == nil {
+		return apperror.ErrInvalidCredentials
+	}
+
+	productID := uuid.MustParse(ctx.Params("id"))
+
+	var req dto.ProductUpdateStockRequest
+	if err := ctx.Bind().JSON(&req); err != nil {
+		return err
+	}
+
+	resp, err := h.productService.UpdateStock(ctx.Context(), productID, req)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(ctx, fiber.StatusOK, resp)
+}
+
 // Search godoc
 //
 //	@Summary		Search products

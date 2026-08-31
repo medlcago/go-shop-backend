@@ -19,7 +19,7 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 	return func(ctx fiber.Ctx, err error) error {
 		status := fiber.StatusInternalServerError
 		message := http.StatusText(status)
-		var details any
+		details := make(map[string]any)
 
 		if fiberErr, ok := errors.AsType[*fiber.Error](err); ok {
 			status = fiberErr.Code
@@ -35,7 +35,10 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 		if _, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			status = http.StatusBadRequest
 			message = "Validation failed"
-			details = structValidator.HumanizeValidationError(err)
+			errsMap := structValidator.HumanizeValidationError(err)
+			for key, value := range errsMap {
+				details[key] = value
+			}
 		}
 
 		if _, ok := errors.AsType[*json.UnmarshalTypeError](err); ok {

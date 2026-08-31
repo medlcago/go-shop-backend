@@ -307,7 +307,6 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 	name := "Updated Product"
 	description := "updated description"
 	price := int64(999_900)
-	stock := 20
 
 	product := &models.Product{
 		ID:          suite.productID,
@@ -324,7 +323,6 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 		Name:        &name,
 		Description: &description,
 		Price:       &price,
-		Stock:       &stock,
 		IsActive:    new(true),
 	}
 
@@ -344,9 +342,9 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 	suite.Equal(utils.Slugify(name), response.Slug)
 	suite.Equal(&description, response.Description)
 	suite.Equal(price, response.Price)
-	suite.Equal(stock, response.Stock)
+	suite.Equal(5, response.Stock)
 	suite.True(response.IsActive)
-	suite.Equal(17, product.Available())
+	suite.Equal(2, product.Available())
 }
 
 func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() {
@@ -388,66 +386,6 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() 
 	suite.Equal(2, product.Available())
 }
 
-func (suite *ProductServiceTestSuite) TestUpdateProduct_StockLessThanReserved() {
-	product := &models.Product{
-		ID:          suite.productID,
-		Name:        "Test Product",
-		Slug:        "test-product",
-		Description: new("description"),
-		Price:       10_000,
-		Stock:       10,
-		Reserved:    5,
-		IsActive:    true,
-	}
-
-	req := dto.ProductUpdateRequest{
-		Stock: new(2),
-	}
-
-	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
-		Return(product, nil).Once()
-
-	response, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.ErrStockLessThanReserved)
-
-	suite.Equal(10, product.Stock)
-	suite.Equal(5, product.Reserved)
-}
-
-func (suite *ProductServiceTestSuite) TestUpdateProduct_StockEqualToReserved() {
-	newStock := 5
-
-	product := &models.Product{
-		ID:          suite.productID,
-		Name:        "Test Product",
-		Slug:        "test-product",
-		Description: new("description"),
-		Price:       10_000,
-		Stock:       10,
-		Reserved:    5,
-		IsActive:    true,
-	}
-
-	req := dto.ProductUpdateRequest{
-		Stock: &newStock,
-	}
-
-	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
-		Return(product, nil).Once()
-
-	suite.productRepo.EXPECT().Update(suite.ctx, product).
-		Return(nil).Once()
-
-	response, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
-
-	suite.NoError(err)
-	suite.NotNil(response)
-	suite.Equal(newStock, response.Stock)
-	suite.Equal(0, product.Available())
-}
-
 func (suite *ProductServiceTestSuite) TestUpdateProduct_ProductNotFound() {
 	req := dto.ProductUpdateRequest{}
 
@@ -478,6 +416,80 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() 
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbErr)
+}
+
+// ==================== UpdateStock Tests ====================
+
+func (suite *ProductServiceTestSuite) TestUpdateStock_Success() {
+	req := dto.ProductUpdateStockRequest{
+		Stock: 50,
+	}
+
+	product := &models.Product{
+		ID:       suite.productID,
+		Stock:    10,
+		Reserved: 3,
+	}
+
+	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
+		Return(product, nil).Once()
+
+	suite.productRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(p *models.Product) bool {
+		return p.Stock == req.Stock && p.Reserved == product.Reserved
+	})).Return(nil).Once()
+
+	response, err := suite.productService.UpdateStock(suite.ctx, suite.productID, req)
+
+	suite.NoError(err)
+	suite.NotNil(response)
+	suite.Equal(suite.productID, response.ID)
+	suite.Equal(req.Stock, response.Stock)
+}
+
+func (suite *ProductServiceTestSuite) TestUpdateStock_StockLessThanReserved() {
+	req := dto.ProductUpdateStockRequest{
+		Stock: 2,
+	}
+
+	product := &models.Product{
+		ID:       suite.productID,
+		Stock:    10,
+		Reserved: 5,
+	}
+
+	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
+		Return(product, nil).Once()
+
+	response, err := suite.productService.UpdateStock(suite.ctx, suite.productID, req)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrStockLessThanReserved)
+	suite.ErrorContains(err, "productService.UpdateStock")
+}
+
+func (suite *ProductServiceTestSuite) TestUpdateStock_StockEqualToReserved() {
+	req := dto.ProductUpdateStockRequest{
+		Stock: 5,
+	}
+
+	product := &models.Product{
+		ID:       suite.productID,
+		Stock:    10,
+		Reserved: 5,
+	}
+
+	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, false).
+		Return(product, nil).Once()
+
+	suite.productRepo.EXPECT().Update(suite.ctx, product).
+		Return(nil).Once()
+
+	response, err := suite.productService.UpdateStock(suite.ctx, suite.productID, req)
+
+	suite.NoError(err)
+	suite.NotNil(response)
+	suite.Equal(req.Stock, response.Stock)
+	suite.Equal(0, product.Available())
 }
 
 // ==================== UploadImage Tests ====================

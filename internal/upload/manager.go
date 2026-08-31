@@ -22,7 +22,7 @@ type Manager interface {
 	SignURL(ctx context.Context, req dto.GeneratePresignedURLRequest, uploadType Type) (*dto.GeneratePresignedURLResponse, error)
 	Attach(ctx context.Context, req dto.AttachFileRequest, uploadType Type) (*dto.UploadResponse, error)
 	PublicURL(objectKey string) string
-	Delete(ctx context.Context, id uuid.UUID) error
+	DeleteByID(ctx context.Context, id uuid.UUID) error
 }
 
 type uploadManager struct {
@@ -166,10 +166,10 @@ func (m *uploadManager) PublicURL(objectKey string) string {
 	return m.storage.PublicURL(objectKey)
 }
 
-func (m *uploadManager) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *uploadManager) DeleteByID(ctx context.Context, id uuid.UUID) error {
 	const op = "uploadManager.Delete"
 
-	if err := m.uploadRepo.Delete(ctx, id); err != nil {
+	if err := m.uploadRepo.DeleteByID(ctx, id); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
@@ -233,7 +233,7 @@ func (m *uploadManager) generateObjectKey(entity dto.UploadEntity, uploadID uuid
 func (m *uploadManager) ensureNotDuplicate(ctx context.Context, objectKey string) error {
 	const op = "uploadManager.ensureNotDuplicate"
 
-	exists, err := m.uploadRepo.Exists(ctx, objectKey)
+	exists, err := m.uploadRepo.ExistsByObjectKey(ctx, objectKey)
 	if err != nil {
 		return apperror.Wrap(op, err)
 	}

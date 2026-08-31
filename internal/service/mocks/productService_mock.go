@@ -471,6 +471,80 @@ func (_c *MockProductService_UpdateProduct_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
+// UpdateStock provides a mock function for the type MockProductService
+func (_mock *MockProductService) UpdateStock(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateStockRequest) (*dto.ProductResponse, error) {
+	ret := _mock.Called(ctx, productID, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateStock")
+	}
+
+	var r0 *dto.ProductResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.ProductUpdateStockRequest) (*dto.ProductResponse, error)); ok {
+		return returnFunc(ctx, productID, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.ProductUpdateStockRequest) *dto.ProductResponse); ok {
+		r0 = returnFunc(ctx, productID, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.ProductResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, dto.ProductUpdateStockRequest) error); ok {
+		r1 = returnFunc(ctx, productID, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockProductService_UpdateStock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStock'
+type MockProductService_UpdateStock_Call struct {
+	*mock.Call
+}
+
+// UpdateStock is a helper method to define mock.On call
+//   - ctx context.Context
+//   - productID uuid.UUID
+//   - req dto.ProductUpdateStockRequest
+func (_e *MockProductService_Expecter) UpdateStock(ctx interface{}, productID interface{}, req interface{}) *MockProductService_UpdateStock_Call {
+	return &MockProductService_UpdateStock_Call{Call: _e.mock.On("UpdateStock", ctx, productID, req)}
+}
+
+func (_c *MockProductService_UpdateStock_Call) Run(run func(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateStockRequest)) *MockProductService_UpdateStock_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 dto.ProductUpdateStockRequest
+		if args[2] != nil {
+			arg2 = args[2].(dto.ProductUpdateStockRequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductService_UpdateStock_Call) Return(productResponse *dto.ProductResponse, err error) *MockProductService_UpdateStock_Call {
+	_c.Call.Return(productResponse, err)
+	return _c
+}
+
+func (_c *MockProductService_UpdateStock_Call) RunAndReturn(run func(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateStockRequest) (*dto.ProductResponse, error)) *MockProductService_UpdateStock_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UploadImage provides a mock function for the type MockProductService
 func (_mock *MockProductService) UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageSignURLRequest) (*dto.GeneratePresignedURLResponse, error) {
 	ret := _mock.Called(ctx, productID, req)

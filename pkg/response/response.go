@@ -3,9 +3,9 @@ package response
 import "github.com/gofiber/fiber/v3"
 
 type Response[T any] struct {
-	Result  T      `json:"result"`
-	Error   string `json:"error,omitempty"`
-	Details any    `json:"details,omitempty"`
+	Result  T              `json:"result"`
+	Error   string         `json:"error,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 func NewResponse[T any](data T) *Response[T] {

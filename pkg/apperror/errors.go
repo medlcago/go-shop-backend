@@ -64,10 +64,10 @@ var (
 )
 
 type AppError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Err     error  `json:"-"`
-	Details any    `json:"details"`
+	Code    int            `json:"code"`
+	Message string         `json:"message"`
+	Err     error          `json:"-"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 func New(code int, message string) *AppError {
@@ -75,11 +75,6 @@ func New(code int, message string) *AppError {
 		Code:    code,
 		Message: message,
 	}
-}
-
-func (e *AppError) WithDetails(details any) *AppError {
-	e.Details = details
-	return e
 }
 
 func (e *AppError) Error() string {
@@ -124,12 +119,11 @@ func UnavailableItemsError(unavailableItems []UnavailableItem) *AppError {
 
 func GetUnavailableItemsFromError(err error) ([]UnavailableItem, bool) {
 	if appErr, ok := errors.AsType[*AppError](err); ok && errors.Is(appErr, errUnavailableItems) {
-		details, ok := appErr.Details.(map[string]any)
-		if !ok {
+		if appErr.Details == nil {
 			return nil, false
 		}
 
-		itemsRaw, exists := details["unavailable_items"]
+		itemsRaw, exists := appErr.Details["unavailable_items"]
 		if !exists {
 			return nil, false
 		}

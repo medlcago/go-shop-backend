@@ -1280,11 +1280,11 @@ func (suite *UserServiceTestSuite) TestRefreshToken_Success() {
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(userClaims, nil).Once()
 
+	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+		Return(user, nil).Once()
+
 	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
 		Return(true, nil).Once()
-
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
-		Return(user, nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
 		Return("access-token", claims, nil).Once()
@@ -1368,6 +1368,10 @@ func (suite *UserServiceTestSuite) TestRefreshToken_InvalidUserID() {
 func (suite *UserServiceTestSuite) TestRefreshToken_TokenAlreadyRevoked() {
 	tokenString := "refresh-token"
 
+	user := &models.User{
+		ID: suite.userID,
+	}
+
 	claims := &token.UserClaims{
 		Payload: token.Payload{
 			UserID: suite.userID.String(),
@@ -1383,6 +1387,9 @@ func (suite *UserServiceTestSuite) TestRefreshToken_TokenAlreadyRevoked() {
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
+
+	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+		Return(user, nil).Once()
 
 	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
 		Return(false, nil).Once()
@@ -1409,15 +1416,10 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserNotFound() {
 		},
 	}
 
-	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, claims.ID)
-
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
-		Return(true, nil).Once()
-
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
@@ -1447,15 +1449,10 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserProfileDeleted() {
 		DeletedAt: gorm.DeletedAt{Time: time.Now(), Valid: true},
 	}
 
-	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, claims.ID)
-
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
-		Return(true, nil).Once()
-
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
 		Return(user, nil).Once()
 
 	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)

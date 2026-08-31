@@ -406,6 +406,9 @@ definitions:
         type: string
       price:
         type: integer
+    type: object
+  go-shop-backend_internal_dto.ProductUpdateStockRequest:
+    properties:
       stock:
         minimum: 0
         type: integer
@@ -713,14 +716,18 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-any:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result: {}
     type: object
   go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_AddressResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -730,7 +737,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-array_go-shop-backend_internal_dto_PasskeyResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -740,7 +749,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AddressResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -748,7 +759,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyDiscoverableLoginResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -756,7 +769,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyRegistrationResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -764,7 +779,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ConfirmEmailResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -772,7 +789,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -780,7 +799,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_OrderResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -788,7 +809,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_PaymentResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -796,7 +819,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -804,7 +829,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_SendEmailConfirmationResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -812,7 +839,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_Setup2FAResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -820,7 +849,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -828,7 +859,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -836,7 +869,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserTokenResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -844,7 +879,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -852,7 +889,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_WishlistShareTokenResponse:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -860,7 +899,9 @@ definitions:
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse
   : properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -868,7 +909,9 @@ definitions:
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse
   : properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -876,7 +919,9 @@ definitions:
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_ProductResponse
   : properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -884,7 +929,9 @@ definitions:
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_WishlistResponse
   : properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -892,7 +939,9 @@ definitions:
     type: object
   go-shop-backend_pkg_response.Response-string:
     properties:
-      details: {}
+      details:
+        additionalProperties: {}
+        type: object
       error:
         type: string
       result:
@@ -2782,6 +2831,57 @@ paths:
       security:
       - BearerAuth: []
       summary: Upload product image
+      tags:
+      - Products
+  /products/{id}/stock:
+    patch:
+      consumes:
+      - application/json
+      description: Update the stock quantity of a specific product. Only users with
+        admin or seller roles can update stock.
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stock update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.ProductUpdateStockRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Update product stock quantity
       tags:
       - Products
   /products/search:

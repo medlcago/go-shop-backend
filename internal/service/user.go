@@ -383,17 +383,17 @@ func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dt
 		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
 	}
 
-	if err := u.revokeToken(ctx, claims.ID, claims.TokenType, claims.ExpiresAt.Time); err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByIDIncludingDeleted(ctx, userID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
 	if user.DeletedAt.Valid {
 		return nil, apperror.Wrap(op, apperror.ErrUserProfileDeleted)
+	}
+
+	if err := u.revokeToken(ctx, claims.ID, claims.TokenType, claims.ExpiresAt.Time); err != nil {
+		return nil, apperror.Wrap(op, err)
 	}
 
 	response, err := u.buildUserTokenResponse(user)
@@ -791,18 +791,13 @@ func (u *userService) buildUserTokenResponse(user *models.User) (*dto.UserTokenR
 		return nil, apperror.Wrap(op, err)
 	}
 
-	response := &dto.UserTokenResponse{
+	userResp, err := u.mapUser(user)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return &dto.UserTokenResponse{
 		TokenResponse: tokens,
-	}
-
-	response.User = &dto.UserResponse{
-		ID:             user.ID,
-		Email:          user.Email,
-		CreatedAt:      user.CreatedAt,
-		Role:           string(user.Role),
-		TwoFAEnabled:   user.TwoFAEnabled,
-		EmailConfirmed: user.EmailConfirmed(),
-	}
-
-	return response, nil
+		User:          userResp,
+	}, nil
 }

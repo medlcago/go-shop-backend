@@ -101,9 +101,36 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if err := applyProductUpdates(product, req); err != nil {
+	if err := mapper.Copy(product, req, true); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
+	product.Slug = utils.Slugify(product.Name)
+
+	if err := p.productRepo.Update(ctx, product); err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	response, err := p.mapProduct(product)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return response, nil
+}
+
+func (p *productService) UpdateStock(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateStockRequest) (*dto.ProductResponse, error) {
+	const op = "productService.UpdateStock"
+
+	product, err := p.getProductByID(ctx, productID, false)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	if req.Stock < product.Reserved {
+		return nil, apperror.Wrap(op, apperror.ErrStockLessThanReserved)
+	}
+
+	product.Stock = req.Stock
 
 	if err := p.productRepo.Update(ctx, product); err != nil {
 		return nil, apperror.Wrap(op, err)
@@ -243,35 +270,4 @@ func (p *productService) mapProducts(products []*models.Product) ([]*dto.Product
 	}
 
 	return response, nil
-}
-
-func applyProductUpdates(product *models.Product, req dto.ProductUpdateRequest) error {
-	if req.Name != nil {
-		product.Name = *req.Name
-		product.Slug = utils.Slugify(product.Name)
-	}
-
-	if req.Description != nil {
-		product.Description = req.Description
-	}
-
-	if req.Price != nil {
-		product.Price = *req.Price
-	}
-
-	if req.Stock != nil {
-		stock := *req.Stock
-
-		if stock < product.Reserved {
-			return apperror.ErrStockLessThanReserved
-		}
-
-		product.Stock = stock
-	}
-
-	if req.IsActive != nil {
-		product.IsActive = *req.IsActive
-	}
-
-	return nil
 }

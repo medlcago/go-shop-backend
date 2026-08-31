@@ -216,7 +216,7 @@ func (suite *ManagerTestSuite) TestAttach_Success() {
 	suite.registry.EXPECT().Get(suite.uploadType).
 		Return(filePolicy, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().ExistsByObjectKey(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
 	suite.storage.EXPECT().Get(suite.ctx, req.ObjectKey).
@@ -303,7 +303,7 @@ func (suite *ManagerTestSuite) TestAttach_FileAlreadyUploaded() {
 	suite.registry.EXPECT().Get(suite.uploadType).
 		Return(upload.Policy{}, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().ExistsByObjectKey(suite.ctx, req.ObjectKey).
 		Return(true, nil).Once()
 
 	response, err := suite.uploadManager.Attach(suite.ctx, req, suite.uploadType)
@@ -341,7 +341,7 @@ func (suite *ManagerTestSuite) TestAttach_InvalidDetectedContentType() {
 	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().ExistsByObjectKey(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
 	suite.registry.EXPECT().Get(suite.uploadType).
@@ -391,7 +391,7 @@ func (suite *ManagerTestSuite) TestAttach_RepositoryError() {
 	suite.storage.EXPECT().GetObjectInfo(suite.ctx, req.ObjectKey).
 		Return(objInfo, nil).Once()
 
-	suite.uploadRepo.EXPECT().Exists(suite.ctx, req.ObjectKey).
+	suite.uploadRepo.EXPECT().ExistsByObjectKey(suite.ctx, req.ObjectKey).
 		Return(false, nil).Once()
 
 	suite.registry.EXPECT().Get(suite.uploadType).

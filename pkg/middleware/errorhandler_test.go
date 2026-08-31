@@ -65,14 +65,14 @@ func TestErrorHandler(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 			expectedBody: response.NewError(
 				"Validation failed",
-				map[string]string{
+				map[string]any{
 					"name": "This field is required",
 				},
 			),
 		},
 		{
 			name:           "JSON UnmarshalTypeError",
-			err:            &json.UnmarshalTypeError{Field: "age", Type: reflect.TypeOf(struct{}{}), Offset: 10},
+			err:            &json.UnmarshalTypeError{Field: "age", Type: reflect.TypeFor[struct{}](), Offset: 10},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   response.NewError(http.StatusText(http.StatusBadRequest)),
 		},

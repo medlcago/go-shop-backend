@@ -51,8 +51,11 @@ type ProductUpdateRequest struct {
 	Name        *string `json:"name" validate:"omitempty,min=2,max=100"`
 	Description *string `json:"description" validate:"omitempty,min=5,max=4096"`
 	Price       *int64  `json:"price" validate:"omitempty,gt=0"`
-	Stock       *int    `json:"stock" validate:"omitempty,gte=0"`
 	IsActive    *bool   `json:"is_active"`
+}
+
+type ProductUpdateStockRequest struct {
+	Stock int `json:"stock" validate:"gte=0"`
 }
 
 type SearchProductRequest struct {

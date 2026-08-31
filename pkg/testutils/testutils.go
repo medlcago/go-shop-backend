@@ -46,9 +46,15 @@ func validateStruct(v any) error {
 }
 
 func ValidationError(v any) *response.Response[struct{}] {
+	errsMap := structValidator.HumanizeValidationError(validateStruct(v))
+	details := make(map[string]any, len(errsMap))
+	for k, v := range errsMap {
+		details[k] = v
+	}
+
 	return response.NewError(
 		"Validation failed",
-		structValidator.HumanizeValidationError(validateStruct(v)),
+		details,
 	)
 }
 

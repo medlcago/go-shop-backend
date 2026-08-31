@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func NewError(err string, details ...any) *Response[struct{}] {
+func NewError(err string, details ...map[string]any) *Response[struct{}] {
 	resp := &Response[struct{}]{
 		Error: err,
 	}
@@ -16,6 +16,6 @@ func NewError(err string, details ...any) *Response[struct{}] {
 	return resp
 }
 
-func Error(ctx fiber.Ctx, status int, err string, details ...any) error {
+func Error(ctx fiber.Ctx, status int, err string, details ...map[string]any) error {
 	return ctx.Status(status).JSON(NewError(err, details...))
 }

@@ -96,12 +96,12 @@ func (_c *MockUploadRepository_Create_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// Delete provides a mock function for the type MockUploadRepository
-func (_mock *MockUploadRepository) Delete(ctx context.Context, id uuid.UUID) error {
+// DeleteByID provides a mock function for the type MockUploadRepository
+func (_mock *MockUploadRepository) DeleteByID(ctx context.Context, id uuid.UUID) error {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Delete")
+		panic("no return value specified for DeleteByID")
 	}
 
 	var r0 error
@@ -113,19 +113,19 @@ func (_mock *MockUploadRepository) Delete(ctx context.Context, id uuid.UUID) err
 	return r0
 }
 
-// MockUploadRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
-type MockUploadRepository_Delete_Call struct {
+// MockUploadRepository_DeleteByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByID'
+type MockUploadRepository_DeleteByID_Call struct {
 	*mock.Call
 }
 
-// Delete is a helper method to define mock.On call
+// DeleteByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUploadRepository_Expecter) Delete(ctx interface{}, id interface{}) *MockUploadRepository_Delete_Call {
-	return &MockUploadRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
+func (_e *MockUploadRepository_Expecter) DeleteByID(ctx interface{}, id interface{}) *MockUploadRepository_DeleteByID_Call {
+	return &MockUploadRepository_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
 }
 
-func (_c *MockUploadRepository_Delete_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUploadRepository_Delete_Call {
+func (_c *MockUploadRepository_DeleteByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUploadRepository_DeleteByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -143,22 +143,22 @@ func (_c *MockUploadRepository_Delete_Call) Run(run func(ctx context.Context, id
 	return _c
 }
 
-func (_c *MockUploadRepository_Delete_Call) Return(err error) *MockUploadRepository_Delete_Call {
+func (_c *MockUploadRepository_DeleteByID_Call) Return(err error) *MockUploadRepository_DeleteByID_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockUploadRepository_Delete_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockUploadRepository_Delete_Call {
+func (_c *MockUploadRepository_DeleteByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockUploadRepository_DeleteByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Exists provides a mock function for the type MockUploadRepository
-func (_mock *MockUploadRepository) Exists(ctx context.Context, objectKey string) (bool, error) {
+// ExistsByObjectKey provides a mock function for the type MockUploadRepository
+func (_mock *MockUploadRepository) ExistsByObjectKey(ctx context.Context, objectKey string) (bool, error) {
 	ret := _mock.Called(ctx, objectKey)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Exists")
+		panic("no return value specified for ExistsByObjectKey")
 	}
 
 	var r0 bool
@@ -179,19 +179,19 @@ func (_mock *MockUploadRepository) Exists(ctx context.Context, objectKey string)
 	return r0, r1
 }
 
-// MockUploadRepository_Exists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exists'
-type MockUploadRepository_Exists_Call struct {
+// MockUploadRepository_ExistsByObjectKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExistsByObjectKey'
+type MockUploadRepository_ExistsByObjectKey_Call struct {
 	*mock.Call
 }
 
-// Exists is a helper method to define mock.On call
+// ExistsByObjectKey is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockUploadRepository_Expecter) Exists(ctx interface{}, objectKey interface{}) *MockUploadRepository_Exists_Call {
-	return &MockUploadRepository_Exists_Call{Call: _e.mock.On("Exists", ctx, objectKey)}
+func (_e *MockUploadRepository_Expecter) ExistsByObjectKey(ctx interface{}, objectKey interface{}) *MockUploadRepository_ExistsByObjectKey_Call {
+	return &MockUploadRepository_ExistsByObjectKey_Call{Call: _e.mock.On("ExistsByObjectKey", ctx, objectKey)}
 }
 
-func (_c *MockUploadRepository_Exists_Call) Run(run func(ctx context.Context, objectKey string)) *MockUploadRepository_Exists_Call {
+func (_c *MockUploadRepository_ExistsByObjectKey_Call) Run(run func(ctx context.Context, objectKey string)) *MockUploadRepository_ExistsByObjectKey_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -209,12 +209,12 @@ func (_c *MockUploadRepository_Exists_Call) Run(run func(ctx context.Context, ob
 	return _c
 }
 
-func (_c *MockUploadRepository_Exists_Call) Return(b bool, err error) *MockUploadRepository_Exists_Call {
+func (_c *MockUploadRepository_ExistsByObjectKey_Call) Return(b bool, err error) *MockUploadRepository_ExistsByObjectKey_Call {
 	_c.Call.Return(b, err)
 	return _c
 }
 
-func (_c *MockUploadRepository_Exists_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (bool, error)) *MockUploadRepository_Exists_Call {
+func (_c *MockUploadRepository_ExistsByObjectKey_Call) RunAndReturn(run func(ctx context.Context, objectKey string) (bool, error)) *MockUploadRepository_ExistsByObjectKey_Call {
 	_c.Call.Return(run)
 	return _c
 }

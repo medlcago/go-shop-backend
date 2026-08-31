@@ -35,8 +35,8 @@ type CategoryRepository interface {
 
 type UploadRepository interface {
 	Create(ctx context.Context, req *models.Upload) error
-	Exists(ctx context.Context, objectKey string) (bool, error)
-	Delete(ctx context.Context, id uuid.UUID) error
+	ExistsByObjectKey(ctx context.Context, objectKey string) (bool, error)
+	DeleteByID(ctx context.Context, id uuid.UUID) error
 }
 
 type OrderRepository interface {

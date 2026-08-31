@@ -570,8 +570,8 @@ func (_c *MockUserService_FinishPasskeyLogin_Call) RunAndReturn(run func(ctx con
 }
 
 // FinishPasskeyRegistration provides a mock function for the type MockUserService
-func (_mock *MockUserService) FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error {
-	ret := _mock.Called(ctx, userID, sessionID, response)
+func (_mock *MockUserService) FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, data []byte) error {
+	ret := _mock.Called(ctx, userID, sessionID, data)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FinishPasskeyRegistration")
@@ -579,7 +579,7 @@ func (_mock *MockUserService) FinishPasskeyRegistration(ctx context.Context, use
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, []byte) error); ok {
-		r0 = returnFunc(ctx, userID, sessionID, response)
+		r0 = returnFunc(ctx, userID, sessionID, data)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -595,12 +595,12 @@ type MockUserService_FinishPasskeyRegistration_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - sessionID string
-//   - response []byte
-func (_e *MockUserService_Expecter) FinishPasskeyRegistration(ctx interface{}, userID interface{}, sessionID interface{}, response interface{}) *MockUserService_FinishPasskeyRegistration_Call {
-	return &MockUserService_FinishPasskeyRegistration_Call{Call: _e.mock.On("FinishPasskeyRegistration", ctx, userID, sessionID, response)}
+//   - data []byte
+func (_e *MockUserService_Expecter) FinishPasskeyRegistration(ctx interface{}, userID interface{}, sessionID interface{}, data interface{}) *MockUserService_FinishPasskeyRegistration_Call {
+	return &MockUserService_FinishPasskeyRegistration_Call{Call: _e.mock.On("FinishPasskeyRegistration", ctx, userID, sessionID, data)}
 }
 
-func (_c *MockUserService_FinishPasskeyRegistration_Call) Run(run func(ctx context.Context, userID uuid.UUID, sessionID string, response []byte)) *MockUserService_FinishPasskeyRegistration_Call {
+func (_c *MockUserService_FinishPasskeyRegistration_Call) Run(run func(ctx context.Context, userID uuid.UUID, sessionID string, data []byte)) *MockUserService_FinishPasskeyRegistration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -633,7 +633,7 @@ func (_c *MockUserService_FinishPasskeyRegistration_Call) Return(err error) *Moc
 	return _c
 }
 
-func (_c *MockUserService_FinishPasskeyRegistration_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID string, response []byte) error) *MockUserService_FinishPasskeyRegistration_Call {
+func (_c *MockUserService_FinishPasskeyRegistration_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID string, data []byte) error) *MockUserService_FinishPasskeyRegistration_Call {
 	_c.Call.Return(run)
 	return _c
 }

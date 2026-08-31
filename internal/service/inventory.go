@@ -52,15 +52,7 @@ func (i *inventoryService) CheckProduct(ctx context.Context, productID uuid.UUID
 func (i *inventoryService) ReserveItems(ctx context.Context, items []dto.InventoryItem) error {
 	const op = "inventoryService.ReserveItems"
 
-	err := i.txManager.Wrap(ctx, func(ctx context.Context) error {
-		return i.applyOnProducts(ctx, items, "reserve",
-			func(p *models.Product, qty int) error {
-				return p.Reserve(qty)
-			},
-		)
-	})
-
-	if err != nil {
+	if err := i.applyOnProducts(ctx, items, "reserve", (*models.Product).Reserve); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
@@ -70,33 +62,18 @@ func (i *inventoryService) ReserveItems(ctx context.Context, items []dto.Invento
 func (i *inventoryService) ReleaseItems(ctx context.Context, items []dto.InventoryItem) error {
 	const op = "inventoryService.ReleaseItems"
 
-	err := i.txManager.Wrap(ctx, func(ctx context.Context) error {
-		return i.applyOnProducts(ctx, items, "release",
-			func(p *models.Product, qty int) error {
-				return p.Release(qty)
-			},
-		)
-	})
-
-	if err != nil {
+	if err := i.applyOnProducts(ctx, items, "release", (*models.Product).Release); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
 	return nil
+
 }
 
 func (i *inventoryService) DeductItems(ctx context.Context, items []dto.InventoryItem) error {
 	const op = "inventoryService.DeductItems"
 
-	err := i.txManager.Wrap(ctx, func(ctx context.Context) error {
-		return i.applyOnProducts(ctx, items, "deduct",
-			func(p *models.Product, qty int) error {
-				return p.Deduct(qty)
-			},
-		)
-	})
-
-	if err != nil {
+	if err := i.applyOnProducts(ctx, items, "deduct", (*models.Product).Deduct); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
@@ -111,54 +88,62 @@ func (i *inventoryService) applyOnProducts(
 ) error {
 	const op = "inventoryService.applyOnProducts"
 
-	productIDs := make([]uuid.UUID, 0, len(items))
-	for _, item := range items {
-		productIDs = append(productIDs, item.ProductID)
-	}
+	err := i.txManager.Wrap(ctx, func(ctx context.Context) error {
+		productIDs := make([]uuid.UUID, 0, len(items))
+		for _, item := range items {
+			productIDs = append(productIDs, item.ProductID)
+		}
 
-	products, err := i.productRepo.GetByIDsForUpdate(ctx, productIDs)
+		products, err := i.productRepo.GetByIDsForUpdate(ctx, productIDs)
+		if err != nil {
+			return err
+		}
+
+		productMap := make(map[uuid.UUID]*models.Product, len(products))
+		for _, p := range products {
+			productMap[p.ID] = p
+		}
+
+		var unavailableItems []apperror.UnavailableItem
+
+		for _, item := range items {
+			product := productMap[item.ProductID]
+			if product == nil {
+				unavailableItems = append(unavailableItems, apperror.UnavailableItem{
+					ID:           item.ItemID,
+					ProductID:    item.ProductID,
+					RequestedQty: item.Quantity,
+					Action:       actionName,
+					Reason:       "PRODUCT_NOT_FOUND",
+				})
+				continue
+			}
+
+			if err := action(product, item.Quantity); err != nil {
+				unavailableItems = append(unavailableItems, apperror.UnavailableItem{
+					ID:           item.ItemID,
+					ProductID:    product.ID,
+					RequestedQty: item.Quantity,
+					AvailableQty: product.Available(),
+					Action:       actionName,
+					Reason:       err.Error(),
+				})
+				continue
+			}
+		}
+
+		if len(unavailableItems) > 0 {
+			return apperror.UnavailableItemsError(unavailableItems)
+		}
+
+		if err := i.productRepo.BulkUpsert(ctx, products); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return apperror.Wrap(op, err)
-	}
-
-	productMap := make(map[uuid.UUID]*models.Product, len(products))
-	for _, p := range products {
-		productMap[p.ID] = p
-	}
-
-	var unavailableItems []apperror.UnavailableItem
-
-	for _, item := range items {
-		product := productMap[item.ProductID]
-		if product == nil {
-			unavailableItems = append(unavailableItems, apperror.UnavailableItem{
-				ID:           item.ItemID,
-				ProductID:    item.ProductID,
-				RequestedQty: item.Quantity,
-				Action:       actionName,
-				Reason:       "PRODUCT_NOT_FOUND",
-			})
-			continue
-		}
-
-		if err := action(product, item.Quantity); err != nil {
-			unavailableItems = append(unavailableItems, apperror.UnavailableItem{
-				ID:           item.ItemID,
-				ProductID:    product.ID,
-				RequestedQty: item.Quantity,
-				AvailableQty: product.Available(),
-				Action:       actionName,
-				Reason:       err.Error(),
-			})
-			continue
-		}
-	}
-
-	if len(unavailableItems) > 0 {
-		return apperror.Wrap(op, apperror.UnavailableItemsError(unavailableItems))
-	}
-
-	if err := i.productRepo.BulkUpsert(ctx, products); err != nil {
 		return apperror.Wrap(op, err)
 	}
 
