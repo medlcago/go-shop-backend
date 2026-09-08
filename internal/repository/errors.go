@@ -11,15 +11,14 @@ var (
 )
 
 func HandleError(err error) error {
-	if err == nil {
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return ErrRecordNotFound
+	case err != nil:
+		return err
+	default:
 		return nil
 	}
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrRecordNotFound
-	}
-
-	return err
 }
 
 func IsRecordNotFound(err error) bool {

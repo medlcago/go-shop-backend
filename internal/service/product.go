@@ -218,11 +218,10 @@ func (p *productService) getProductByID(
 	const op = "productService.getProductByID"
 
 	product, err := p.productRepo.GetByID(ctx, productID, preload)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrProductNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrProductNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
 	}
 

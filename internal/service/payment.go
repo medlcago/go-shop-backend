@@ -100,10 +100,10 @@ func (p *paymentService) HandleWebhook(ctx context.Context, body []byte) error {
 
 	err = p.txManager.Wrap(ctx, func(ctx context.Context) error {
 		order, err := p.orderQuery.GetByPayment(ctx, p.provider.GetName(), event.PaymentID, true)
-		if err != nil {
-			if repository.IsRecordNotFound(err) {
-				return nil
-			}
+		switch {
+		case repository.IsRecordNotFound(err):
+			return nil
+		case err != nil:
 			return err
 		}
 
@@ -168,40 +168,37 @@ func (p *paymentService) GetUserPaymentMethods(ctx context.Context, userID uuid.
 func (p *paymentService) SetDefaultPaymentMethod(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	const op = "paymentService.SetDefaultPaymentMethod"
 
-	if err := p.userPaymentMethodRepo.SetDefault(ctx, id, userID); err != nil {
-		if repository.IsRecordNotFound(err) {
-			return apperror.Wrap(op, apperror.ErrPaymentMethodNotFound)
-		}
-
+	switch err := p.userPaymentMethodRepo.SetDefault(ctx, id, userID); {
+	case repository.IsRecordNotFound(err):
+		return apperror.Wrap(op, apperror.ErrPaymentMethodNotFound)
+	case err != nil:
 		return apperror.Wrap(op, err)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func (p *paymentService) DeletePaymentMethod(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	const op = "paymentService.DeletePaymentMethod"
 
-	if err := p.userPaymentMethodRepo.Delete(ctx, id, userID); err != nil {
-		if repository.IsRecordNotFound(err) {
-			return apperror.Wrap(op, apperror.ErrPaymentMethodNotFound)
-		}
-
+	switch err := p.userPaymentMethodRepo.Delete(ctx, id, userID); {
+	case repository.IsRecordNotFound(err):
+		return apperror.Wrap(op, apperror.ErrPaymentMethodNotFound)
+	case err != nil:
 		return apperror.Wrap(op, err)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func (p *paymentService) getOrderForPayment(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) (*models.Order, error) {
 	const op = "paymentService.getOrderForPayment"
 
 	order, err := p.orderQuery.GetByID(ctx, orderID, false)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrOrderNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrOrderNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -272,8 +269,11 @@ func (p *paymentService) getUserPaymentMethod(
 	const op = "paymentService.getUserPaymentMethod"
 
 	userPaymentMethod, err := p.userPaymentMethodRepo.GetByID(ctx, paymentMethodID)
-	if err != nil {
+	switch {
+	case repository.IsRecordNotFound(err):
 		return nil, apperror.Wrap(op, apperror.ErrPaymentMethodNotFound)
+	case err != nil:
+		return nil, apperror.Wrap(op, err)
 	}
 
 	if userPaymentMethod.UserID != userID {

@@ -112,11 +112,10 @@ func (w *wishlistService) GetSharedWishlist(
 	const op = "wishlistService.GetSharedWishlist"
 
 	wl, err := w.wishlistRepo.GetByShareToken(ctx, shareToken, true)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -335,11 +334,10 @@ func (w *wishlistService) getWishlistByID(
 	const op = "wishlistService.getWishlistByID"
 
 	wl, err := w.wishlistRepo.GetByID(ctx, id, preload)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -354,11 +352,10 @@ func (w *wishlistService) getWishlistItem(
 	const op = "wishlistService.getWishlistItem"
 
 	item, err := w.wishlistItemRepo.GetItem(ctx, wishlistID, itemID)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrWishlistItemNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrWishlistItemNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
 	}
 

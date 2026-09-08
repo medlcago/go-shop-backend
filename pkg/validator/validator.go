@@ -19,7 +19,3 @@ func New(v *validator.Validate) *structValidator {
 func (v *structValidator) Validate(out any) error {
 	return v.validate.Struct(out)
 }
-
-func (v *structValidator) Instance() *validator.Validate {
-	return v.validate
-}

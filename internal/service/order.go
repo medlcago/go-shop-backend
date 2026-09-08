@@ -194,11 +194,10 @@ func (o *orderService) RemoveItem(
 			return nil, apperror.ErrInvalidOrderStatus
 		}
 
-		if err := o.orderItemRepo.RemoveItem(ctx, orderID, itemID); err != nil {
-			if repository.IsRecordNotFound(err) {
-				return nil, apperror.ErrItemNotFound
-			}
-
+		switch err := o.orderItemRepo.RemoveItem(ctx, orderID, itemID); {
+		case repository.IsRecordNotFound(err):
+			return nil, apperror.ErrItemNotFound
+		case err != nil:
 			return nil, err
 		}
 
@@ -265,11 +264,10 @@ func (o *orderService) Checkout(
 
 	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
 		address, err := o.addressQuery.GetByID(ctx, req.AddressID, userID)
-		if err != nil {
-			if repository.IsRecordNotFound(err) {
-				return nil, apperror.ErrAddressNotFound
-			}
-
+		switch {
+		case repository.IsRecordNotFound(err):
+			return nil, apperror.ErrAddressNotFound
+		case err != nil:
 			return nil, err
 		}
 
@@ -432,15 +430,14 @@ func (o *orderService) getOrderByOwner(
 	const op = "orderService.getOrderByOwner"
 
 	order, err := o.orderRepo.GetByOwner(ctx, orderID, userID, sessionID, preload)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrForbidden)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrForbidden)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
+	default:
+		return order, nil
 	}
-
-	return order, nil
 }
 
 func (o *orderService) getOrderByID(
@@ -451,15 +448,14 @@ func (o *orderService) getOrderByID(
 	const op = "orderService.getOrderByID"
 
 	order, err := o.orderRepo.GetByID(ctx, orderID, preload)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrOrderNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrOrderNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
+	default:
+		return order, nil
 	}
-
-	return order, nil
 }
 
 func (o *orderService) mapOrder(order *models.Order) (*dto.OrderResponse, error) {

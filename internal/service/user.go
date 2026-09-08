@@ -576,11 +576,10 @@ func (u *userService) UpdatePasskeyName(ctx context.Context, passkeyID uuid.UUID
 	const op = "userService.UpdatePasskeyName"
 
 	userPasskey, err := u.passkeyRepo.GetByUser(ctx, passkeyID, userID)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return apperror.Wrap(op, apperror.ErrForbidden)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return apperror.Wrap(op, apperror.ErrForbidden)
+	case err != nil:
 		return apperror.Wrap(op, err)
 	}
 
@@ -595,15 +594,14 @@ func (u *userService) UpdatePasskeyName(ctx context.Context, passkeyID uuid.UUID
 func (u *userService) DeletePasskey(ctx context.Context, passkeyID uuid.UUID, userID uuid.UUID) error {
 	const op = "userService.DeletePasskey"
 
-	if err := u.passkeyRepo.Delete(ctx, passkeyID, userID); err != nil {
-		if repository.IsRecordNotFound(err) {
-			return apperror.Wrap(op, apperror.ErrForbidden)
-		}
-
+	switch err := u.passkeyRepo.Delete(ctx, passkeyID, userID); {
+	case repository.IsRecordNotFound(err):
+		return apperror.Wrap(op, apperror.ErrForbidden)
+	case err != nil:
 		return apperror.Wrap(op, err)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func (u *userService) createTokens(user *models.User) (*dto.TokenResponse, error) {
@@ -680,11 +678,10 @@ func (u *userService) verifyEmailCode(ctx context.Context, userID uuid.UUID, inp
 
 	cacheKey := fmt.Sprintf("email_confirmation:%s", userID)
 	code, err := u.cache.Get(ctx, cacheKey)
-	if err != nil {
-		if errors.Is(err, cache.ErrCacheMiss) {
-			return apperror.Wrap(op, apperror.ErrInvalidCode)
-		}
-
+	switch {
+	case errors.Is(err, cache.ErrCacheMiss):
+		return apperror.Wrap(op, apperror.ErrInvalidCode)
+	case err != nil:
 		return apperror.Wrap(op, err)
 	}
 
@@ -720,11 +717,10 @@ func (u *userService) getUserByID(ctx context.Context, userID uuid.UUID) (*model
 	const op = "userService.getUserByID"
 
 	user, err := u.userRepo.GetByID(ctx, userID)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -735,11 +731,10 @@ func (u *userService) getUserByIDIncludingDeleted(ctx context.Context, userID uu
 	const op = "userService.getUserByIDIncludingDeleted"
 
 	user, err := u.userRepo.GetByIDIncludingDeleted(ctx, userID)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
 	}
 

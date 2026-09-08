@@ -101,46 +101,41 @@ func (a *addressService) UpdateAddress(ctx context.Context, id uuid.UUID, userID
 func (a *addressService) DeleteAddress(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	const op = "addressService.DeleteAddress"
 
-	err := a.addressRepo.Delete(ctx, id, userID)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return apperror.Wrap(op, apperror.ErrAddressNotFound)
-		}
-
+	switch err := a.addressRepo.Delete(ctx, id, userID); {
+	case repository.IsRecordNotFound(err):
+		return apperror.Wrap(op, apperror.ErrAddressNotFound)
+	case err != nil:
 		return apperror.Wrap(op, err)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func (a *addressService) SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	const op = "addressService.SetDefault"
 
-	err := a.addressRepo.SetDefault(ctx, id, userID)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return apperror.Wrap(op, apperror.ErrAddressNotFound)
-		}
-
+	switch err := a.addressRepo.SetDefault(ctx, id, userID); {
+	case repository.IsRecordNotFound(err):
+		return apperror.Wrap(op, apperror.ErrAddressNotFound)
+	case err != nil:
 		return apperror.Wrap(op, err)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func (a *addressService) getAddressByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error) {
 	const op = "addressService.getAddressByID"
 
 	address, err := a.addressRepo.GetByID(ctx, id, userID)
-	if err != nil {
-		if repository.IsRecordNotFound(err) {
-			return nil, apperror.Wrap(op, apperror.ErrAddressNotFound)
-		}
-
+	switch {
+	case repository.IsRecordNotFound(err):
+		return nil, apperror.Wrap(op, apperror.ErrAddressNotFound)
+	case err != nil:
 		return nil, apperror.Wrap(op, err)
+	default:
+		return address, nil
 	}
-
-	return address, nil
 }
 
 func (a *addressService) mapAddress(address *models.Address) (*dto.AddressResponse, error) {

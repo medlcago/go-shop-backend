@@ -140,15 +140,14 @@ func (s *Storage) Exists(ctx context.Context, objectKey string) error {
 	const op = "minio.Storage.Exists"
 
 	_, err := s.client.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
-	if err != nil {
-		if s.isNoSuchKey(err) {
-			return fmt.Errorf("%s: %w", op, storage.ErrNotFound)
-		}
-
+	switch {
+	case s.isNoSuchKey(err):
+		return fmt.Errorf("%s: %w", op, storage.ErrNotFound)
+	case err != nil:
 		return fmt.Errorf("%s: %w", op, err)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func (s *Storage) Get(ctx context.Context, objectKey string) (io.ReadSeekCloser, error) {
@@ -162,11 +161,12 @@ func (s *Storage) Get(ctx context.Context, objectKey string) (io.ReadSeekCloser,
 	if _, err := obj.Stat(); err != nil {
 		_ = obj.Close()
 
-		if s.isNoSuchKey(err) {
+		switch {
+		case s.isNoSuchKey(err):
 			return nil, fmt.Errorf("%s: %w", op, storage.ErrNotFound)
+		default:
+			return nil, fmt.Errorf("%s: stat failed: %w", op, err)
 		}
-
-		return nil, fmt.Errorf("%s: stat failed: %w", op, err)
 	}
 
 	return obj, nil

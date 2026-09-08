@@ -52,11 +52,10 @@ func (s *sessionStore) SaveSession(ctx context.Context, sessionID string, data *
 
 func (s *sessionStore) GetSession(ctx context.Context, sessionID string) (*SessionData, error) {
 	jsonBytes, err := s.rdb.Get(ctx, sessionID).Bytes()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, fmt.Errorf("get session %q: %w", sessionID, ErrSessionNotFound)
-		}
-
+	switch {
+	case errors.Is(err, redis.Nil):
+		return nil, fmt.Errorf("get session %q: %w", sessionID, ErrSessionNotFound)
+	case err != nil:
 		return nil, fmt.Errorf("get session %q: %w", sessionID, err)
 	}
 
