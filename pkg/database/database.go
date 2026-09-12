@@ -16,7 +16,7 @@ type Provider interface {
 type DB interface {
 	Provider
 	Close() error
-	Migrate(dialect string) error
+	Migrate(ctx context.Context, dialect string) (string, error)
 }
 
 type Database struct {
@@ -73,11 +73,11 @@ func (d *Database) GetDB(ctx context.Context) *gorm.DB {
 	return d.db.WithContext(ctx)
 }
 
-func (d *Database) Migrate(dialect string) error {
+func (d *Database) Migrate(ctx context.Context, dialect string) (string, error) {
 	db, err := d.db.DB()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return Migrate(db, dialect)
+	return Migrate(ctx, db, dialect)
 }

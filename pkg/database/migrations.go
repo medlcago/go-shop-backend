@@ -1,29 +1,48 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"go-shop-backend/migrations"
+	"strings"
 
 	"github.com/pressly/goose/v3"
 )
 
 const (
-	tableName     = "goose_migrations"
-	migrationsDir = "migrations"
+	tableName = "goose_migrations"
 )
 
-func Migrate(db *sql.DB, dialect string) error {
-	goose.SetLogger(goose.NopLogger())
+func Migrate(
+	ctx context.Context,
+	db *sql.DB,
+	dialect string,
+) (string, error) {
+	provider, err := goose.NewProvider(
+		goose.Dialect(dialect),
+		db,
+		migrations.FS,
+		goose.WithTableName(tableName),
+		goose.WithLogger(goose.NopLogger()),
+	)
 
-	goose.SetTableName(tableName)
-
-	if err := goose.SetDialect(dialect); err != nil {
-		return fmt.Errorf("migrate: failed to set dialect: %w", err)
+	if err != nil {
+		return "", fmt.Errorf("migrate: failed to create goose provider: %w", err)
 	}
 
-	if err := goose.Up(db, migrationsDir); err != nil {
-		return fmt.Errorf("migrate: failed to migrate: %w", err)
+	result, err := provider.Up(ctx)
+	if err != nil {
+		return "", fmt.Errorf("migrate: failed to migrate: %w", err)
 	}
 
-	return nil
+	var builder strings.Builder
+	for i, mig := range result {
+		builder.WriteString(mig.String())
+		if i < len(result)-1 {
+			builder.WriteString(", ")
+		}
+	}
+
+	return builder.String(), nil
 }

@@ -8,6 +8,7 @@ import (
 	asynqServer "go-shop-backend/internal/server/asynq"
 	httpServer "go-shop-backend/internal/server/http"
 	"go-shop-backend/pkg/logger"
+	"log/slog"
 	"time"
 )
 
@@ -27,12 +28,23 @@ func main() {
 	cfg := config.MustLoad()
 
 	container := core.NewContainer(cfg)
+	log := container.Logger()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	if cfg.Database.AutoMigrate {
-		container.Logger().Info("starting database migration...")
-		if err := container.DB().Migrate(cfg.Database.Dialect); err != nil {
-			logger.Fatal(container.Logger(), "failed to migrate database", err)
+		log.Info("starting database migration...")
+		result, err := container.DB().Migrate(ctx, cfg.Database.Dialect)
+		if err != nil {
+			logger.Fatal(log, "failed to migrate database", err)
 		}
+
+		log.InfoContext(
+			ctx,
+			"database migrated successfully",
+			slog.String("result", result),
+		)
 	}
 
 	httpSrv := httpServer.NewServer(container)
@@ -44,7 +56,7 @@ func main() {
 		asynqSrv,
 	)
 
-	if err := application.Run(context.Background()); err != nil {
-		logger.Fatal(container.Logger(), "application.Run failed", err)
+	if err := application.Run(ctx); err != nil {
+		logger.Fatal(log, "application.Run failed", err)
 	}
 }
