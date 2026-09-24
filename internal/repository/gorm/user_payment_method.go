@@ -27,7 +27,7 @@ func (p *userPaymentMethodRepository) Upsert(ctx context.Context, paymentMethod 
 
 	err := db.Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "user_id"}, {Name: "provider"}, {Name: "provider_payment_method_id"}},
-		DoUpdates: clause.Assignments(map[string]interface{}{
+		DoUpdates: clause.Assignments(map[string]any{
 			"last_used_at": time.Now().UTC(),
 			"updated_at":   time.Now().UTC(),
 		}),

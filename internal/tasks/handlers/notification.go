@@ -22,6 +22,10 @@ type NotificationTaskHandler struct {
 }
 
 func NewNotificationTaskHandler(notification Notification, logger *slog.Logger) *NotificationTaskHandler {
+	logger = logger.With(
+		slog.String("handler", "NotificationTaskHandler"),
+	)
+
 	return &NotificationTaskHandler{
 		notification: notification,
 		logger:       logger,

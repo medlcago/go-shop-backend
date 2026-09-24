@@ -29,14 +29,14 @@ func (a *App) Run(ctx context.Context) error {
 		return errors.New("no servers available to run")
 	}
 
-	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	signalCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, groupCtx := errgroup.WithContext(signalCtx)
 
 	for _, srv := range a.servers {
 		g.Go(func() error {
-			if err := srv.Start(ctx); err != nil {
+			if err := srv.Start(groupCtx); err != nil {
 				return fmt.Errorf("srv.Start failed: %w", err)
 			}
 			return nil
@@ -49,7 +49,7 @@ func (a *App) Run(ctx context.Context) error {
 	}()
 
 	select {
-	case <-ctx.Done():
+	case <-groupCtx.Done():
 		a.container.Logger().Info("Shutdown signal received")
 	case err := <-done:
 		if err != nil {
@@ -57,22 +57,25 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), a.container.Config().ShutdownTimeout)
+	return a.shutdown(ctx)
+}
+
+func (a *App) shutdown(ctx context.Context) error {
+	shutdownCtx, cancel := context.WithTimeout(ctx, a.container.Config().ShutdownTimeout)
 	defer cancel()
 
-	gStop, shutdownCtx := errgroup.WithContext(shutdownCtx)
+	g, groupCtx := errgroup.WithContext(shutdownCtx)
 
 	for _, srv := range a.servers {
-		gStop.Go(func() error {
-			if err := srv.Stop(shutdownCtx); err != nil {
+		g.Go(func() error {
+			if err := srv.Stop(groupCtx); err != nil {
 				return fmt.Errorf("srv.Stop failed: %s: %w", srv.Name(), err)
 			}
-
 			return nil
 		})
 	}
 
-	if err := gStop.Wait(); err != nil {
+	if err := g.Wait(); err != nil {
 		a.container.Logger().Error("Shutdown error", logger.Err(err))
 		return err
 	}

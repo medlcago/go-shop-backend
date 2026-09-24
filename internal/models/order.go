@@ -2,6 +2,7 @@ package models
 
 import (
 	"go-shop-backend/pkg/apperror"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,12 +50,7 @@ func (s OrderStatus) CanTransitionTo(next OrderStatus) bool {
 		return false
 	}
 
-	for _, allowedNext := range allowed {
-		if next == allowedNext {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(allowed, next)
 }
 
 type Order struct {
