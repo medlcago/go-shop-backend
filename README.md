@@ -96,6 +96,15 @@
 | DELETE | `/api/v1/addresses/:addressID`         | Delete address (auth)               |
 | PUT    | `/api/v1/addresses/:addressID/default` | Set default address (auth)          |
 
+### Favorites
+
+| Method | Endpoint                       | Description                                          |
+|--------|--------------------------------|------------------------------------------------------|
+| PUT    | `/api/v1/favorites/:productID` | Add product to favorites (auth)                      |
+| DELETE | `/api/v1/favorites/:productID` | Remove product from favorites (auth)                 |
+| GET    | `/api/v1/favorites`            | Favorites list (auth)                                |
+| GET    | `/api/v1/favorites/:productID` | Check if the product is in the favorites list (auth) |
+
 ### Other
 
 | Method | Endpoint   | Description                  |
