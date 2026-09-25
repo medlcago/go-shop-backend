@@ -99,3 +99,10 @@ type AddressService interface {
 	DeleteAddress(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
+
+type FavoriteService interface {
+	AddProduct(ctx context.Context, userID uuid.UUID, productID uuid.UUID) ([]*dto.FavoriteProduct, int64, error)
+	RemoveProduct(ctx context.Context, userID uuid.UUID, productID uuid.UUID) ([]*dto.FavoriteProduct, int64, error)
+	List(ctx context.Context, userID uuid.UUID) ([]*dto.FavoriteProduct, int64, error)
+	IsFavorite(ctx context.Context, userID uuid.UUID, productID uuid.UUID) (*dto.FavoriteStatusResponse, error)
+}

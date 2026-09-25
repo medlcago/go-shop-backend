@@ -96,3 +96,10 @@ type PasskeyRepository interface {
 	Update(ctx context.Context, credential *models.PasskeyCredential) error
 	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
+
+type FavoriteRepository interface {
+	Add(ctx context.Context, favorite *models.Favorite) error
+	GetListByUser(ctx context.Context, userID uuid.UUID) ([]*models.FavoriteProductProjection, int64, error)
+	Exists(ctx context.Context, productID uuid.UUID, userID uuid.UUID) (bool, error)
+	Remove(ctx context.Context, productID uuid.UUID, userID uuid.UUID) error
+}

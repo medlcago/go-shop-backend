@@ -223,6 +223,26 @@ definitions:
     - code
     - password
     type: object
+  go-shop-backend_internal_dto.FavoriteProduct:
+    properties:
+      available:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+    type: object
+  go-shop-backend_internal_dto.FavoriteStatusResponse:
+    properties:
+      is_favorite:
+        type: boolean
+      product_id:
+        type: string
+    type: object
   go-shop-backend_internal_dto.GeneratePresignedURLResponse:
     properties:
       content_type:
@@ -678,6 +698,15 @@ definitions:
       total:
         type: integer
     type: object
+  go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_FavoriteProduct:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/go-shop-backend_internal_dto.FavoriteProduct'
+        type: array
+      total:
+        type: integer
+    type: object
   go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse:
     properties:
       data:
@@ -786,6 +815,16 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.ConfirmEmailResponse'
+    type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_FavoriteStatusResponse:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.FavoriteStatusResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse:
     properties:
@@ -906,6 +945,16 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_CategoryResponse'
+    type: object
+  ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_FavoriteProduct
+  : properties:
+      details:
+        additionalProperties: {}
+        type: object
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_pkg_response.PaginatedResponse-array_go-shop-backend_internal_dto_FavoriteProduct'
     type: object
   ? go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_OrderResponse
   : properties:
@@ -1987,6 +2036,117 @@ paths:
       summary: List categories or subcategories
       tags:
       - Categories
+  /favorites:
+    get:
+      consumes:
+      - application/json
+      description: Favorites list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_FavoriteProduct'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: List
+      tags:
+      - Favorites
+  /favorites/{productID}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove product from favorites
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: productID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_FavoriteProduct'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Remove product
+      tags:
+      - Favorites
+    get:
+      consumes:
+      - application/json
+      description: Check if the product is in the favorites list
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: productID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_FavoriteStatusResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Is favorite product
+      tags:
+      - Favorites
+    put:
+      consumes:
+      - application/json
+      description: Add product to favorites
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: productID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_pkg_response_PaginatedResponse-array_go-shop-backend_internal_dto_FavoriteProduct'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Add product
+      tags:
+      - Favorites
   /orders:
     get:
       description: Get paginated list of orders

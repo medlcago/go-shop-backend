@@ -6,6 +6,7 @@ import (
 	"go-shop-backend/internal/core"
 	addresstHttp "go-shop-backend/internal/delivery/http/address"
 	categoryHttp "go-shop-backend/internal/delivery/http/category"
+	favoriteHttp "go-shop-backend/internal/delivery/http/favorite"
 	orderHttp "go-shop-backend/internal/delivery/http/order"
 	paymentHttp "go-shop-backend/internal/delivery/http/payment"
 	productHttp "go-shop-backend/internal/delivery/http/product"
@@ -111,4 +112,7 @@ func (s *Server) Init() {
 
 	addressHandler := addresstHttp.NewHandler(s.container.AddressService())
 	addresstHttp.RegisterRoutes(v1, addressHandler)
+
+	favoriteHandler := favoriteHttp.NewHandler(s.container.FavoriteService())
+	favoriteHttp.RegisterRoutes(v1, favoriteHandler)
 }

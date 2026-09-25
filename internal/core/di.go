@@ -84,6 +84,7 @@ type Container struct {
 	addressRepository           Lazy[repository.AddressRepository]
 	userPaymentMethodRepository Lazy[repository.UserPaymentMethodRepository]
 	passkeyRepository           Lazy[repository.PasskeyRepository]
+	favoriteRepository          Lazy[repository.FavoriteRepository]
 
 	// services
 	userService         Lazy[service.UserService]
@@ -95,6 +96,7 @@ type Container struct {
 	inventoryService    Lazy[service.InventoryService]
 	paymentService      Lazy[service.PaymentService]
 	addressService      Lazy[service.AddressService]
+	favoriteService     Lazy[service.FavoriteService]
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -395,6 +397,12 @@ func (c *Container) PasskeyRepo() repository.PasskeyRepository {
 	})
 }
 
+func (c *Container) FavoriteRepo() repository.FavoriteRepository {
+	return c.favoriteRepository.Get(func() repository.FavoriteRepository {
+		return gormRepo.NewFavoriteRepository(c.DB())
+	})
+}
+
 func (c *Container) UserService() service.UserService {
 	return c.userService.Get(func() service.UserService {
 		userService := service.NewUserService(
@@ -489,6 +497,15 @@ func (c *Container) PaymentService() service.PaymentService {
 func (c *Container) AddressService() service.AddressService {
 	return c.addressService.Get(func() service.AddressService {
 		return service.NewAddressService(c.AddressRepo())
+	})
+}
+
+func (c *Container) FavoriteService() service.FavoriteService {
+	return c.favoriteService.Get(func() service.FavoriteService {
+		return service.NewFavoriteService(
+			c.ProductRepo(),
+			c.FavoriteRepo(),
+		)
 	})
 }
 
