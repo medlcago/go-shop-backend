@@ -18,10 +18,19 @@ func NewMockWishlistService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockWishlistService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockWishlistService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -77,7 +86,7 @@ type MockWishlistService_AddItem_Call struct {
 //   - userID uuid.UUID
 //   - wishlistID uuid.UUID
 //   - req dto.AddWishlistItemRequest
-func (_e *MockWishlistService_Expecter) AddItem(ctx interface{}, userID interface{}, wishlistID interface{}, req interface{}) *MockWishlistService_AddItem_Call {
+func (_e *MockWishlistService_Expecter) AddItem(ctx any, userID any, wishlistID any, req any) *MockWishlistService_AddItem_Call {
 	return &MockWishlistService_AddItem_Call{Call: _e.mock.On("AddItem", ctx, userID, wishlistID, req)}
 }
 
@@ -156,7 +165,7 @@ type MockWishlistService_CreateWishlist_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.CreateWishlistRequest
-func (_e *MockWishlistService_Expecter) CreateWishlist(ctx interface{}, userID interface{}, req interface{}) *MockWishlistService_CreateWishlist_Call {
+func (_e *MockWishlistService_Expecter) CreateWishlist(ctx any, userID any, req any) *MockWishlistService_CreateWishlist_Call {
 	return &MockWishlistService_CreateWishlist_Call{Call: _e.mock.On("CreateWishlist", ctx, userID, req)}
 }
 
@@ -219,7 +228,7 @@ type MockWishlistService_DeleteWishlist_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - wishlistID uuid.UUID
-func (_e *MockWishlistService_Expecter) DeleteWishlist(ctx interface{}, userID interface{}, wishlistID interface{}) *MockWishlistService_DeleteWishlist_Call {
+func (_e *MockWishlistService_Expecter) DeleteWishlist(ctx any, userID any, wishlistID any) *MockWishlistService_DeleteWishlist_Call {
 	return &MockWishlistService_DeleteWishlist_Call{Call: _e.mock.On("DeleteWishlist", ctx, userID, wishlistID)}
 }
 
@@ -292,7 +301,7 @@ type MockWishlistService_GetSharedWishlist_Call struct {
 // GetSharedWishlist is a helper method to define mock.On call
 //   - ctx context.Context
 //   - shareToken string
-func (_e *MockWishlistService_Expecter) GetSharedWishlist(ctx interface{}, shareToken interface{}) *MockWishlistService_GetSharedWishlist_Call {
+func (_e *MockWishlistService_Expecter) GetSharedWishlist(ctx any, shareToken any) *MockWishlistService_GetSharedWishlist_Call {
 	return &MockWishlistService_GetSharedWishlist_Call{Call: _e.mock.On("GetSharedWishlist", ctx, shareToken)}
 }
 
@@ -361,7 +370,7 @@ type MockWishlistService_GetWishlist_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - wishlistID uuid.UUID
-func (_e *MockWishlistService_Expecter) GetWishlist(ctx interface{}, userID interface{}, wishlistID interface{}) *MockWishlistService_GetWishlist_Call {
+func (_e *MockWishlistService_Expecter) GetWishlist(ctx any, userID any, wishlistID any) *MockWishlistService_GetWishlist_Call {
 	return &MockWishlistService_GetWishlist_Call{Call: _e.mock.On("GetWishlist", ctx, userID, wishlistID)}
 }
 
@@ -441,7 +450,7 @@ type MockWishlistService_GetWishlists_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.ListWishlistRequest
-func (_e *MockWishlistService_Expecter) GetWishlists(ctx interface{}, userID interface{}, req interface{}) *MockWishlistService_GetWishlists_Call {
+func (_e *MockWishlistService_Expecter) GetWishlists(ctx any, userID any, req any) *MockWishlistService_GetWishlists_Call {
 	return &MockWishlistService_GetWishlists_Call{Call: _e.mock.On("GetWishlists", ctx, userID, req)}
 }
 
@@ -515,7 +524,7 @@ type MockWishlistService_RegenerateShareToken_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - wishlistID uuid.UUID
-func (_e *MockWishlistService_Expecter) RegenerateShareToken(ctx interface{}, userID interface{}, wishlistID interface{}) *MockWishlistService_RegenerateShareToken_Call {
+func (_e *MockWishlistService_Expecter) RegenerateShareToken(ctx any, userID any, wishlistID any) *MockWishlistService_RegenerateShareToken_Call {
 	return &MockWishlistService_RegenerateShareToken_Call{Call: _e.mock.On("RegenerateShareToken", ctx, userID, wishlistID)}
 }
 
@@ -590,7 +599,7 @@ type MockWishlistService_RemoveItem_Call struct {
 //   - userID uuid.UUID
 //   - wishlistID uuid.UUID
 //   - itemID uuid.UUID
-func (_e *MockWishlistService_Expecter) RemoveItem(ctx interface{}, userID interface{}, wishlistID interface{}, itemID interface{}) *MockWishlistService_RemoveItem_Call {
+func (_e *MockWishlistService_Expecter) RemoveItem(ctx any, userID any, wishlistID any, itemID any) *MockWishlistService_RemoveItem_Call {
 	return &MockWishlistService_RemoveItem_Call{Call: _e.mock.On("RemoveItem", ctx, userID, wishlistID, itemID)}
 }
 
@@ -671,7 +680,7 @@ type MockWishlistService_UpdateItem_Call struct {
 //   - wishlistID uuid.UUID
 //   - itemID uuid.UUID
 //   - req dto.UpdateWishlistItemRequest
-func (_e *MockWishlistService_Expecter) UpdateItem(ctx interface{}, userID interface{}, wishlistID interface{}, itemID interface{}, req interface{}) *MockWishlistService_UpdateItem_Call {
+func (_e *MockWishlistService_Expecter) UpdateItem(ctx any, userID any, wishlistID any, itemID any, req any) *MockWishlistService_UpdateItem_Call {
 	return &MockWishlistService_UpdateItem_Call{Call: _e.mock.On("UpdateItem", ctx, userID, wishlistID, itemID, req)}
 }
 
@@ -756,7 +765,7 @@ type MockWishlistService_UpdateWishlist_Call struct {
 //   - userID uuid.UUID
 //   - wishlistID uuid.UUID
 //   - req dto.UpdateWishlistRequest
-func (_e *MockWishlistService_Expecter) UpdateWishlist(ctx interface{}, userID interface{}, wishlistID interface{}, req interface{}) *MockWishlistService_UpdateWishlist_Call {
+func (_e *MockWishlistService_Expecter) UpdateWishlist(ctx any, userID any, wishlistID any, req any) *MockWishlistService_UpdateWishlist_Call {
 	return &MockWishlistService_UpdateWishlist_Call{Call: _e.mock.On("UpdateWishlist", ctx, userID, wishlistID, req)}
 }
 

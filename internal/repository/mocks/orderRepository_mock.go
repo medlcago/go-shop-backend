@@ -6,8 +6,8 @@ package mocks
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
+	"go-shop-backend/internal/repository"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -19,10 +19,19 @@ func NewMockOrderRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrderRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrderRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockOrderRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - order *models.Order
-func (_e *MockOrderRepository_Expecter) Create(ctx interface{}, order interface{}) *MockOrderRepository_Create_Call {
+func (_e *MockOrderRepository_Expecter) Create(ctx any, order any) *MockOrderRepository_Create_Call {
 	return &MockOrderRepository_Create_Call{Call: _e.mock.On("Create", ctx, order)}
 }
 
@@ -134,7 +143,7 @@ type MockOrderRepository_GetByID_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - preload bool
-func (_e *MockOrderRepository_Expecter) GetByID(ctx interface{}, id interface{}, preload interface{}) *MockOrderRepository_GetByID_Call {
+func (_e *MockOrderRepository_Expecter) GetByID(ctx any, id any, preload any) *MockOrderRepository_GetByID_Call {
 	return &MockOrderRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, preload)}
 }
 
@@ -210,7 +219,7 @@ type MockOrderRepository_GetByOwner_Call struct {
 //   - userID *uuid.UUID
 //   - sessionID uuid.UUID
 //   - preload bool
-func (_e *MockOrderRepository_Expecter) GetByOwner(ctx interface{}, orderID interface{}, userID interface{}, sessionID interface{}, preload interface{}) *MockOrderRepository_GetByOwner_Call {
+func (_e *MockOrderRepository_Expecter) GetByOwner(ctx any, orderID any, userID any, sessionID any, preload any) *MockOrderRepository_GetByOwner_Call {
 	return &MockOrderRepository_GetByOwner_Call{Call: _e.mock.On("GetByOwner", ctx, orderID, userID, sessionID, preload)}
 }
 
@@ -295,7 +304,7 @@ type MockOrderRepository_GetByPayment_Call struct {
 //   - providerName string
 //   - paymentID string
 //   - preload bool
-func (_e *MockOrderRepository_Expecter) GetByPayment(ctx interface{}, providerName interface{}, paymentID interface{}, preload interface{}) *MockOrderRepository_GetByPayment_Call {
+func (_e *MockOrderRepository_Expecter) GetByPayment(ctx any, providerName any, paymentID any, preload any) *MockOrderRepository_GetByPayment_Call {
 	return &MockOrderRepository_GetByPayment_Call{Call: _e.mock.On("GetByPayment", ctx, providerName, paymentID, preload)}
 }
 
@@ -338,8 +347,8 @@ func (_c *MockOrderRepository_GetByPayment_Call) RunAndReturn(run func(ctx conte
 }
 
 // GetListByOwner provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error) {
-	ret := _mock.Called(ctx, userID, sessionID, req)
+func (_mock *MockOrderRepository) GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, filter repository.ListOrderFilter) ([]*models.Order, int64, error) {
+	ret := _mock.Called(ctx, userID, sessionID, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetListByOwner")
@@ -348,23 +357,23 @@ func (_mock *MockOrderRepository) GetListByOwner(ctx context.Context, userID *uu
 	var r0 []*models.Order
 	var r1 int64
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, dto.ListOrderRequest) ([]*models.Order, int64, error)); ok {
-		return returnFunc(ctx, userID, sessionID, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, repository.ListOrderFilter) ([]*models.Order, int64, error)); ok {
+		return returnFunc(ctx, userID, sessionID, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, dto.ListOrderRequest) []*models.Order); ok {
-		r0 = returnFunc(ctx, userID, sessionID, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *uuid.UUID, uuid.UUID, repository.ListOrderFilter) []*models.Order); ok {
+		r0 = returnFunc(ctx, userID, sessionID, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *uuid.UUID, uuid.UUID, dto.ListOrderRequest) int64); ok {
-		r1 = returnFunc(ctx, userID, sessionID, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *uuid.UUID, uuid.UUID, repository.ListOrderFilter) int64); ok {
+		r1 = returnFunc(ctx, userID, sessionID, filter)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, *uuid.UUID, uuid.UUID, dto.ListOrderRequest) error); ok {
-		r2 = returnFunc(ctx, userID, sessionID, req)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *uuid.UUID, uuid.UUID, repository.ListOrderFilter) error); ok {
+		r2 = returnFunc(ctx, userID, sessionID, filter)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -380,12 +389,12 @@ type MockOrderRepository_GetListByOwner_Call struct {
 //   - ctx context.Context
 //   - userID *uuid.UUID
 //   - sessionID uuid.UUID
-//   - req dto.ListOrderRequest
-func (_e *MockOrderRepository_Expecter) GetListByOwner(ctx interface{}, userID interface{}, sessionID interface{}, req interface{}) *MockOrderRepository_GetListByOwner_Call {
-	return &MockOrderRepository_GetListByOwner_Call{Call: _e.mock.On("GetListByOwner", ctx, userID, sessionID, req)}
+//   - filter repository.ListOrderFilter
+func (_e *MockOrderRepository_Expecter) GetListByOwner(ctx any, userID any, sessionID any, filter any) *MockOrderRepository_GetListByOwner_Call {
+	return &MockOrderRepository_GetListByOwner_Call{Call: _e.mock.On("GetListByOwner", ctx, userID, sessionID, filter)}
 }
 
-func (_c *MockOrderRepository_GetListByOwner_Call) Run(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest)) *MockOrderRepository_GetListByOwner_Call {
+func (_c *MockOrderRepository_GetListByOwner_Call) Run(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, filter repository.ListOrderFilter)) *MockOrderRepository_GetListByOwner_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -399,9 +408,9 @@ func (_c *MockOrderRepository_GetListByOwner_Call) Run(run func(ctx context.Cont
 		if args[2] != nil {
 			arg2 = args[2].(uuid.UUID)
 		}
-		var arg3 dto.ListOrderRequest
+		var arg3 repository.ListOrderFilter
 		if args[3] != nil {
-			arg3 = args[3].(dto.ListOrderRequest)
+			arg3 = args[3].(repository.ListOrderFilter)
 		}
 		run(
 			arg0,
@@ -418,7 +427,7 @@ func (_c *MockOrderRepository_GetListByOwner_Call) Return(orders []*models.Order
 	return _c
 }
 
-func (_c *MockOrderRepository_GetListByOwner_Call) RunAndReturn(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error)) *MockOrderRepository_GetListByOwner_Call {
+func (_c *MockOrderRepository_GetListByOwner_Call) RunAndReturn(run func(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, filter repository.ListOrderFilter) ([]*models.Order, int64, error)) *MockOrderRepository_GetListByOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -448,7 +457,7 @@ type MockOrderRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - order *models.Order
-func (_e *MockOrderRepository_Expecter) Update(ctx interface{}, order interface{}) *MockOrderRepository_Update_Call {
+func (_e *MockOrderRepository_Expecter) Update(ctx any, order any) *MockOrderRepository_Update_Call {
 	return &MockOrderRepository_Update_Call{Call: _e.mock.On("Update", ctx, order)}
 }
 

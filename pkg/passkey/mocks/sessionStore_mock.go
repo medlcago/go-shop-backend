@@ -17,10 +17,19 @@ func NewMockSessionStore(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockSessionStore {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockSessionStore{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -63,7 +72,7 @@ type MockSessionStore_DeleteSession_Call struct {
 // DeleteSession is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID string
-func (_e *MockSessionStore_Expecter) DeleteSession(ctx interface{}, sessionID interface{}) *MockSessionStore_DeleteSession_Call {
+func (_e *MockSessionStore_Expecter) DeleteSession(ctx any, sessionID any) *MockSessionStore_DeleteSession_Call {
 	return &MockSessionStore_DeleteSession_Call{Call: _e.mock.On("DeleteSession", ctx, sessionID)}
 }
 
@@ -131,7 +140,7 @@ type MockSessionStore_GetSession_Call struct {
 // GetSession is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID string
-func (_e *MockSessionStore_Expecter) GetSession(ctx interface{}, sessionID interface{}) *MockSessionStore_GetSession_Call {
+func (_e *MockSessionStore_Expecter) GetSession(ctx any, sessionID any) *MockSessionStore_GetSession_Call {
 	return &MockSessionStore_GetSession_Call{Call: _e.mock.On("GetSession", ctx, sessionID)}
 }
 
@@ -153,8 +162,8 @@ func (_c *MockSessionStore_GetSession_Call) Run(run func(ctx context.Context, se
 	return _c
 }
 
-func (_c *MockSessionStore_GetSession_Call) Return(v *passkey.SessionData, err error) *MockSessionStore_GetSession_Call {
-	_c.Call.Return(v, err)
+func (_c *MockSessionStore_GetSession_Call) Return(sessionData *passkey.SessionData, err error) *MockSessionStore_GetSession_Call {
+	_c.Call.Return(sessionData, err)
 	return _c
 }
 
@@ -189,7 +198,7 @@ type MockSessionStore_SaveSession_Call struct {
 //   - ctx context.Context
 //   - sessionID string
 //   - data *passkey.SessionData
-func (_e *MockSessionStore_Expecter) SaveSession(ctx interface{}, sessionID interface{}, data interface{}) *MockSessionStore_SaveSession_Call {
+func (_e *MockSessionStore_Expecter) SaveSession(ctx any, sessionID any, data any) *MockSessionStore_SaveSession_Call {
 	return &MockSessionStore_SaveSession_Call{Call: _e.mock.On("SaveSession", ctx, sessionID, data)}
 }
 

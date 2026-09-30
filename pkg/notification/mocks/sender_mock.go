@@ -17,10 +17,19 @@ func NewMockSender(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockSender {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockSender{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -107,7 +116,7 @@ type MockSender_Send_Call struct {
 // Send is a helper method to define mock.On call
 //   - ctx context.Context
 //   - n notification.Notification
-func (_e *MockSender_Expecter) Send(ctx interface{}, n interface{}) *MockSender_Send_Call {
+func (_e *MockSender_Expecter) Send(ctx any, n any) *MockSender_Send_Call {
 	return &MockSender_Send_Call{Call: _e.mock.On("Send", ctx, n)}
 }
 

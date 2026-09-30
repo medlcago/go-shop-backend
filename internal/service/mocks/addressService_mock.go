@@ -18,10 +18,19 @@ func NewMockAddressService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockAddressService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockAddressService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -76,7 +85,7 @@ type MockAddressService_CreateAddress_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.CreateAddressRequest
-func (_e *MockAddressService_Expecter) CreateAddress(ctx interface{}, userID interface{}, req interface{}) *MockAddressService_CreateAddress_Call {
+func (_e *MockAddressService_Expecter) CreateAddress(ctx any, userID any, req any) *MockAddressService_CreateAddress_Call {
 	return &MockAddressService_CreateAddress_Call{Call: _e.mock.On("CreateAddress", ctx, userID, req)}
 }
 
@@ -139,7 +148,7 @@ type MockAddressService_DeleteAddress_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressService_Expecter) DeleteAddress(ctx interface{}, id interface{}, userID interface{}) *MockAddressService_DeleteAddress_Call {
+func (_e *MockAddressService_Expecter) DeleteAddress(ctx any, id any, userID any) *MockAddressService_DeleteAddress_Call {
 	return &MockAddressService_DeleteAddress_Call{Call: _e.mock.On("DeleteAddress", ctx, id, userID)}
 }
 
@@ -213,7 +222,7 @@ type MockAddressService_GetAddress_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressService_Expecter) GetAddress(ctx interface{}, id interface{}, userID interface{}) *MockAddressService_GetAddress_Call {
+func (_e *MockAddressService_Expecter) GetAddress(ctx any, id any, userID any) *MockAddressService_GetAddress_Call {
 	return &MockAddressService_GetAddress_Call{Call: _e.mock.On("GetAddress", ctx, id, userID)}
 }
 
@@ -286,7 +295,7 @@ type MockAddressService_ListAddresses_Call struct {
 // ListAddresses is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockAddressService_Expecter) ListAddresses(ctx interface{}, userID interface{}) *MockAddressService_ListAddresses_Call {
+func (_e *MockAddressService_Expecter) ListAddresses(ctx any, userID any) *MockAddressService_ListAddresses_Call {
 	return &MockAddressService_ListAddresses_Call{Call: _e.mock.On("ListAddresses", ctx, userID)}
 }
 
@@ -344,7 +353,7 @@ type MockAddressService_SetDefault_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressService_Expecter) SetDefault(ctx interface{}, id interface{}, userID interface{}) *MockAddressService_SetDefault_Call {
+func (_e *MockAddressService_Expecter) SetDefault(ctx any, id any, userID any) *MockAddressService_SetDefault_Call {
 	return &MockAddressService_SetDefault_Call{Call: _e.mock.On("SetDefault", ctx, id, userID)}
 }
 
@@ -419,7 +428,7 @@ type MockAddressService_UpdateAddress_Call struct {
 //   - id uuid.UUID
 //   - userID uuid.UUID
 //   - req dto.UpdateAddressRequest
-func (_e *MockAddressService_Expecter) UpdateAddress(ctx interface{}, id interface{}, userID interface{}, req interface{}) *MockAddressService_UpdateAddress_Call {
+func (_e *MockAddressService_Expecter) UpdateAddress(ctx any, id any, userID any, req any) *MockAddressService_UpdateAddress_Call {
 	return &MockAddressService_UpdateAddress_Call{Call: _e.mock.On("UpdateAddress", ctx, id, userID, req)}
 }
 

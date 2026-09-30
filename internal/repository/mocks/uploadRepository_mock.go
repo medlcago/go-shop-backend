@@ -18,10 +18,19 @@ func NewMockUploadRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockUploadRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockUploadRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockUploadRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *models.Upload
-func (_e *MockUploadRepository_Expecter) Create(ctx interface{}, req interface{}) *MockUploadRepository_Create_Call {
+func (_e *MockUploadRepository_Expecter) Create(ctx any, req any) *MockUploadRepository_Create_Call {
 	return &MockUploadRepository_Create_Call{Call: _e.mock.On("Create", ctx, req)}
 }
 
@@ -121,7 +130,7 @@ type MockUploadRepository_DeleteByID_Call struct {
 // DeleteByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUploadRepository_Expecter) DeleteByID(ctx interface{}, id interface{}) *MockUploadRepository_DeleteByID_Call {
+func (_e *MockUploadRepository_Expecter) DeleteByID(ctx any, id any) *MockUploadRepository_DeleteByID_Call {
 	return &MockUploadRepository_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
 }
 
@@ -187,7 +196,7 @@ type MockUploadRepository_ExistsByObjectKey_Call struct {
 // ExistsByObjectKey is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockUploadRepository_Expecter) ExistsByObjectKey(ctx interface{}, objectKey interface{}) *MockUploadRepository_ExistsByObjectKey_Call {
+func (_e *MockUploadRepository_Expecter) ExistsByObjectKey(ctx any, objectKey any) *MockUploadRepository_ExistsByObjectKey_Call {
 	return &MockUploadRepository_ExistsByObjectKey_Call{Call: _e.mock.On("ExistsByObjectKey", ctx, objectKey)}
 }
 

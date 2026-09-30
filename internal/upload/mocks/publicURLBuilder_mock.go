@@ -14,10 +14,19 @@ func NewMockPublicURLBuilder(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockPublicURLBuilder {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockPublicURLBuilder{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -59,7 +68,7 @@ type MockPublicURLBuilder_PublicURL_Call struct {
 
 // PublicURL is a helper method to define mock.On call
 //   - objectKey string
-func (_e *MockPublicURLBuilder_Expecter) PublicURL(objectKey interface{}) *MockPublicURLBuilder_PublicURL_Call {
+func (_e *MockPublicURLBuilder_Expecter) PublicURL(objectKey any) *MockPublicURLBuilder_PublicURL_Call {
 	return &MockPublicURLBuilder_PublicURL_Call{Call: _e.mock.On("PublicURL", objectKey)}
 }
 

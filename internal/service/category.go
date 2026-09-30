@@ -22,7 +22,13 @@ func NewCategoryService(categoryRepo repository.CategoryRepository) *categorySer
 func (c *categoryService) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*dto.CategoryResponse, int64, error) {
 	const op = "categoryService.ListCategories"
 
-	categories, total, err := c.categoryRepo.ListCategories(ctx, req)
+	filter := repository.ListCategoryFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+		ID:     req.ID,
+	}
+
+	categories, total, err := c.categoryRepo.ListCategories(ctx, filter)
 	if err != nil {
 		return nil, 0, apperror.Wrap(op, err)
 	}

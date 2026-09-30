@@ -18,10 +18,19 @@ func NewMockFavoriteService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockFavoriteService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockFavoriteService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -82,7 +91,7 @@ type MockFavoriteService_AddProduct_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - productID uuid.UUID
-func (_e *MockFavoriteService_Expecter) AddProduct(ctx interface{}, userID interface{}, productID interface{}) *MockFavoriteService_AddProduct_Call {
+func (_e *MockFavoriteService_Expecter) AddProduct(ctx any, userID any, productID any) *MockFavoriteService_AddProduct_Call {
 	return &MockFavoriteService_AddProduct_Call{Call: _e.mock.On("AddProduct", ctx, userID, productID)}
 }
 
@@ -156,7 +165,7 @@ type MockFavoriteService_IsFavorite_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - productID uuid.UUID
-func (_e *MockFavoriteService_Expecter) IsFavorite(ctx interface{}, userID interface{}, productID interface{}) *MockFavoriteService_IsFavorite_Call {
+func (_e *MockFavoriteService_Expecter) IsFavorite(ctx any, userID any, productID any) *MockFavoriteService_IsFavorite_Call {
 	return &MockFavoriteService_IsFavorite_Call{Call: _e.mock.On("IsFavorite", ctx, userID, productID)}
 }
 
@@ -235,7 +244,7 @@ type MockFavoriteService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockFavoriteService_Expecter) List(ctx interface{}, userID interface{}) *MockFavoriteService_List_Call {
+func (_e *MockFavoriteService_Expecter) List(ctx any, userID any) *MockFavoriteService_List_Call {
 	return &MockFavoriteService_List_Call{Call: _e.mock.On("List", ctx, userID)}
 }
 
@@ -310,7 +319,7 @@ type MockFavoriteService_RemoveProduct_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - productID uuid.UUID
-func (_e *MockFavoriteService_Expecter) RemoveProduct(ctx interface{}, userID interface{}, productID interface{}) *MockFavoriteService_RemoveProduct_Call {
+func (_e *MockFavoriteService_Expecter) RemoveProduct(ctx any, userID any, productID any) *MockFavoriteService_RemoveProduct_Call {
 	return &MockFavoriteService_RemoveProduct_Call{Call: _e.mock.On("RemoveProduct", ctx, userID, productID)}
 }
 

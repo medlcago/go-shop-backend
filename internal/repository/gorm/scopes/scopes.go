@@ -62,6 +62,10 @@ func AvailableProducts() func(db *gorm.DB) *gorm.DB {
 
 func ProductPriceBetween(min int64, max int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
+		if min > max {
+			return db
+		}
+
 		if min <= 0 {
 			min = 0
 		}
@@ -135,5 +139,13 @@ func WishlistWithRelations() func(db *gorm.DB) *gorm.DB {
 		return db.Preload("Items", func(tx *gorm.DB) *gorm.DB {
 			return tx.Order("priority DESC, created_at DESC")
 		}).Preload("Items.Product")
+	}
+}
+
+func FavoriteWithRelations() func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload("Product", func(tx *gorm.DB) *gorm.DB {
+			return tx.Select("id", "name", "price", "stock", "reserved")
+		})
 	}
 }

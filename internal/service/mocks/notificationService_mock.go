@@ -17,10 +17,19 @@ func NewMockNotificationService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockNotificationService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockNotificationService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockNotificationService_SendEmailConfirmationCode_Call struct {
 //   - to string
 //   - code string
 //   - channel notification.Channel
-func (_e *MockNotificationService_Expecter) SendEmailConfirmationCode(ctx interface{}, to interface{}, code interface{}, channel interface{}) *MockNotificationService_SendEmailConfirmationCode_Call {
+func (_e *MockNotificationService_Expecter) SendEmailConfirmationCode(ctx any, to any, code any, channel any) *MockNotificationService_SendEmailConfirmationCode_Call {
 	return &MockNotificationService_SendEmailConfirmationCode_Call{Call: _e.mock.On("SendEmailConfirmationCode", ctx, to, code, channel)}
 }
 

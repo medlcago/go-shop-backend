@@ -18,10 +18,19 @@ func NewMockAddressQuery(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockAddressQuery {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockAddressQuery{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -76,7 +85,7 @@ type MockAddressQuery_GetByID_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressQuery_Expecter) GetByID(ctx interface{}, id interface{}, userID interface{}) *MockAddressQuery_GetByID_Call {
+func (_e *MockAddressQuery_Expecter) GetByID(ctx any, id any, userID any) *MockAddressQuery_GetByID_Call {
 	return &MockAddressQuery_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, userID)}
 }
 

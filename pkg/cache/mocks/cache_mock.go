@@ -17,10 +17,19 @@ func NewMockCache(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCache {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCache{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -63,7 +72,7 @@ type MockCache_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockCache_Expecter) Delete(ctx interface{}, key interface{}) *MockCache_Delete_Call {
+func (_e *MockCache_Expecter) Delete(ctx any, key any) *MockCache_Delete_Call {
 	return &MockCache_Delete_Call{Call: _e.mock.On("Delete", ctx, key)}
 }
 
@@ -129,7 +138,7 @@ type MockCache_Exists_Call struct {
 // Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockCache_Expecter) Exists(ctx interface{}, key interface{}) *MockCache_Exists_Call {
+func (_e *MockCache_Expecter) Exists(ctx any, key any) *MockCache_Exists_Call {
 	return &MockCache_Exists_Call{Call: _e.mock.On("Exists", ctx, key)}
 }
 
@@ -195,7 +204,7 @@ type MockCache_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockCache_Expecter) Get(ctx interface{}, key interface{}) *MockCache_Get_Call {
+func (_e *MockCache_Expecter) Get(ctx any, key any) *MockCache_Get_Call {
 	return &MockCache_Get_Call{Call: _e.mock.On("Get", ctx, key)}
 }
 
@@ -254,7 +263,7 @@ type MockCache_Set_Call struct {
 //   - key string
 //   - value string
 //   - ttl time.Duration
-func (_e *MockCache_Expecter) Set(ctx interface{}, key interface{}, value interface{}, ttl interface{}) *MockCache_Set_Call {
+func (_e *MockCache_Expecter) Set(ctx any, key any, value any, ttl any) *MockCache_Set_Call {
 	return &MockCache_Set_Call{Call: _e.mock.On("Set", ctx, key, value, ttl)}
 }
 
@@ -332,7 +341,7 @@ type MockCache_SetNX_Call struct {
 //   - key string
 //   - value string
 //   - ttl time.Duration
-func (_e *MockCache_Expecter) SetNX(ctx interface{}, key interface{}, value interface{}, ttl interface{}) *MockCache_SetNX_Call {
+func (_e *MockCache_Expecter) SetNX(ctx any, key any, value any, ttl any) *MockCache_SetNX_Call {
 	return &MockCache_SetNX_Call{Call: _e.mock.On("SetNX", ctx, key, value, ttl)}
 }
 

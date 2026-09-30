@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/internal/repository/gorm/scopes"
@@ -86,7 +85,7 @@ func (w *wishlistRepository) GetByShareToken(ctx context.Context, token string, 
 	return &wishlist, nil
 }
 
-func (w *wishlistRepository) GetListByUser(ctx context.Context, userID uuid.UUID, req dto.ListWishlistRequest) ([]*models.Wishlist, int64, error) {
+func (w *wishlistRepository) GetListByUser(ctx context.Context, userID uuid.UUID, filter repository.ListWishlistFilter) ([]*models.Wishlist, int64, error) {
 	db := w.db.GetDB(ctx)
 
 	db = db.Where("user_id = ?", userID)
@@ -103,7 +102,7 @@ func (w *wishlistRepository) GetListByUser(ctx context.Context, userID uuid.UUID
 	var wishlists []*models.Wishlist
 	err := db.Scopes(
 		scopes.WishlistWithRelations(),
-		scopes.Paginate(req.Limit, req.Limit),
+		scopes.Paginate(filter.Limit, filter.Limit),
 	).Find(&wishlists).Error
 
 	if err != nil {

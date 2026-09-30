@@ -17,10 +17,19 @@ func NewMockNotificationTask(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockNotificationTask {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockNotificationTask{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -63,7 +72,7 @@ type MockNotificationTask_SendEmailConfirmationCode_Call struct {
 // SendEmailConfirmationCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - payload tasks.SendEmailConfirmationCodePayload
-func (_e *MockNotificationTask_Expecter) SendEmailConfirmationCode(ctx interface{}, payload interface{}) *MockNotificationTask_SendEmailConfirmationCode_Call {
+func (_e *MockNotificationTask_Expecter) SendEmailConfirmationCode(ctx any, payload any) *MockNotificationTask_SendEmailConfirmationCode_Call {
 	return &MockNotificationTask_SendEmailConfirmationCode_Call{Call: _e.mock.On("SendEmailConfirmationCode", ctx, payload)}
 }
 

@@ -17,10 +17,19 @@ func NewMockProductChecker(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockProductChecker {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockProductChecker{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockProductChecker_Exists_Call struct {
 // Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockProductChecker_Expecter) Exists(ctx interface{}, id interface{}) *MockProductChecker_Exists_Call {
+func (_e *MockProductChecker_Expecter) Exists(ctx any, id any) *MockProductChecker_Exists_Call {
 	return &MockProductChecker_Exists_Call{Call: _e.mock.On("Exists", ctx, id)}
 }
 

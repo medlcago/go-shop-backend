@@ -107,7 +107,13 @@ func (o *orderService) GetOrders(
 ) ([]*dto.OrderResponse, int64, error) {
 	const op = "orderService.GetOrders"
 
-	orders, total, err := o.orderRepo.GetListByOwner(ctx, userID, sessionID, req)
+	filter := repository.ListOrderFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+		Status: req.Status,
+	}
+
+	orders, total, err := o.orderRepo.GetListByOwner(ctx, userID, sessionID, filter)
 	if err != nil {
 		return nil, 0, apperror.Wrap(op, err)
 	}

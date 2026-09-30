@@ -3,7 +3,6 @@ package gorm
 import (
 	"context"
 	"database/sql"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/internal/repository/gorm/scopes"
@@ -43,14 +42,14 @@ func (p *productRepository) GetByID(ctx context.Context, id uuid.UUID, preload b
 	return &product, nil
 }
 
-func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error) {
+func (p *productRepository) ListProducts(ctx context.Context, filter repository.ListProductFilter) ([]*models.Product, int64, error) {
 	db := p.db.GetDB(ctx)
 
 	db = db.Model(&models.Product{}).
 		Scopes(
 			scopes.AvailableProducts(),
-			scopes.ProductWithCategory(req.CategoryID),
-			scopes.ProductPriceBetween(req.MinPrice, req.MaxPrice),
+			scopes.ProductWithCategory(filter.CategoryID),
+			scopes.ProductPriceBetween(filter.MinPrice, filter.MaxPrice),
 		)
 
 	var total int64
@@ -66,8 +65,8 @@ func (p *productRepository) ListProducts(ctx context.Context, req dto.ListProduc
 
 	if err := db.
 		Scopes(
-			scopes.Paginate(req.Limit, req.Offset),
-			scopes.ProductOrderBy(req.OrderBy, req.OrderDesc),
+			scopes.Paginate(filter.Limit, filter.Offset),
+			scopes.ProductOrderBy(filter.OrderBy, filter.OrderDesc),
 			scopes.ProductWithRelations(),
 		).
 		Find(&products).Error; err != nil {
@@ -126,14 +125,14 @@ func (p *productRepository) GetByIDsForUpdate(ctx context.Context, ids []uuid.UU
 	return products, nil
 }
 
-func (p *productRepository) Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error) {
-	if req.Query == "" {
+func (p *productRepository) Search(ctx context.Context, filter repository.SearchProductFilter) ([]*models.Product, int64, error) {
+	if filter.Query == "" {
 		return nil, 0, nil
 	}
 
 	db := p.db.GetDB(ctx)
 
-	query := utils.BuildSearchQuery(req.Query)
+	query := utils.BuildSearchQuery(filter.Query)
 	tsQuery := "to_tsquery('english', @query)"
 	namedQuery := sql.Named("query", query)
 
@@ -157,7 +156,7 @@ func (p *productRepository) Search(ctx context.Context, req dto.SearchProductReq
 	err := db.Select("products.*, ts_rank(search_vector, "+tsQuery+") AS rank", namedQuery).
 		Order("rank DESC").
 		Scopes(
-			scopes.Paginate(req.Limit, req.Offset),
+			scopes.Paginate(filter.Limit, filter.Offset),
 			scopes.ProductWithRelations(),
 		).
 		Find(&products).Error

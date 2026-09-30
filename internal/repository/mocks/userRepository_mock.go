@@ -18,10 +18,19 @@ func NewMockUserRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockUserRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockUserRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockUserRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user *models.User
-func (_e *MockUserRepository_Expecter) Create(ctx interface{}, user interface{}) *MockUserRepository_Create_Call {
+func (_e *MockUserRepository_Expecter) Create(ctx any, user any) *MockUserRepository_Create_Call {
 	return &MockUserRepository_Create_Call{Call: _e.mock.On("Create", ctx, user)}
 }
 
@@ -130,7 +139,7 @@ type MockUserRepository_ExistsByEmail_Call struct {
 // ExistsByEmail is a helper method to define mock.On call
 //   - ctx context.Context
 //   - email string
-func (_e *MockUserRepository_Expecter) ExistsByEmail(ctx interface{}, email interface{}) *MockUserRepository_ExistsByEmail_Call {
+func (_e *MockUserRepository_Expecter) ExistsByEmail(ctx any, email any) *MockUserRepository_ExistsByEmail_Call {
 	return &MockUserRepository_ExistsByEmail_Call{Call: _e.mock.On("ExistsByEmail", ctx, email)}
 }
 
@@ -198,7 +207,7 @@ type MockUserRepository_GetByEmail_Call struct {
 // GetByEmail is a helper method to define mock.On call
 //   - ctx context.Context
 //   - email string
-func (_e *MockUserRepository_Expecter) GetByEmail(ctx interface{}, email interface{}) *MockUserRepository_GetByEmail_Call {
+func (_e *MockUserRepository_Expecter) GetByEmail(ctx any, email any) *MockUserRepository_GetByEmail_Call {
 	return &MockUserRepository_GetByEmail_Call{Call: _e.mock.On("GetByEmail", ctx, email)}
 }
 
@@ -266,7 +275,7 @@ type MockUserRepository_GetByEmailIncludingDeleted_Call struct {
 // GetByEmailIncludingDeleted is a helper method to define mock.On call
 //   - ctx context.Context
 //   - email string
-func (_e *MockUserRepository_Expecter) GetByEmailIncludingDeleted(ctx interface{}, email interface{}) *MockUserRepository_GetByEmailIncludingDeleted_Call {
+func (_e *MockUserRepository_Expecter) GetByEmailIncludingDeleted(ctx any, email any) *MockUserRepository_GetByEmailIncludingDeleted_Call {
 	return &MockUserRepository_GetByEmailIncludingDeleted_Call{Call: _e.mock.On("GetByEmailIncludingDeleted", ctx, email)}
 }
 
@@ -334,7 +343,7 @@ type MockUserRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUserRepository_Expecter) GetByID(ctx interface{}, id interface{}) *MockUserRepository_GetByID_Call {
+func (_e *MockUserRepository_Expecter) GetByID(ctx any, id any) *MockUserRepository_GetByID_Call {
 	return &MockUserRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
 }
 
@@ -402,7 +411,7 @@ type MockUserRepository_GetByIDIncludingDeleted_Call struct {
 // GetByIDIncludingDeleted is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUserRepository_Expecter) GetByIDIncludingDeleted(ctx interface{}, id interface{}) *MockUserRepository_GetByIDIncludingDeleted_Call {
+func (_e *MockUserRepository_Expecter) GetByIDIncludingDeleted(ctx any, id any) *MockUserRepository_GetByIDIncludingDeleted_Call {
 	return &MockUserRepository_GetByIDIncludingDeleted_Call{Call: _e.mock.On("GetByIDIncludingDeleted", ctx, id)}
 }
 
@@ -459,7 +468,7 @@ type MockUserRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user *models.User
-func (_e *MockUserRepository_Expecter) Update(ctx interface{}, user interface{}) *MockUserRepository_Update_Call {
+func (_e *MockUserRepository_Expecter) Update(ctx any, user any) *MockUserRepository_Update_Call {
 	return &MockUserRepository_Update_Call{Call: _e.mock.On("Update", ctx, user)}
 }
 

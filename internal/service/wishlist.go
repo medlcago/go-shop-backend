@@ -92,7 +92,12 @@ func (w *wishlistService) GetWishlists(
 ) ([]*dto.WishlistResponse, int64, error) {
 	const op = "wishlistService.GetWishlists"
 
-	wishlists, total, err := w.wishlistRepo.GetListByUser(ctx, userID, req)
+	filter := repository.ListWishlistFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+
+	wishlists, total, err := w.wishlistRepo.GetListByUser(ctx, userID, filter)
 	if err != nil {
 		return nil, 0, apperror.Wrap(op, err)
 	}

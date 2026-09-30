@@ -16,10 +16,19 @@ func NewMockManager(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockManager {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockManager{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -61,7 +70,7 @@ type MockManager_Load_Call struct {
 
 // Load is a helper method to define mock.On call
 //   - pattern string
-func (_e *MockManager_Expecter) Load(pattern interface{}) *MockManager_Load_Call {
+func (_e *MockManager_Expecter) Load(pattern any) *MockManager_Load_Call {
 	return &MockManager_Load_Call{Call: _e.mock.On("Load", pattern)}
 }
 
@@ -119,9 +128,9 @@ type MockManager_LoadFromFS_Call struct {
 // LoadFromFS is a helper method to define mock.On call
 //   - fs1 fs.FS
 //   - patterns ...string
-func (_e *MockManager_Expecter) LoadFromFS(fs1 interface{}, patterns ...interface{}) *MockManager_LoadFromFS_Call {
+func (_e *MockManager_Expecter) LoadFromFS(fs1 any, patterns ...any) *MockManager_LoadFromFS_Call {
 	return &MockManager_LoadFromFS_Call{Call: _e.mock.On("LoadFromFS",
-		append([]interface{}{fs1}, patterns...)...)}
+		append([]any{fs1}, patterns...)...)}
 }
 
 func (_c *MockManager_LoadFromFS_Call) Run(run func(fs1 fs.FS, patterns ...string)) *MockManager_LoadFromFS_Call {
@@ -188,7 +197,7 @@ type MockManager_Render_Call struct {
 // Render is a helper method to define mock.On call
 //   - name string
 //   - data any
-func (_e *MockManager_Expecter) Render(name interface{}, data interface{}) *MockManager_Render_Call {
+func (_e *MockManager_Expecter) Render(name any, data any) *MockManager_Render_Call {
 	return &MockManager_Render_Call{Call: _e.mock.On("Render", name, data)}
 }
 

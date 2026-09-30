@@ -18,10 +18,19 @@ func NewMockProductService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockProductService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockProductService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -76,7 +85,7 @@ type MockProductService_AttachImage_Call struct {
 //   - ctx context.Context
 //   - productID uuid.UUID
 //   - req dto.AttachProductImageRequest
-func (_e *MockProductService_Expecter) AttachImage(ctx interface{}, productID interface{}, req interface{}) *MockProductService_AttachImage_Call {
+func (_e *MockProductService_Expecter) AttachImage(ctx any, productID any, req any) *MockProductService_AttachImage_Call {
 	return &MockProductService_AttachImage_Call{Call: _e.mock.On("AttachImage", ctx, productID, req)}
 }
 
@@ -149,7 +158,7 @@ type MockProductService_CreateProduct_Call struct {
 // CreateProduct is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.ProductCreateRequest
-func (_e *MockProductService_Expecter) CreateProduct(ctx interface{}, req interface{}) *MockProductService_CreateProduct_Call {
+func (_e *MockProductService_Expecter) CreateProduct(ctx any, req any) *MockProductService_CreateProduct_Call {
 	return &MockProductService_CreateProduct_Call{Call: _e.mock.On("CreateProduct", ctx, req)}
 }
 
@@ -217,7 +226,7 @@ type MockProductService_GetProductByID_Call struct {
 // GetProductByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - productID uuid.UUID
-func (_e *MockProductService_Expecter) GetProductByID(ctx interface{}, productID interface{}) *MockProductService_GetProductByID_Call {
+func (_e *MockProductService_Expecter) GetProductByID(ctx any, productID any) *MockProductService_GetProductByID_Call {
 	return &MockProductService_GetProductByID_Call{Call: _e.mock.On("GetProductByID", ctx, productID)}
 }
 
@@ -291,7 +300,7 @@ type MockProductService_ListProducts_Call struct {
 // ListProducts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.ListProductRequest
-func (_e *MockProductService_Expecter) ListProducts(ctx interface{}, req interface{}) *MockProductService_ListProducts_Call {
+func (_e *MockProductService_Expecter) ListProducts(ctx any, req any) *MockProductService_ListProducts_Call {
 	return &MockProductService_ListProducts_Call{Call: _e.mock.On("ListProducts", ctx, req)}
 }
 
@@ -365,7 +374,7 @@ type MockProductService_Search_Call struct {
 // Search is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.SearchProductRequest
-func (_e *MockProductService_Expecter) Search(ctx interface{}, req interface{}) *MockProductService_Search_Call {
+func (_e *MockProductService_Expecter) Search(ctx any, req any) *MockProductService_Search_Call {
 	return &MockProductService_Search_Call{Call: _e.mock.On("Search", ctx, req)}
 }
 
@@ -434,7 +443,7 @@ type MockProductService_UpdateProduct_Call struct {
 //   - ctx context.Context
 //   - productID uuid.UUID
 //   - req dto.ProductUpdateRequest
-func (_e *MockProductService_Expecter) UpdateProduct(ctx interface{}, productID interface{}, req interface{}) *MockProductService_UpdateProduct_Call {
+func (_e *MockProductService_Expecter) UpdateProduct(ctx any, productID any, req any) *MockProductService_UpdateProduct_Call {
 	return &MockProductService_UpdateProduct_Call{Call: _e.mock.On("UpdateProduct", ctx, productID, req)}
 }
 
@@ -508,7 +517,7 @@ type MockProductService_UpdateStock_Call struct {
 //   - ctx context.Context
 //   - productID uuid.UUID
 //   - req dto.ProductUpdateStockRequest
-func (_e *MockProductService_Expecter) UpdateStock(ctx interface{}, productID interface{}, req interface{}) *MockProductService_UpdateStock_Call {
+func (_e *MockProductService_Expecter) UpdateStock(ctx any, productID any, req any) *MockProductService_UpdateStock_Call {
 	return &MockProductService_UpdateStock_Call{Call: _e.mock.On("UpdateStock", ctx, productID, req)}
 }
 
@@ -582,7 +591,7 @@ type MockProductService_UploadImage_Call struct {
 //   - ctx context.Context
 //   - productID uuid.UUID
 //   - req dto.UploadProductImageSignURLRequest
-func (_e *MockProductService_Expecter) UploadImage(ctx interface{}, productID interface{}, req interface{}) *MockProductService_UploadImage_Call {
+func (_e *MockProductService_Expecter) UploadImage(ctx any, productID any, req any) *MockProductService_UploadImage_Call {
 	return &MockProductService_UploadImage_Call{Call: _e.mock.On("UploadImage", ctx, productID, req)}
 }
 

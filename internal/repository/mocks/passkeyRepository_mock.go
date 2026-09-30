@@ -18,10 +18,19 @@ func NewMockPasskeyRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockPasskeyRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockPasskeyRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockPasskeyRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - credential *models.PasskeyCredential
-func (_e *MockPasskeyRepository_Expecter) Create(ctx interface{}, credential interface{}) *MockPasskeyRepository_Create_Call {
+func (_e *MockPasskeyRepository_Expecter) Create(ctx any, credential any) *MockPasskeyRepository_Create_Call {
 	return &MockPasskeyRepository_Create_Call{Call: _e.mock.On("Create", ctx, credential)}
 }
 
@@ -122,7 +131,7 @@ type MockPasskeyRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockPasskeyRepository_Expecter) Delete(ctx interface{}, id interface{}, userID interface{}) *MockPasskeyRepository_Delete_Call {
+func (_e *MockPasskeyRepository_Expecter) Delete(ctx any, id any, userID any) *MockPasskeyRepository_Delete_Call {
 	return &MockPasskeyRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id, userID)}
 }
 
@@ -195,7 +204,7 @@ type MockPasskeyRepository_GetByCredentialID_Call struct {
 // GetByCredentialID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - credentialID []byte
-func (_e *MockPasskeyRepository_Expecter) GetByCredentialID(ctx interface{}, credentialID interface{}) *MockPasskeyRepository_GetByCredentialID_Call {
+func (_e *MockPasskeyRepository_Expecter) GetByCredentialID(ctx any, credentialID any) *MockPasskeyRepository_GetByCredentialID_Call {
 	return &MockPasskeyRepository_GetByCredentialID_Call{Call: _e.mock.On("GetByCredentialID", ctx, credentialID)}
 }
 
@@ -264,7 +273,7 @@ type MockPasskeyRepository_GetByUser_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockPasskeyRepository_Expecter) GetByUser(ctx interface{}, id interface{}, userID interface{}) *MockPasskeyRepository_GetByUser_Call {
+func (_e *MockPasskeyRepository_Expecter) GetByUser(ctx any, id any, userID any) *MockPasskeyRepository_GetByUser_Call {
 	return &MockPasskeyRepository_GetByUser_Call{Call: _e.mock.On("GetByUser", ctx, id, userID)}
 }
 
@@ -337,7 +346,7 @@ type MockPasskeyRepository_GetListByUser_Call struct {
 // GetListByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockPasskeyRepository_Expecter) GetListByUser(ctx interface{}, userID interface{}) *MockPasskeyRepository_GetListByUser_Call {
+func (_e *MockPasskeyRepository_Expecter) GetListByUser(ctx any, userID any) *MockPasskeyRepository_GetListByUser_Call {
 	return &MockPasskeyRepository_GetListByUser_Call{Call: _e.mock.On("GetListByUser", ctx, userID)}
 }
 
@@ -394,7 +403,7 @@ type MockPasskeyRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - credential *models.PasskeyCredential
-func (_e *MockPasskeyRepository_Expecter) Update(ctx interface{}, credential interface{}) *MockPasskeyRepository_Update_Call {
+func (_e *MockPasskeyRepository_Expecter) Update(ctx any, credential any) *MockPasskeyRepository_Update_Call {
 	return &MockPasskeyRepository_Update_Call{Call: _e.mock.On("Update", ctx, credential)}
 }
 

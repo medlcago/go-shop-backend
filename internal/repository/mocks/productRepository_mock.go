@@ -6,8 +6,8 @@ package mocks
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
+	"go-shop-backend/internal/repository"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -19,10 +19,19 @@ func NewMockProductRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockProductRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockProductRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockProductRepository_BulkUpsert_Call struct {
 // BulkUpsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - products []*models.Product
-func (_e *MockProductRepository_Expecter) BulkUpsert(ctx interface{}, products interface{}) *MockProductRepository_BulkUpsert_Call {
+func (_e *MockProductRepository_Expecter) BulkUpsert(ctx any, products any) *MockProductRepository_BulkUpsert_Call {
 	return &MockProductRepository_BulkUpsert_Call{Call: _e.mock.On("BulkUpsert", ctx, products)}
 }
 
@@ -122,7 +131,7 @@ type MockProductRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - product *models.Product
-func (_e *MockProductRepository_Expecter) Create(ctx interface{}, product interface{}) *MockProductRepository_Create_Call {
+func (_e *MockProductRepository_Expecter) Create(ctx any, product any) *MockProductRepository_Create_Call {
 	return &MockProductRepository_Create_Call{Call: _e.mock.On("Create", ctx, product)}
 }
 
@@ -188,7 +197,7 @@ type MockProductRepository_Exists_Call struct {
 // Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockProductRepository_Expecter) Exists(ctx interface{}, id interface{}) *MockProductRepository_Exists_Call {
+func (_e *MockProductRepository_Expecter) Exists(ctx any, id any) *MockProductRepository_Exists_Call {
 	return &MockProductRepository_Exists_Call{Call: _e.mock.On("Exists", ctx, id)}
 }
 
@@ -257,7 +266,7 @@ type MockProductRepository_GetByID_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - preload bool
-func (_e *MockProductRepository_Expecter) GetByID(ctx interface{}, id interface{}, preload interface{}) *MockProductRepository_GetByID_Call {
+func (_e *MockProductRepository_Expecter) GetByID(ctx any, id any, preload any) *MockProductRepository_GetByID_Call {
 	return &MockProductRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, preload)}
 }
 
@@ -330,7 +339,7 @@ type MockProductRepository_GetByIDsForUpdate_Call struct {
 // GetByIDsForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ids []uuid.UUID
-func (_e *MockProductRepository_Expecter) GetByIDsForUpdate(ctx interface{}, ids interface{}) *MockProductRepository_GetByIDsForUpdate_Call {
+func (_e *MockProductRepository_Expecter) GetByIDsForUpdate(ctx any, ids any) *MockProductRepository_GetByIDsForUpdate_Call {
 	return &MockProductRepository_GetByIDsForUpdate_Call{Call: _e.mock.On("GetByIDsForUpdate", ctx, ids)}
 }
 
@@ -363,8 +372,8 @@ func (_c *MockProductRepository_GetByIDsForUpdate_Call) RunAndReturn(run func(ct
 }
 
 // ListProducts provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error) {
-	ret := _mock.Called(ctx, req)
+func (_mock *MockProductRepository) ListProducts(ctx context.Context, filter repository.ListProductFilter) ([]*models.Product, int64, error) {
+	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListProducts")
@@ -373,23 +382,23 @@ func (_mock *MockProductRepository) ListProducts(ctx context.Context, req dto.Li
 	var r0 []*models.Product
 	var r1 int64
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListProductRequest) ([]*models.Product, int64, error)); ok {
-		return returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.ListProductFilter) ([]*models.Product, int64, error)); ok {
+		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListProductRequest) []*models.Product); ok {
-		r0 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.ListProductFilter) []*models.Product); ok {
+		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.Product)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.ListProductRequest) int64); ok {
-		r1 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repository.ListProductFilter) int64); ok {
+		r1 = returnFunc(ctx, filter)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, dto.ListProductRequest) error); ok {
-		r2 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, repository.ListProductFilter) error); ok {
+		r2 = returnFunc(ctx, filter)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -403,20 +412,20 @@ type MockProductRepository_ListProducts_Call struct {
 
 // ListProducts is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req dto.ListProductRequest
-func (_e *MockProductRepository_Expecter) ListProducts(ctx interface{}, req interface{}) *MockProductRepository_ListProducts_Call {
-	return &MockProductRepository_ListProducts_Call{Call: _e.mock.On("ListProducts", ctx, req)}
+//   - filter repository.ListProductFilter
+func (_e *MockProductRepository_Expecter) ListProducts(ctx any, filter any) *MockProductRepository_ListProducts_Call {
+	return &MockProductRepository_ListProducts_Call{Call: _e.mock.On("ListProducts", ctx, filter)}
 }
 
-func (_c *MockProductRepository_ListProducts_Call) Run(run func(ctx context.Context, req dto.ListProductRequest)) *MockProductRepository_ListProducts_Call {
+func (_c *MockProductRepository_ListProducts_Call) Run(run func(ctx context.Context, filter repository.ListProductFilter)) *MockProductRepository_ListProducts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 dto.ListProductRequest
+		var arg1 repository.ListProductFilter
 		if args[1] != nil {
-			arg1 = args[1].(dto.ListProductRequest)
+			arg1 = args[1].(repository.ListProductFilter)
 		}
 		run(
 			arg0,
@@ -431,14 +440,14 @@ func (_c *MockProductRepository_ListProducts_Call) Return(products []*models.Pro
 	return _c
 }
 
-func (_c *MockProductRepository_ListProducts_Call) RunAndReturn(run func(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)) *MockProductRepository_ListProducts_Call {
+func (_c *MockProductRepository_ListProducts_Call) RunAndReturn(run func(ctx context.Context, filter repository.ListProductFilter) ([]*models.Product, int64, error)) *MockProductRepository_ListProducts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Search provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error) {
-	ret := _mock.Called(ctx, req)
+func (_mock *MockProductRepository) Search(ctx context.Context, filter repository.SearchProductFilter) ([]*models.Product, int64, error) {
+	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Search")
@@ -447,23 +456,23 @@ func (_mock *MockProductRepository) Search(ctx context.Context, req dto.SearchPr
 	var r0 []*models.Product
 	var r1 int64
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.SearchProductRequest) ([]*models.Product, int64, error)); ok {
-		return returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.SearchProductFilter) ([]*models.Product, int64, error)); ok {
+		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.SearchProductRequest) []*models.Product); ok {
-		r0 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.SearchProductFilter) []*models.Product); ok {
+		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.Product)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.SearchProductRequest) int64); ok {
-		r1 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repository.SearchProductFilter) int64); ok {
+		r1 = returnFunc(ctx, filter)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, dto.SearchProductRequest) error); ok {
-		r2 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, repository.SearchProductFilter) error); ok {
+		r2 = returnFunc(ctx, filter)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -477,20 +486,20 @@ type MockProductRepository_Search_Call struct {
 
 // Search is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req dto.SearchProductRequest
-func (_e *MockProductRepository_Expecter) Search(ctx interface{}, req interface{}) *MockProductRepository_Search_Call {
-	return &MockProductRepository_Search_Call{Call: _e.mock.On("Search", ctx, req)}
+//   - filter repository.SearchProductFilter
+func (_e *MockProductRepository_Expecter) Search(ctx any, filter any) *MockProductRepository_Search_Call {
+	return &MockProductRepository_Search_Call{Call: _e.mock.On("Search", ctx, filter)}
 }
 
-func (_c *MockProductRepository_Search_Call) Run(run func(ctx context.Context, req dto.SearchProductRequest)) *MockProductRepository_Search_Call {
+func (_c *MockProductRepository_Search_Call) Run(run func(ctx context.Context, filter repository.SearchProductFilter)) *MockProductRepository_Search_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 dto.SearchProductRequest
+		var arg1 repository.SearchProductFilter
 		if args[1] != nil {
-			arg1 = args[1].(dto.SearchProductRequest)
+			arg1 = args[1].(repository.SearchProductFilter)
 		}
 		run(
 			arg0,
@@ -505,7 +514,7 @@ func (_c *MockProductRepository_Search_Call) Return(products []*models.Product, 
 	return _c
 }
 
-func (_c *MockProductRepository_Search_Call) RunAndReturn(run func(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error)) *MockProductRepository_Search_Call {
+func (_c *MockProductRepository_Search_Call) RunAndReturn(run func(ctx context.Context, filter repository.SearchProductFilter) ([]*models.Product, int64, error)) *MockProductRepository_Search_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -535,7 +544,7 @@ type MockProductRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - product *models.Product
-func (_e *MockProductRepository_Expecter) Update(ctx interface{}, product interface{}) *MockProductRepository_Update_Call {
+func (_e *MockProductRepository_Expecter) Update(ctx any, product any) *MockProductRepository_Update_Call {
 	return &MockProductRepository_Update_Call{Call: _e.mock.On("Update", ctx, product)}
 }
 

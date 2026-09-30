@@ -19,10 +19,19 @@ func NewMockStorage(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockStorage {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockStorage{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockStorage_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorage_Expecter) Delete(ctx interface{}, objectKey interface{}) *MockStorage_Delete_Call {
+func (_e *MockStorage_Expecter) Delete(ctx any, objectKey any) *MockStorage_Delete_Call {
 	return &MockStorage_Delete_Call{Call: _e.mock.On("Delete", ctx, objectKey)}
 }
 
@@ -122,7 +131,7 @@ type MockStorage_Exists_Call struct {
 // Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorage_Expecter) Exists(ctx interface{}, objectKey interface{}) *MockStorage_Exists_Call {
+func (_e *MockStorage_Expecter) Exists(ctx any, objectKey any) *MockStorage_Exists_Call {
 	return &MockStorage_Exists_Call{Call: _e.mock.On("Exists", ctx, objectKey)}
 }
 
@@ -190,7 +199,7 @@ type MockStorage_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorage_Expecter) Get(ctx interface{}, objectKey interface{}) *MockStorage_Get_Call {
+func (_e *MockStorage_Expecter) Get(ctx any, objectKey any) *MockStorage_Get_Call {
 	return &MockStorage_Get_Call{Call: _e.mock.On("Get", ctx, objectKey)}
 }
 
@@ -258,7 +267,7 @@ type MockStorage_GetObjectInfo_Call struct {
 // GetObjectInfo is a helper method to define mock.On call
 //   - ctx context.Context
 //   - objectKey string
-func (_e *MockStorage_Expecter) GetObjectInfo(ctx interface{}, objectKey interface{}) *MockStorage_GetObjectInfo_Call {
+func (_e *MockStorage_Expecter) GetObjectInfo(ctx any, objectKey any) *MockStorage_GetObjectInfo_Call {
 	return &MockStorage_GetObjectInfo_Call{Call: _e.mock.On("GetObjectInfo", ctx, objectKey)}
 }
 
@@ -314,7 +323,7 @@ type MockStorage_PublicURL_Call struct {
 
 // PublicURL is a helper method to define mock.On call
 //   - objectKey string
-func (_e *MockStorage_Expecter) PublicURL(objectKey interface{}) *MockStorage_PublicURL_Call {
+func (_e *MockStorage_Expecter) PublicURL(objectKey any) *MockStorage_PublicURL_Call {
 	return &MockStorage_PublicURL_Call{Call: _e.mock.On("PublicURL", objectKey)}
 }
 
@@ -376,7 +385,7 @@ type MockStorage_TemporaryURL_Call struct {
 //   - ctx context.Context
 //   - objectKey string
 //   - expires time.Duration
-func (_e *MockStorage_Expecter) TemporaryURL(ctx interface{}, objectKey interface{}, expires interface{}) *MockStorage_TemporaryURL_Call {
+func (_e *MockStorage_Expecter) TemporaryURL(ctx any, objectKey any, expires any) *MockStorage_TemporaryURL_Call {
 	return &MockStorage_TemporaryURL_Call{Call: _e.mock.On("TemporaryURL", ctx, objectKey, expires)}
 }
 
@@ -449,7 +458,7 @@ type MockStorage_TemporaryUploadURL_Call struct {
 // TemporaryUploadURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - opts storage.TemporaryUploadURLOptions
-func (_e *MockStorage_Expecter) TemporaryUploadURL(ctx interface{}, opts interface{}) *MockStorage_TemporaryUploadURL_Call {
+func (_e *MockStorage_Expecter) TemporaryUploadURL(ctx any, opts any) *MockStorage_TemporaryUploadURL_Call {
 	return &MockStorage_TemporaryUploadURL_Call{Call: _e.mock.On("TemporaryUploadURL", ctx, opts)}
 }
 
@@ -518,7 +527,7 @@ type MockStorage_Upload_Call struct {
 //   - r io.Reader
 //   - size int64
 //   - opts storage.UploadOptions
-func (_e *MockStorage_Expecter) Upload(ctx interface{}, objectKey interface{}, r interface{}, size interface{}, opts interface{}) *MockStorage_Upload_Call {
+func (_e *MockStorage_Expecter) Upload(ctx any, objectKey any, r any, size any, opts any) *MockStorage_Upload_Call {
 	return &MockStorage_Upload_Call{Call: _e.mock.On("Upload", ctx, objectKey, r, size, opts)}
 }
 

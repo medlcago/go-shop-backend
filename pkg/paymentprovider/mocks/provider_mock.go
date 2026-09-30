@@ -17,10 +17,19 @@ func NewMockProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockProvider {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockProvider{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockProvider_CancelPayment_Call struct {
 //   - ctx context.Context
 //   - paymentID string
 //   - idempotencyKey string
-func (_e *MockProvider_Expecter) CancelPayment(ctx interface{}, paymentID interface{}, idempotencyKey interface{}) *MockProvider_CancelPayment_Call {
+func (_e *MockProvider_Expecter) CancelPayment(ctx any, paymentID any, idempotencyKey any) *MockProvider_CancelPayment_Call {
 	return &MockProvider_CancelPayment_Call{Call: _e.mock.On("CancelPayment", ctx, paymentID, idempotencyKey)}
 }
 
@@ -138,7 +147,7 @@ type MockProvider_CreatePayment_Call struct {
 //   - ctx context.Context
 //   - req *paymentprovider.CreatePaymentRequest
 //   - idempotencyKey string
-func (_e *MockProvider_Expecter) CreatePayment(ctx interface{}, req interface{}, idempotencyKey interface{}) *MockProvider_CreatePayment_Call {
+func (_e *MockProvider_Expecter) CreatePayment(ctx any, req any, idempotencyKey any) *MockProvider_CreatePayment_Call {
 	return &MockProvider_CreatePayment_Call{Call: _e.mock.On("CreatePayment", ctx, req, idempotencyKey)}
 }
 
@@ -254,7 +263,7 @@ type MockProvider_ParseWebhook_Call struct {
 
 // ParseWebhook is a helper method to define mock.On call
 //   - body []byte
-func (_e *MockProvider_Expecter) ParseWebhook(body interface{}) *MockProvider_ParseWebhook_Call {
+func (_e *MockProvider_Expecter) ParseWebhook(body any) *MockProvider_ParseWebhook_Call {
 	return &MockProvider_ParseWebhook_Call{Call: _e.mock.On("ParseWebhook", body)}
 }
 

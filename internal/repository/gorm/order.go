@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/internal/repository/gorm/scopes"
@@ -87,13 +86,13 @@ func (o *orderRepository) GetListByOwner(
 	ctx context.Context,
 	userID *uuid.UUID,
 	sessionID uuid.UUID,
-	req dto.ListOrderRequest,
+	filter repository.ListOrderFilter,
 ) ([]*models.Order, int64, error) {
 	db := o.db.GetDB(ctx)
 
 	db = db.Scopes(
 		scopes.OrderOwner(userID, sessionID),
-		scopes.OrderStatus(req.Status),
+		scopes.OrderStatus(filter.Status),
 	)
 
 	var total int64
@@ -109,7 +108,7 @@ func (o *orderRepository) GetListByOwner(
 	err := db.
 		Scopes(
 			scopes.OrderWithRelations(),
-			scopes.Paginate(req.Limit, req.Offset),
+			scopes.Paginate(filter.Limit, filter.Offset),
 		).
 		Find(&orders).Error
 

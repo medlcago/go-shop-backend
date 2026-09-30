@@ -17,10 +17,19 @@ func NewMockCategoryService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCategoryService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCategoryService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -80,7 +89,7 @@ type MockCategoryService_ListCategories_Call struct {
 // ListCategories is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.ListCategoryRequest
-func (_e *MockCategoryService_Expecter) ListCategories(ctx interface{}, req interface{}) *MockCategoryService_ListCategories_Call {
+func (_e *MockCategoryService_Expecter) ListCategories(ctx any, req any) *MockCategoryService_ListCategories_Call {
 	return &MockCategoryService_ListCategories_Call{Call: _e.mock.On("ListCategories", ctx, req)}
 }
 

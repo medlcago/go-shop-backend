@@ -6,8 +6,8 @@ package mocks
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
+	"go-shop-backend/internal/repository"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -19,10 +19,19 @@ func NewMockWishlistRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockWishlistRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockWishlistRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockWishlistRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - wishlist *models.Wishlist
-func (_e *MockWishlistRepository_Expecter) Create(ctx interface{}, wishlist interface{}) *MockWishlistRepository_Create_Call {
+func (_e *MockWishlistRepository_Expecter) Create(ctx any, wishlist any) *MockWishlistRepository_Create_Call {
 	return &MockWishlistRepository_Create_Call{Call: _e.mock.On("Create", ctx, wishlist)}
 }
 
@@ -122,7 +131,7 @@ type MockWishlistRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockWishlistRepository_Expecter) Delete(ctx interface{}, id interface{}) *MockWishlistRepository_Delete_Call {
+func (_e *MockWishlistRepository_Expecter) Delete(ctx any, id any) *MockWishlistRepository_Delete_Call {
 	return &MockWishlistRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
 }
 
@@ -191,7 +200,7 @@ type MockWishlistRepository_GetByID_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - preload bool
-func (_e *MockWishlistRepository_Expecter) GetByID(ctx interface{}, id interface{}, preload interface{}) *MockWishlistRepository_GetByID_Call {
+func (_e *MockWishlistRepository_Expecter) GetByID(ctx any, id any, preload any) *MockWishlistRepository_GetByID_Call {
 	return &MockWishlistRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, preload)}
 }
 
@@ -265,7 +274,7 @@ type MockWishlistRepository_GetByShareToken_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - preload bool
-func (_e *MockWishlistRepository_Expecter) GetByShareToken(ctx interface{}, token interface{}, preload interface{}) *MockWishlistRepository_GetByShareToken_Call {
+func (_e *MockWishlistRepository_Expecter) GetByShareToken(ctx any, token any, preload any) *MockWishlistRepository_GetByShareToken_Call {
 	return &MockWishlistRepository_GetByShareToken_Call{Call: _e.mock.On("GetByShareToken", ctx, token, preload)}
 }
 
@@ -303,8 +312,8 @@ func (_c *MockWishlistRepository_GetByShareToken_Call) RunAndReturn(run func(ctx
 }
 
 // GetListByUser provides a mock function for the type MockWishlistRepository
-func (_mock *MockWishlistRepository) GetListByUser(ctx context.Context, userID uuid.UUID, req dto.ListWishlistRequest) ([]*models.Wishlist, int64, error) {
-	ret := _mock.Called(ctx, userID, req)
+func (_mock *MockWishlistRepository) GetListByUser(ctx context.Context, userID uuid.UUID, filter repository.ListWishlistFilter) ([]*models.Wishlist, int64, error) {
+	ret := _mock.Called(ctx, userID, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetListByUser")
@@ -313,23 +322,23 @@ func (_mock *MockWishlistRepository) GetListByUser(ctx context.Context, userID u
 	var r0 []*models.Wishlist
 	var r1 int64
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.ListWishlistRequest) ([]*models.Wishlist, int64, error)); ok {
-		return returnFunc(ctx, userID, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, repository.ListWishlistFilter) ([]*models.Wishlist, int64, error)); ok {
+		return returnFunc(ctx, userID, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, dto.ListWishlistRequest) []*models.Wishlist); ok {
-		r0 = returnFunc(ctx, userID, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, repository.ListWishlistFilter) []*models.Wishlist); ok {
+		r0 = returnFunc(ctx, userID, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.Wishlist)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, dto.ListWishlistRequest) int64); ok {
-		r1 = returnFunc(ctx, userID, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, repository.ListWishlistFilter) int64); ok {
+		r1 = returnFunc(ctx, userID, filter)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, uuid.UUID, dto.ListWishlistRequest) error); ok {
-		r2 = returnFunc(ctx, userID, req)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, uuid.UUID, repository.ListWishlistFilter) error); ok {
+		r2 = returnFunc(ctx, userID, filter)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -344,12 +353,12 @@ type MockWishlistRepository_GetListByUser_Call struct {
 // GetListByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-//   - req dto.ListWishlistRequest
-func (_e *MockWishlistRepository_Expecter) GetListByUser(ctx interface{}, userID interface{}, req interface{}) *MockWishlistRepository_GetListByUser_Call {
-	return &MockWishlistRepository_GetListByUser_Call{Call: _e.mock.On("GetListByUser", ctx, userID, req)}
+//   - filter repository.ListWishlistFilter
+func (_e *MockWishlistRepository_Expecter) GetListByUser(ctx any, userID any, filter any) *MockWishlistRepository_GetListByUser_Call {
+	return &MockWishlistRepository_GetListByUser_Call{Call: _e.mock.On("GetListByUser", ctx, userID, filter)}
 }
 
-func (_c *MockWishlistRepository_GetListByUser_Call) Run(run func(ctx context.Context, userID uuid.UUID, req dto.ListWishlistRequest)) *MockWishlistRepository_GetListByUser_Call {
+func (_c *MockWishlistRepository_GetListByUser_Call) Run(run func(ctx context.Context, userID uuid.UUID, filter repository.ListWishlistFilter)) *MockWishlistRepository_GetListByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -359,9 +368,9 @@ func (_c *MockWishlistRepository_GetListByUser_Call) Run(run func(ctx context.Co
 		if args[1] != nil {
 			arg1 = args[1].(uuid.UUID)
 		}
-		var arg2 dto.ListWishlistRequest
+		var arg2 repository.ListWishlistFilter
 		if args[2] != nil {
-			arg2 = args[2].(dto.ListWishlistRequest)
+			arg2 = args[2].(repository.ListWishlistFilter)
 		}
 		run(
 			arg0,
@@ -377,7 +386,7 @@ func (_c *MockWishlistRepository_GetListByUser_Call) Return(wishlists []*models.
 	return _c
 }
 
-func (_c *MockWishlistRepository_GetListByUser_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, req dto.ListWishlistRequest) ([]*models.Wishlist, int64, error)) *MockWishlistRepository_GetListByUser_Call {
+func (_c *MockWishlistRepository_GetListByUser_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, filter repository.ListWishlistFilter) ([]*models.Wishlist, int64, error)) *MockWishlistRepository_GetListByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -407,7 +416,7 @@ type MockWishlistRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - wishlist *models.Wishlist
-func (_e *MockWishlistRepository_Expecter) Update(ctx interface{}, wishlist interface{}) *MockWishlistRepository_Update_Call {
+func (_e *MockWishlistRepository_Expecter) Update(ctx any, wishlist any) *MockWishlistRepository_Update_Call {
 	return &MockWishlistRepository_Update_Call{Call: _e.mock.On("Update", ctx, wishlist)}
 }
 

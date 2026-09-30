@@ -18,10 +18,19 @@ func NewMockOrderTask(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrderTask {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrderTask{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockOrderTask_EnqueueCancelOrder_Call struct {
 //   - ctx context.Context
 //   - payload tasks.CancelOrderPayload
 //   - delay time.Duration
-func (_e *MockOrderTask_Expecter) EnqueueCancelOrder(ctx interface{}, payload interface{}, delay interface{}) *MockOrderTask_EnqueueCancelOrder_Call {
+func (_e *MockOrderTask_Expecter) EnqueueCancelOrder(ctx any, payload any, delay any) *MockOrderTask_EnqueueCancelOrder_Call {
 	return &MockOrderTask_EnqueueCancelOrder_Call{Call: _e.mock.On("EnqueueCancelOrder", ctx, payload, delay)}
 }
 

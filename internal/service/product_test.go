@@ -118,6 +118,13 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 		OrderDesc: false,
 	}
 
+	filter := repository.ListProductFilter{
+		Limit:     req.Limit,
+		Offset:    req.Offset,
+		OrderBy:   req.OrderBy,
+		OrderDesc: req.OrderDesc,
+	}
+
 	products := []*models.Product{
 		{
 			Name:  "Product 1",
@@ -158,7 +165,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 		},
 	}
 
-	suite.productRepo.EXPECT().ListProducts(suite.ctx, req).
+	suite.productRepo.EXPECT().ListProducts(suite.ctx, filter).
 		Return(products, 2, nil).Once()
 
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
@@ -188,6 +195,14 @@ func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 		OrderDesc:  true,
 	}
 
+	filter := repository.ListProductFilter{
+		Limit:      req.Limit,
+		Offset:     req.Offset,
+		CategoryID: req.CategoryID,
+		OrderBy:    req.OrderBy,
+		OrderDesc:  req.OrderDesc,
+	}
+
 	products := []*models.Product{
 		{
 			Name: "Category Product",
@@ -207,7 +222,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 		},
 	}
 
-	suite.productRepo.EXPECT().ListProducts(suite.ctx, req).
+	suite.productRepo.EXPECT().ListProducts(suite.ctx, filter).
 		Return(products, 1, nil).Once()
 
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
@@ -228,7 +243,12 @@ func (suite *ProductServiceTestSuite) TestListProducts_EmptyResult() {
 		Offset: 1000,
 	}
 
-	suite.productRepo.EXPECT().ListProducts(suite.ctx, req).
+	filter := repository.ListProductFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+
+	suite.productRepo.EXPECT().ListProducts(suite.ctx, filter).
 		Return([]*models.Product{}, 0, nil).Once()
 
 	suite.uploadManager.AssertNotCalled(suite.T(), "PublicURL")
@@ -247,8 +267,13 @@ func (suite *ProductServiceTestSuite) TestListProducts_RepositoryError() {
 		Offset: 0,
 	}
 
+	filter := repository.ListProductFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+
 	repoErr := errors.New("query execution failed")
-	suite.productRepo.EXPECT().ListProducts(suite.ctx, req).
+	suite.productRepo.EXPECT().ListProducts(suite.ctx, filter).
 		Return(nil, 0, repoErr).Once()
 
 	response, total, err := suite.productService.ListProducts(suite.ctx, req)

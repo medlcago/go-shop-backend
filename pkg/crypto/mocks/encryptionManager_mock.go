@@ -16,10 +16,19 @@ func NewMockEncryptionManager(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockEncryptionManager {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockEncryptionManager{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -71,7 +80,7 @@ type MockEncryptionManager_Decrypt_Call struct {
 // Decrypt is a helper method to define mock.On call
 //   - ctx context.Context
 //   - encrypted string
-func (_e *MockEncryptionManager_Expecter) Decrypt(ctx interface{}, encrypted interface{}) *MockEncryptionManager_Decrypt_Call {
+func (_e *MockEncryptionManager_Expecter) Decrypt(ctx any, encrypted any) *MockEncryptionManager_Decrypt_Call {
 	return &MockEncryptionManager_Decrypt_Call{Call: _e.mock.On("Decrypt", ctx, encrypted)}
 }
 
@@ -137,7 +146,7 @@ type MockEncryptionManager_Encrypt_Call struct {
 // Encrypt is a helper method to define mock.On call
 //   - ctx context.Context
 //   - plaintext string
-func (_e *MockEncryptionManager_Expecter) Encrypt(ctx interface{}, plaintext interface{}) *MockEncryptionManager_Encrypt_Call {
+func (_e *MockEncryptionManager_Expecter) Encrypt(ctx any, plaintext any) *MockEncryptionManager_Encrypt_Call {
 	return &MockEncryptionManager_Encrypt_Call{Call: _e.mock.On("Encrypt", ctx, plaintext)}
 }
 

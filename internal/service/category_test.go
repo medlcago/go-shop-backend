@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
+	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	"testing"
 
@@ -41,6 +42,11 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 		Offset: 0,
 	}
 
+	filter := repository.ListCategoryFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+
 	categories := []*models.Category{
 		{
 			Name: "Electronics",
@@ -50,7 +56,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_RootCategories
 		},
 	}
 
-	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, filter).
 		Return(categories, 5, nil).Once()
 
 	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)
@@ -72,6 +78,12 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 		Offset: 0,
 	}
 
+	filter := repository.ListCategoryFilter{
+		ID:     req.ID,
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+
 	categories := []*models.Category{
 		{
 			Name:     "Laptops",
@@ -83,7 +95,7 @@ func (suite *CategoryServiceTestSuite) TestListCategories_Success_Subcategories(
 		},
 	}
 
-	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, filter).
 		Return(categories, 2, nil).Once()
 
 	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)
@@ -104,8 +116,13 @@ func (suite *CategoryServiceTestSuite) TestListCategories_RepositoryError() {
 		Offset: 0,
 	}
 
+	filter := repository.ListCategoryFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+
 	repoErr := errors.New("database connection failed")
-	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, filter).
 		Return(nil, 0, repoErr).Once()
 
 	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)
@@ -122,7 +139,12 @@ func (suite *CategoryServiceTestSuite) TestListCategories_EmptyResult() {
 		Offset: 100,
 	}
 
-	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, req).
+	filter := repository.ListCategoryFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+
+	suite.categoryRepo.EXPECT().ListCategories(suite.ctx, filter).
 		Return([]*models.Category{}, 0, nil).Once()
 
 	response, total, err := suite.categoryService.ListCategories(suite.ctx, req)

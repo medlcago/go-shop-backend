@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 
 	"github.com/google/uuid"
@@ -20,17 +19,17 @@ type UserRepository interface {
 
 type ProductRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Product, error)
-	ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*models.Product, int64, error)
+	ListProducts(ctx context.Context, filter ListProductFilter) ([]*models.Product, int64, error)
 	Create(ctx context.Context, product *models.Product) error
 	Update(ctx context.Context, product *models.Product) error
 	BulkUpsert(ctx context.Context, products []*models.Product) error
 	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 	GetByIDsForUpdate(ctx context.Context, ids []uuid.UUID) ([]*models.Product, error)
-	Search(ctx context.Context, req dto.SearchProductRequest) ([]*models.Product, int64, error)
+	Search(ctx context.Context, filter SearchProductFilter) ([]*models.Product, int64, error)
 }
 
 type CategoryRepository interface {
-	ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error)
+	ListCategories(ctx context.Context, filter ListCategoryFilter) ([]*models.Category, int64, error)
 }
 
 type UploadRepository interface {
@@ -44,7 +43,7 @@ type OrderRepository interface {
 	Update(ctx context.Context, order *models.Order) error
 	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Order, error)
 	GetByOwner(ctx context.Context, orderID uuid.UUID, userID *uuid.UUID, sessionID uuid.UUID, preload bool) (*models.Order, error)
-	GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, req dto.ListOrderRequest) ([]*models.Order, int64, error)
+	GetListByOwner(ctx context.Context, userID *uuid.UUID, sessionID uuid.UUID, filter ListOrderFilter) ([]*models.Order, int64, error)
 	GetByPayment(ctx context.Context, providerName string, paymentID string, preload bool) (*models.Order, error)
 }
 
@@ -60,7 +59,7 @@ type WishlistRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID, preload bool) (*models.Wishlist, error)
 	GetByShareToken(ctx context.Context, token string, preload bool) (*models.Wishlist, error)
-	GetListByUser(ctx context.Context, userID uuid.UUID, req dto.ListWishlistRequest) ([]*models.Wishlist, int64, error)
+	GetListByUser(ctx context.Context, userID uuid.UUID, filter ListWishlistFilter) ([]*models.Wishlist, int64, error)
 }
 
 type WishlistItemRepository interface {

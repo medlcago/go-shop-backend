@@ -18,10 +18,19 @@ func NewMockOrderItemRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrderItemRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrderItemRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockOrderItemRepository_Clear_Call struct {
 // Clear is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orderID uuid.UUID
-func (_e *MockOrderItemRepository_Expecter) Clear(ctx interface{}, orderID interface{}) *MockOrderItemRepository_Clear_Call {
+func (_e *MockOrderItemRepository_Expecter) Clear(ctx any, orderID any) *MockOrderItemRepository_Clear_Call {
 	return &MockOrderItemRepository_Clear_Call{Call: _e.mock.On("Clear", ctx, orderID)}
 }
 
@@ -122,7 +131,7 @@ type MockOrderItemRepository_RemoveItem_Call struct {
 //   - ctx context.Context
 //   - orderID uuid.UUID
 //   - itemID uuid.UUID
-func (_e *MockOrderItemRepository_Expecter) RemoveItem(ctx interface{}, orderID interface{}, itemID interface{}) *MockOrderItemRepository_RemoveItem_Call {
+func (_e *MockOrderItemRepository_Expecter) RemoveItem(ctx any, orderID any, itemID any) *MockOrderItemRepository_RemoveItem_Call {
 	return &MockOrderItemRepository_RemoveItem_Call{Call: _e.mock.On("RemoveItem", ctx, orderID, itemID)}
 }
 
@@ -184,7 +193,7 @@ type MockOrderItemRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orderItem *models.OrderItem
-func (_e *MockOrderItemRepository_Expecter) Upsert(ctx interface{}, orderItem interface{}) *MockOrderItemRepository_Upsert_Call {
+func (_e *MockOrderItemRepository_Expecter) Upsert(ctx any, orderItem any) *MockOrderItemRepository_Upsert_Call {
 	return &MockOrderItemRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, orderItem)}
 }
 

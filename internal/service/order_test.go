@@ -212,9 +212,19 @@ func (suite *OrderServiceTestSuite) TestGetOrders_Success() {
 			Status:    models.OrderStatusCanceled,
 		},
 	}
-	req := dto.ListOrderRequest{Limit: 10, Offset: 0, Status: string(models.OrderStatusCanceled)}
+	req := dto.ListOrderRequest{
+		Limit:  10,
+		Offset: 0,
+		Status: string(models.OrderStatusCanceled),
+	}
 
-	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, req).
+	filter := repository.ListOrderFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+		Status: req.Status,
+	}
+
+	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, filter).
 		Return(orders, int64(5), nil).Once()
 
 	suite.publicURLBuilder.EXPECT().PublicURL(mock.AnythingOfType("string")).
@@ -232,8 +242,9 @@ func (suite *OrderServiceTestSuite) TestGetOrders_Success() {
 
 func (suite *OrderServiceTestSuite) TestGetOrders_Empty() {
 	req := dto.ListOrderRequest{Limit: 10, Offset: 0}
+	filter := repository.ListOrderFilter{Limit: req.Limit, Offset: req.Offset}
 
-	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, req).
+	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, filter).
 		Return([]*models.Order{}, int64(0), nil).Once()
 
 	response, total, err := suite.orderService.GetOrders(suite.ctx, &suite.userID, suite.sessionID, req)
@@ -245,9 +256,10 @@ func (suite *OrderServiceTestSuite) TestGetOrders_Empty() {
 
 func (suite *OrderServiceTestSuite) TestGetOrders_RepositoryError() {
 	req := dto.ListOrderRequest{}
+	filter := repository.ListOrderFilter{}
 
 	dbError := errors.New("db error")
-	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, req).
+	suite.orderRepo.EXPECT().GetListByOwner(suite.ctx, &suite.userID, suite.sessionID, filter).
 		Return(nil, int64(0), dbError).Once()
 
 	response, total, err := suite.orderService.GetOrders(suite.ctx, &suite.userID, suite.sessionID, req)

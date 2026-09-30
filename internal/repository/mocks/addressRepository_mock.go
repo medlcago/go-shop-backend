@@ -18,10 +18,19 @@ func NewMockAddressRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockAddressRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockAddressRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockAddressRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - address *models.Address
-func (_e *MockAddressRepository_Expecter) Create(ctx interface{}, address interface{}) *MockAddressRepository_Create_Call {
+func (_e *MockAddressRepository_Expecter) Create(ctx any, address any) *MockAddressRepository_Create_Call {
 	return &MockAddressRepository_Create_Call{Call: _e.mock.On("Create", ctx, address)}
 }
 
@@ -122,7 +131,7 @@ type MockAddressRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressRepository_Expecter) Delete(ctx interface{}, id interface{}, userID interface{}) *MockAddressRepository_Delete_Call {
+func (_e *MockAddressRepository_Expecter) Delete(ctx any, id any, userID any) *MockAddressRepository_Delete_Call {
 	return &MockAddressRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id, userID)}
 }
 
@@ -196,7 +205,7 @@ type MockAddressRepository_GetByID_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressRepository_Expecter) GetByID(ctx interface{}, id interface{}, userID interface{}) *MockAddressRepository_GetByID_Call {
+func (_e *MockAddressRepository_Expecter) GetByID(ctx any, id any, userID any) *MockAddressRepository_GetByID_Call {
 	return &MockAddressRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, userID)}
 }
 
@@ -269,7 +278,7 @@ type MockAddressRepository_ListByUser_Call struct {
 // ListByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockAddressRepository_Expecter) ListByUser(ctx interface{}, userID interface{}) *MockAddressRepository_ListByUser_Call {
+func (_e *MockAddressRepository_Expecter) ListByUser(ctx any, userID any) *MockAddressRepository_ListByUser_Call {
 	return &MockAddressRepository_ListByUser_Call{Call: _e.mock.On("ListByUser", ctx, userID)}
 }
 
@@ -327,7 +336,7 @@ type MockAddressRepository_SetDefault_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressRepository_Expecter) SetDefault(ctx interface{}, id interface{}, userID interface{}) *MockAddressRepository_SetDefault_Call {
+func (_e *MockAddressRepository_Expecter) SetDefault(ctx any, id any, userID any) *MockAddressRepository_SetDefault_Call {
 	return &MockAddressRepository_SetDefault_Call{Call: _e.mock.On("SetDefault", ctx, id, userID)}
 }
 
@@ -389,7 +398,7 @@ type MockAddressRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - address *models.Address
-func (_e *MockAddressRepository_Expecter) Update(ctx interface{}, address interface{}) *MockAddressRepository_Update_Call {
+func (_e *MockAddressRepository_Expecter) Update(ctx any, address any) *MockAddressRepository_Update_Call {
 	return &MockAddressRepository_Update_Call{Call: _e.mock.On("Update", ctx, address)}
 }
 

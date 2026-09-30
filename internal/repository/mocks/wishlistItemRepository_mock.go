@@ -18,10 +18,19 @@ func NewMockWishlistItemRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockWishlistItemRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockWishlistItemRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockWishlistItemRepository_AddItem_Call struct {
 // AddItem is a helper method to define mock.On call
 //   - ctx context.Context
 //   - item *models.WishlistItem
-func (_e *MockWishlistItemRepository_Expecter) AddItem(ctx interface{}, item interface{}) *MockWishlistItemRepository_AddItem_Call {
+func (_e *MockWishlistItemRepository_Expecter) AddItem(ctx any, item any) *MockWishlistItemRepository_AddItem_Call {
 	return &MockWishlistItemRepository_AddItem_Call{Call: _e.mock.On("AddItem", ctx, item)}
 }
 
@@ -133,7 +142,7 @@ type MockWishlistItemRepository_GetItem_Call struct {
 //   - ctx context.Context
 //   - wishlistID uuid.UUID
 //   - itemID uuid.UUID
-func (_e *MockWishlistItemRepository_Expecter) GetItem(ctx interface{}, wishlistID interface{}, itemID interface{}) *MockWishlistItemRepository_GetItem_Call {
+func (_e *MockWishlistItemRepository_Expecter) GetItem(ctx any, wishlistID any, itemID any) *MockWishlistItemRepository_GetItem_Call {
 	return &MockWishlistItemRepository_GetItem_Call{Call: _e.mock.On("GetItem", ctx, wishlistID, itemID)}
 }
 
@@ -205,7 +214,7 @@ type MockWishlistItemRepository_ProductExistsInWishlist_Call struct {
 //   - ctx context.Context
 //   - wishlistID uuid.UUID
 //   - productID uuid.UUID
-func (_e *MockWishlistItemRepository_Expecter) ProductExistsInWishlist(ctx interface{}, wishlistID interface{}, productID interface{}) *MockWishlistItemRepository_ProductExistsInWishlist_Call {
+func (_e *MockWishlistItemRepository_Expecter) ProductExistsInWishlist(ctx any, wishlistID any, productID any) *MockWishlistItemRepository_ProductExistsInWishlist_Call {
 	return &MockWishlistItemRepository_ProductExistsInWishlist_Call{Call: _e.mock.On("ProductExistsInWishlist", ctx, wishlistID, productID)}
 }
 
@@ -268,7 +277,7 @@ type MockWishlistItemRepository_RemoveItem_Call struct {
 //   - ctx context.Context
 //   - wishlistID uuid.UUID
 //   - itemID uuid.UUID
-func (_e *MockWishlistItemRepository_Expecter) RemoveItem(ctx interface{}, wishlistID interface{}, itemID interface{}) *MockWishlistItemRepository_RemoveItem_Call {
+func (_e *MockWishlistItemRepository_Expecter) RemoveItem(ctx any, wishlistID any, itemID any) *MockWishlistItemRepository_RemoveItem_Call {
 	return &MockWishlistItemRepository_RemoveItem_Call{Call: _e.mock.On("RemoveItem", ctx, wishlistID, itemID)}
 }
 
@@ -330,7 +339,7 @@ type MockWishlistItemRepository_UpdateItem_Call struct {
 // UpdateItem is a helper method to define mock.On call
 //   - ctx context.Context
 //   - wishlistItem *models.WishlistItem
-func (_e *MockWishlistItemRepository_Expecter) UpdateItem(ctx interface{}, wishlistItem interface{}) *MockWishlistItemRepository_UpdateItem_Call {
+func (_e *MockWishlistItemRepository_Expecter) UpdateItem(ctx any, wishlistItem any) *MockWishlistItemRepository_UpdateItem_Call {
 	return &MockWishlistItemRepository_UpdateItem_Call{Call: _e.mock.On("UpdateItem", ctx, wishlistItem)}
 }
 

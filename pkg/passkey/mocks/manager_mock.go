@@ -17,10 +17,19 @@ func NewMockManager(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockManager {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockManager{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -79,7 +88,7 @@ type MockManager_BeginDiscoverableLogin_Call struct {
 
 // BeginDiscoverableLogin is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockManager_Expecter) BeginDiscoverableLogin(ctx interface{}) *MockManager_BeginDiscoverableLogin_Call {
+func (_e *MockManager_Expecter) BeginDiscoverableLogin(ctx any) *MockManager_BeginDiscoverableLogin_Call {
 	return &MockManager_BeginDiscoverableLogin_Call{Call: _e.mock.On("BeginDiscoverableLogin", ctx)}
 }
 
@@ -96,8 +105,8 @@ func (_c *MockManager_BeginDiscoverableLogin_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockManager_BeginDiscoverableLogin_Call) Return(v *passkey.CredentialAssertion, s string, err error) *MockManager_BeginDiscoverableLogin_Call {
-	_c.Call.Return(v, s, err)
+func (_c *MockManager_BeginDiscoverableLogin_Call) Return(credentialAssertion *passkey.CredentialAssertion, s string, err error) *MockManager_BeginDiscoverableLogin_Call {
+	_c.Call.Return(credentialAssertion, s, err)
 	return _c
 }
 
@@ -148,7 +157,7 @@ type MockManager_BeginRegistration_Call struct {
 // BeginRegistration is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user passkey.User
-func (_e *MockManager_Expecter) BeginRegistration(ctx interface{}, user interface{}) *MockManager_BeginRegistration_Call {
+func (_e *MockManager_Expecter) BeginRegistration(ctx any, user any) *MockManager_BeginRegistration_Call {
 	return &MockManager_BeginRegistration_Call{Call: _e.mock.On("BeginRegistration", ctx, user)}
 }
 
@@ -170,8 +179,8 @@ func (_c *MockManager_BeginRegistration_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MockManager_BeginRegistration_Call) Return(v *passkey.CredentialCreation, s string, err error) *MockManager_BeginRegistration_Call {
-	_c.Call.Return(v, s, err)
+func (_c *MockManager_BeginRegistration_Call) Return(credentialCreation *passkey.CredentialCreation, s string, err error) *MockManager_BeginRegistration_Call {
+	_c.Call.Return(credentialCreation, s, err)
 	return _c
 }
 
@@ -226,7 +235,7 @@ type MockManager_FinishDiscoverableLogin_Call struct {
 //   - handler passkey.DiscoverableUserHandler
 //   - sessionID string
 //   - data []byte
-func (_e *MockManager_Expecter) FinishDiscoverableLogin(ctx interface{}, handler interface{}, sessionID interface{}, data interface{}) *MockManager_FinishDiscoverableLogin_Call {
+func (_e *MockManager_Expecter) FinishDiscoverableLogin(ctx any, handler any, sessionID any, data any) *MockManager_FinishDiscoverableLogin_Call {
 	return &MockManager_FinishDiscoverableLogin_Call{Call: _e.mock.On("FinishDiscoverableLogin", ctx, handler, sessionID, data)}
 }
 
@@ -258,8 +267,8 @@ func (_c *MockManager_FinishDiscoverableLogin_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockManager_FinishDiscoverableLogin_Call) Return(v passkey.User, v1 *passkey.Credential, err error) *MockManager_FinishDiscoverableLogin_Call {
-	_c.Call.Return(v, v1, err)
+func (_c *MockManager_FinishDiscoverableLogin_Call) Return(user passkey.User, credential *passkey.Credential, err error) *MockManager_FinishDiscoverableLogin_Call {
+	_c.Call.Return(user, credential, err)
 	return _c
 }
 
@@ -306,7 +315,7 @@ type MockManager_FinishRegistration_Call struct {
 //   - user passkey.User
 //   - sessionID string
 //   - data []byte
-func (_e *MockManager_Expecter) FinishRegistration(ctx interface{}, user interface{}, sessionID interface{}, data interface{}) *MockManager_FinishRegistration_Call {
+func (_e *MockManager_Expecter) FinishRegistration(ctx any, user any, sessionID any, data any) *MockManager_FinishRegistration_Call {
 	return &MockManager_FinishRegistration_Call{Call: _e.mock.On("FinishRegistration", ctx, user, sessionID, data)}
 }
 
@@ -338,8 +347,8 @@ func (_c *MockManager_FinishRegistration_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockManager_FinishRegistration_Call) Return(v *passkey.Credential, err error) *MockManager_FinishRegistration_Call {
-	_c.Call.Return(v, err)
+func (_c *MockManager_FinishRegistration_Call) Return(credential *passkey.Credential, err error) *MockManager_FinishRegistration_Call {
+	_c.Call.Return(credential, err)
 	return _c
 }
 

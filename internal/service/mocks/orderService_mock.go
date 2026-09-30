@@ -19,10 +19,19 @@ func NewMockOrderService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrderService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrderService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -79,7 +88,7 @@ type MockOrderService_AddItem_Call struct {
 //   - sessionID uuid.UUID
 //   - orderID uuid.UUID
 //   - req dto.AddOrderItemRequest
-func (_e *MockOrderService_Expecter) AddItem(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}, req interface{}) *MockOrderService_AddItem_Call {
+func (_e *MockOrderService_Expecter) AddItem(ctx any, userID any, sessionID any, orderID any, req any) *MockOrderService_AddItem_Call {
 	return &MockOrderService_AddItem_Call{Call: _e.mock.On("AddItem", ctx, userID, sessionID, orderID, req)}
 }
 
@@ -152,7 +161,7 @@ type MockOrderService_CancelOrder_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - orderID uuid.UUID
-func (_e *MockOrderService_Expecter) CancelOrder(ctx interface{}, userID interface{}, orderID interface{}) *MockOrderService_CancelOrder_Call {
+func (_e *MockOrderService_Expecter) CancelOrder(ctx any, userID any, orderID any) *MockOrderService_CancelOrder_Call {
 	return &MockOrderService_CancelOrder_Call{Call: _e.mock.On("CancelOrder", ctx, userID, orderID)}
 }
 
@@ -228,7 +237,7 @@ type MockOrderService_Checkout_Call struct {
 //   - sessionID uuid.UUID
 //   - orderID uuid.UUID
 //   - req dto.OrderCheckoutRequest
-func (_e *MockOrderService_Expecter) Checkout(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}, req interface{}) *MockOrderService_Checkout_Call {
+func (_e *MockOrderService_Expecter) Checkout(ctx any, userID any, sessionID any, orderID any, req any) *MockOrderService_Checkout_Call {
 	return &MockOrderService_Checkout_Call{Call: _e.mock.On("Checkout", ctx, userID, sessionID, orderID, req)}
 }
 
@@ -313,7 +322,7 @@ type MockOrderService_Clear_Call struct {
 //   - userID *uuid.UUID
 //   - sessionID uuid.UUID
 //   - orderID uuid.UUID
-func (_e *MockOrderService_Expecter) Clear(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}) *MockOrderService_Clear_Call {
+func (_e *MockOrderService_Expecter) Clear(ctx any, userID any, sessionID any, orderID any) *MockOrderService_Clear_Call {
 	return &MockOrderService_Clear_Call{Call: _e.mock.On("Clear", ctx, userID, sessionID, orderID)}
 }
 
@@ -392,7 +401,7 @@ type MockOrderService_CreateOrder_Call struct {
 //   - ctx context.Context
 //   - userID *uuid.UUID
 //   - sessionID uuid.UUID
-func (_e *MockOrderService_Expecter) CreateOrder(ctx interface{}, userID interface{}, sessionID interface{}) *MockOrderService_CreateOrder_Call {
+func (_e *MockOrderService_Expecter) CreateOrder(ctx any, userID any, sessionID any) *MockOrderService_CreateOrder_Call {
 	return &MockOrderService_CreateOrder_Call{Call: _e.mock.On("CreateOrder", ctx, userID, sessionID)}
 }
 
@@ -467,7 +476,7 @@ type MockOrderService_GetOrder_Call struct {
 //   - userID *uuid.UUID
 //   - sessionID uuid.UUID
 //   - orderID uuid.UUID
-func (_e *MockOrderService_Expecter) GetOrder(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}) *MockOrderService_GetOrder_Call {
+func (_e *MockOrderService_Expecter) GetOrder(ctx any, userID any, sessionID any, orderID any) *MockOrderService_GetOrder_Call {
 	return &MockOrderService_GetOrder_Call{Call: _e.mock.On("GetOrder", ctx, userID, sessionID, orderID)}
 }
 
@@ -553,7 +562,7 @@ type MockOrderService_GetOrders_Call struct {
 //   - userID *uuid.UUID
 //   - sessionID uuid.UUID
 //   - req dto.ListOrderRequest
-func (_e *MockOrderService_Expecter) GetOrders(ctx interface{}, userID interface{}, sessionID interface{}, req interface{}) *MockOrderService_GetOrders_Call {
+func (_e *MockOrderService_Expecter) GetOrders(ctx any, userID any, sessionID any, req any) *MockOrderService_GetOrders_Call {
 	return &MockOrderService_GetOrders_Call{Call: _e.mock.On("GetOrders", ctx, userID, sessionID, req)}
 }
 
@@ -634,7 +643,7 @@ type MockOrderService_RemoveItem_Call struct {
 //   - sessionID uuid.UUID
 //   - orderID uuid.UUID
 //   - itemID uuid.UUID
-func (_e *MockOrderService_Expecter) RemoveItem(ctx interface{}, userID interface{}, sessionID interface{}, orderID interface{}, itemID interface{}) *MockOrderService_RemoveItem_Call {
+func (_e *MockOrderService_Expecter) RemoveItem(ctx any, userID any, sessionID any, orderID any, itemID any) *MockOrderService_RemoveItem_Call {
 	return &MockOrderService_RemoveItem_Call{Call: _e.mock.On("RemoveItem", ctx, userID, sessionID, orderID, itemID)}
 }
 
@@ -707,7 +716,7 @@ type MockOrderService_UpdateOrderStatus_Call struct {
 //   - ctx context.Context
 //   - orderID uuid.UUID
 //   - status models.OrderStatus
-func (_e *MockOrderService_Expecter) UpdateOrderStatus(ctx interface{}, orderID interface{}, status interface{}) *MockOrderService_UpdateOrderStatus_Call {
+func (_e *MockOrderService_Expecter) UpdateOrderStatus(ctx any, orderID any, status any) *MockOrderService_UpdateOrderStatus_Call {
 	return &MockOrderService_UpdateOrderStatus_Call{Call: _e.mock.On("UpdateOrderStatus", ctx, orderID, status)}
 }
 

@@ -18,10 +18,19 @@ func NewMockUserPaymentMethodRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockUserPaymentMethodRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockUserPaymentMethodRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockUserPaymentMethodRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockUserPaymentMethodRepository_Expecter) Delete(ctx interface{}, id interface{}, userID interface{}) *MockUserPaymentMethodRepository_Delete_Call {
+func (_e *MockUserPaymentMethodRepository_Expecter) Delete(ctx any, id any, userID any) *MockUserPaymentMethodRepository_Delete_Call {
 	return &MockUserPaymentMethodRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id, userID)}
 }
 
@@ -138,7 +147,7 @@ type MockUserPaymentMethodRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUserPaymentMethodRepository_Expecter) GetByID(ctx interface{}, id interface{}) *MockUserPaymentMethodRepository_GetByID_Call {
+func (_e *MockUserPaymentMethodRepository_Expecter) GetByID(ctx any, id any) *MockUserPaymentMethodRepository_GetByID_Call {
 	return &MockUserPaymentMethodRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
 }
 
@@ -212,7 +221,7 @@ type MockUserPaymentMethodRepository_GetListByUser_Call struct {
 // GetListByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockUserPaymentMethodRepository_Expecter) GetListByUser(ctx interface{}, userID interface{}) *MockUserPaymentMethodRepository_GetListByUser_Call {
+func (_e *MockUserPaymentMethodRepository_Expecter) GetListByUser(ctx any, userID any) *MockUserPaymentMethodRepository_GetListByUser_Call {
 	return &MockUserPaymentMethodRepository_GetListByUser_Call{Call: _e.mock.On("GetListByUser", ctx, userID)}
 }
 
@@ -270,7 +279,7 @@ type MockUserPaymentMethodRepository_SetDefault_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockUserPaymentMethodRepository_Expecter) SetDefault(ctx interface{}, id interface{}, userID interface{}) *MockUserPaymentMethodRepository_SetDefault_Call {
+func (_e *MockUserPaymentMethodRepository_Expecter) SetDefault(ctx any, id any, userID any) *MockUserPaymentMethodRepository_SetDefault_Call {
 	return &MockUserPaymentMethodRepository_SetDefault_Call{Call: _e.mock.On("SetDefault", ctx, id, userID)}
 }
 
@@ -332,7 +341,7 @@ type MockUserPaymentMethodRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - paymentMethod *models.UserPaymentMethod
-func (_e *MockUserPaymentMethodRepository_Expecter) Upsert(ctx interface{}, paymentMethod interface{}) *MockUserPaymentMethodRepository_Upsert_Call {
+func (_e *MockUserPaymentMethodRepository_Expecter) Upsert(ctx any, paymentMethod any) *MockUserPaymentMethodRepository_Upsert_Call {
 	return &MockUserPaymentMethodRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, paymentMethod)}
 }
 

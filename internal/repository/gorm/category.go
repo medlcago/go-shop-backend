@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
 	"go-shop-backend/internal/repository"
 	"go-shop-backend/internal/repository/gorm/scopes"
@@ -19,12 +18,12 @@ func NewCategoryRepository(db database.Provider) *categoryRepository {
 	}
 }
 
-func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error) {
+func (c *categoryRepository) ListCategories(ctx context.Context, filter repository.ListCategoryFilter) ([]*models.Category, int64, error) {
 	db := c.db.GetDB(ctx)
 
 	db = db.Model(&models.Category{}).
 		Scopes(
-			scopes.CategoryWithParentID(req.ID),
+			scopes.CategoryWithParentID(filter.ID),
 		)
 
 	var total int64
@@ -39,7 +38,7 @@ func (c *categoryRepository) ListCategories(ctx context.Context, req dto.ListCat
 	var categories []*models.Category
 	if err := db.
 		Scopes(
-			scopes.Paginate(req.Limit, req.Offset),
+			scopes.Paginate(filter.Limit, filter.Offset),
 		).
 		Select(`
 		categories.*,

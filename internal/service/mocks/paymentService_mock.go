@@ -18,10 +18,19 @@ func NewMockPaymentService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockPaymentService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockPaymentService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -76,7 +85,7 @@ type MockPaymentService_CreatePayment_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.CreatePaymentRequest
-func (_e *MockPaymentService_Expecter) CreatePayment(ctx interface{}, userID interface{}, req interface{}) *MockPaymentService_CreatePayment_Call {
+func (_e *MockPaymentService_Expecter) CreatePayment(ctx any, userID any, req any) *MockPaymentService_CreatePayment_Call {
 	return &MockPaymentService_CreatePayment_Call{Call: _e.mock.On("CreatePayment", ctx, userID, req)}
 }
 
@@ -139,7 +148,7 @@ type MockPaymentService_DeletePaymentMethod_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockPaymentService_Expecter) DeletePaymentMethod(ctx interface{}, id interface{}, userID interface{}) *MockPaymentService_DeletePaymentMethod_Call {
+func (_e *MockPaymentService_Expecter) DeletePaymentMethod(ctx any, id any, userID any) *MockPaymentService_DeletePaymentMethod_Call {
 	return &MockPaymentService_DeletePaymentMethod_Call{Call: _e.mock.On("DeletePaymentMethod", ctx, id, userID)}
 }
 
@@ -218,7 +227,7 @@ type MockPaymentService_GetUserPaymentMethods_Call struct {
 // GetUserPaymentMethods is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockPaymentService_Expecter) GetUserPaymentMethods(ctx interface{}, userID interface{}) *MockPaymentService_GetUserPaymentMethods_Call {
+func (_e *MockPaymentService_Expecter) GetUserPaymentMethods(ctx any, userID any) *MockPaymentService_GetUserPaymentMethods_Call {
 	return &MockPaymentService_GetUserPaymentMethods_Call{Call: _e.mock.On("GetUserPaymentMethods", ctx, userID)}
 }
 
@@ -275,7 +284,7 @@ type MockPaymentService_HandleWebhook_Call struct {
 // HandleWebhook is a helper method to define mock.On call
 //   - ctx context.Context
 //   - body []byte
-func (_e *MockPaymentService_Expecter) HandleWebhook(ctx interface{}, body interface{}) *MockPaymentService_HandleWebhook_Call {
+func (_e *MockPaymentService_Expecter) HandleWebhook(ctx any, body any) *MockPaymentService_HandleWebhook_Call {
 	return &MockPaymentService_HandleWebhook_Call{Call: _e.mock.On("HandleWebhook", ctx, body)}
 }
 
@@ -333,7 +342,7 @@ type MockPaymentService_SetDefaultPaymentMethod_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockPaymentService_Expecter) SetDefaultPaymentMethod(ctx interface{}, id interface{}, userID interface{}) *MockPaymentService_SetDefaultPaymentMethod_Call {
+func (_e *MockPaymentService_Expecter) SetDefaultPaymentMethod(ctx any, id any, userID any) *MockPaymentService_SetDefaultPaymentMethod_Call {
 	return &MockPaymentService_SetDefaultPaymentMethod_Call{Call: _e.mock.On("SetDefaultPaymentMethod", ctx, id, userID)}
 }
 

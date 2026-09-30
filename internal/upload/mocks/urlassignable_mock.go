@@ -14,10 +14,19 @@ func NewMockURLAssignable(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockURLAssignable {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockURLAssignable{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -92,7 +101,7 @@ type MockURLAssignable_SetURL_Call struct {
 
 // SetURL is a helper method to define mock.On call
 //   - url string
-func (_e *MockURLAssignable_Expecter) SetURL(url interface{}) *MockURLAssignable_SetURL_Call {
+func (_e *MockURLAssignable_Expecter) SetURL(url any) *MockURLAssignable_SetURL_Call {
 	return &MockURLAssignable_SetURL_Call{Call: _e.mock.On("SetURL", url)}
 }
 

@@ -14,10 +14,19 @@ func NewMockHasher(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockHasher {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockHasher{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -68,7 +77,7 @@ type MockHasher_Hash_Call struct {
 
 // Hash is a helper method to define mock.On call
 //   - password string
-func (_e *MockHasher_Expecter) Hash(password interface{}) *MockHasher_Hash_Call {
+func (_e *MockHasher_Expecter) Hash(password any) *MockHasher_Hash_Call {
 	return &MockHasher_Hash_Call{Call: _e.mock.On("Hash", password)}
 }
 
@@ -129,7 +138,7 @@ type MockHasher_Verify_Call struct {
 // Verify is a helper method to define mock.On call
 //   - password string
 //   - hash string
-func (_e *MockHasher_Expecter) Verify(password interface{}, hash interface{}) *MockHasher_Verify_Call {
+func (_e *MockHasher_Expecter) Verify(password any, hash any) *MockHasher_Verify_Call {
 	return &MockHasher_Verify_Call{Call: _e.mock.On("Verify", password, hash)}
 }
 

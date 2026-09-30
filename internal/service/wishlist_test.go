@@ -216,10 +216,11 @@ func (suite *WishlistServiceTestSuite) TestGetWishlist_RepositoryError() {
 // ==================== GetWishlists Tests ====================
 
 func (suite *WishlistServiceTestSuite) TestGetWishlists_Success() {
-	req := dto.ListWishlistRequest{}
+	req := dto.ListWishlistRequest{Limit: 10, Offset: 2}
+	filter := repository.ListWishlistFilter{Limit: req.Limit, Offset: req.Offset}
 	wishlists := []*models.Wishlist{{ID: uuid.New()}, {ID: uuid.New()}}
 
-	suite.wishlistRepo.EXPECT().GetListByUser(suite.ctx, suite.userID, req).
+	suite.wishlistRepo.EXPECT().GetListByUser(suite.ctx, suite.userID, filter).
 		Return(wishlists, 3, nil).Once()
 
 	response, total, err := suite.wishlistService.GetWishlists(suite.ctx, suite.userID, req)
@@ -232,8 +233,9 @@ func (suite *WishlistServiceTestSuite) TestGetWishlists_Success() {
 
 func (suite *WishlistServiceTestSuite) TestGetWishlists_EmptyList() {
 	req := dto.ListWishlistRequest{}
+	filter := repository.ListWishlistFilter{}
 
-	suite.wishlistRepo.EXPECT().GetListByUser(suite.ctx, suite.userID, req).
+	suite.wishlistRepo.EXPECT().GetListByUser(suite.ctx, suite.userID, filter).
 		Return([]*models.Wishlist{}, 0, nil).Once()
 
 	response, total, err := suite.wishlistService.GetWishlists(suite.ctx, suite.userID, req)
@@ -246,8 +248,10 @@ func (suite *WishlistServiceTestSuite) TestGetWishlists_EmptyList() {
 
 func (suite *WishlistServiceTestSuite) TestGetWishlists_RepositoryError() {
 	req := dto.ListWishlistRequest{}
+	filter := repository.ListWishlistFilter{}
+
 	dbErr := errors.New("db error")
-	suite.wishlistRepo.EXPECT().GetListByUser(suite.ctx, suite.userID, req).
+	suite.wishlistRepo.EXPECT().GetListByUser(suite.ctx, suite.userID, filter).
 		Return([]*models.Wishlist{}, 0, dbErr).Once()
 
 	response, total, err := suite.wishlistService.GetWishlists(suite.ctx, suite.userID, req)

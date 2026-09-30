@@ -16,10 +16,19 @@ func NewMockManager(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockManager {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockManager{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockManager_GenerateSecret_Call struct {
 
 // GenerateSecret is a helper method to define mock.On call
 //   - email string
-func (_e *MockManager_Expecter) GenerateSecret(email interface{}) *MockManager_GenerateSecret_Call {
+func (_e *MockManager_Expecter) GenerateSecret(email any) *MockManager_GenerateSecret_Call {
 	return &MockManager_GenerateSecret_Call{Call: _e.mock.On("GenerateSecret", email)}
 }
 
@@ -124,7 +133,7 @@ type MockManager_ValidateCode_Call struct {
 // ValidateCode is a helper method to define mock.On call
 //   - secret string
 //   - code string
-func (_e *MockManager_Expecter) ValidateCode(secret interface{}, code interface{}) *MockManager_ValidateCode_Call {
+func (_e *MockManager_Expecter) ValidateCode(secret any, code any) *MockManager_ValidateCode_Call {
 	return &MockManager_ValidateCode_Call{Call: _e.mock.On("ValidateCode", secret, code)}
 }
 

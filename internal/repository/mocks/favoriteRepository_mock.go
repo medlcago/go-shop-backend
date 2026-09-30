@@ -18,10 +18,19 @@ func NewMockFavoriteRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockFavoriteRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockFavoriteRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockFavoriteRepository_Add_Call struct {
 // Add is a helper method to define mock.On call
 //   - ctx context.Context
 //   - favorite *models.Favorite
-func (_e *MockFavoriteRepository_Expecter) Add(ctx interface{}, favorite interface{}) *MockFavoriteRepository_Add_Call {
+func (_e *MockFavoriteRepository_Expecter) Add(ctx any, favorite any) *MockFavoriteRepository_Add_Call {
 	return &MockFavoriteRepository_Add_Call{Call: _e.mock.On("Add", ctx, favorite)}
 }
 
@@ -131,7 +140,7 @@ type MockFavoriteRepository_Exists_Call struct {
 //   - ctx context.Context
 //   - productID uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockFavoriteRepository_Expecter) Exists(ctx interface{}, productID interface{}, userID interface{}) *MockFavoriteRepository_Exists_Call {
+func (_e *MockFavoriteRepository_Expecter) Exists(ctx any, productID any, userID any) *MockFavoriteRepository_Exists_Call {
 	return &MockFavoriteRepository_Exists_Call{Call: _e.mock.On("Exists", ctx, productID, userID)}
 }
 
@@ -210,7 +219,7 @@ type MockFavoriteRepository_GetListByUser_Call struct {
 // GetListByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockFavoriteRepository_Expecter) GetListByUser(ctx interface{}, userID interface{}) *MockFavoriteRepository_GetListByUser_Call {
+func (_e *MockFavoriteRepository_Expecter) GetListByUser(ctx any, userID any) *MockFavoriteRepository_GetListByUser_Call {
 	return &MockFavoriteRepository_GetListByUser_Call{Call: _e.mock.On("GetListByUser", ctx, userID)}
 }
 
@@ -268,7 +277,7 @@ type MockFavoriteRepository_Remove_Call struct {
 //   - ctx context.Context
 //   - productID uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockFavoriteRepository_Expecter) Remove(ctx interface{}, productID interface{}, userID interface{}) *MockFavoriteRepository_Remove_Call {
+func (_e *MockFavoriteRepository_Expecter) Remove(ctx any, productID any, userID any) *MockFavoriteRepository_Remove_Call {
 	return &MockFavoriteRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, productID, userID)}
 }
 

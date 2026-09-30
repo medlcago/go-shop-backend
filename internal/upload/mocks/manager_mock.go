@@ -19,10 +19,19 @@ func NewMockManager(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockManager {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockManager{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -77,7 +86,7 @@ type MockManager_Attach_Call struct {
 //   - ctx context.Context
 //   - req dto.AttachFileRequest
 //   - uploadType upload.Type
-func (_e *MockManager_Expecter) Attach(ctx interface{}, req interface{}, uploadType interface{}) *MockManager_Attach_Call {
+func (_e *MockManager_Expecter) Attach(ctx any, req any, uploadType any) *MockManager_Attach_Call {
 	return &MockManager_Attach_Call{Call: _e.mock.On("Attach", ctx, req, uploadType)}
 }
 
@@ -139,7 +148,7 @@ type MockManager_DeleteByID_Call struct {
 // DeleteByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockManager_Expecter) DeleteByID(ctx interface{}, id interface{}) *MockManager_DeleteByID_Call {
+func (_e *MockManager_Expecter) DeleteByID(ctx any, id any) *MockManager_DeleteByID_Call {
 	return &MockManager_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
 }
 
@@ -195,7 +204,7 @@ type MockManager_PublicURL_Call struct {
 
 // PublicURL is a helper method to define mock.On call
 //   - objectKey string
-func (_e *MockManager_Expecter) PublicURL(objectKey interface{}) *MockManager_PublicURL_Call {
+func (_e *MockManager_Expecter) PublicURL(objectKey any) *MockManager_PublicURL_Call {
 	return &MockManager_PublicURL_Call{Call: _e.mock.On("PublicURL", objectKey)}
 }
 
@@ -259,7 +268,7 @@ type MockManager_SignURL_Call struct {
 //   - ctx context.Context
 //   - req dto.GeneratePresignedURLRequest
 //   - uploadType upload.Type
-func (_e *MockManager_Expecter) SignURL(ctx interface{}, req interface{}, uploadType interface{}) *MockManager_SignURL_Call {
+func (_e *MockManager_Expecter) SignURL(ctx any, req any, uploadType any) *MockManager_SignURL_Call {
 	return &MockManager_SignURL_Call{Call: _e.mock.On("SignURL", ctx, req, uploadType)}
 }
 

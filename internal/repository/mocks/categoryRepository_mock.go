@@ -6,8 +6,8 @@ package mocks
 
 import (
 	"context"
-	"go-shop-backend/internal/dto"
 	"go-shop-backend/internal/models"
+	"go-shop-backend/internal/repository"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -18,10 +18,19 @@ func NewMockCategoryRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCategoryRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCategoryRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -40,8 +49,8 @@ func (_m *MockCategoryRepository) EXPECT() *MockCategoryRepository_Expecter {
 }
 
 // ListCategories provides a mock function for the type MockCategoryRepository
-func (_mock *MockCategoryRepository) ListCategories(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error) {
-	ret := _mock.Called(ctx, req)
+func (_mock *MockCategoryRepository) ListCategories(ctx context.Context, filter repository.ListCategoryFilter) ([]*models.Category, int64, error) {
+	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCategories")
@@ -50,23 +59,23 @@ func (_mock *MockCategoryRepository) ListCategories(ctx context.Context, req dto
 	var r0 []*models.Category
 	var r1 int64
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListCategoryRequest) ([]*models.Category, int64, error)); ok {
-		return returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.ListCategoryFilter) ([]*models.Category, int64, error)); ok {
+		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.ListCategoryRequest) []*models.Category); ok {
-		r0 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repository.ListCategoryFilter) []*models.Category); ok {
+		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.Category)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.ListCategoryRequest) int64); ok {
-		r1 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repository.ListCategoryFilter) int64); ok {
+		r1 = returnFunc(ctx, filter)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, dto.ListCategoryRequest) error); ok {
-		r2 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, repository.ListCategoryFilter) error); ok {
+		r2 = returnFunc(ctx, filter)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -80,20 +89,20 @@ type MockCategoryRepository_ListCategories_Call struct {
 
 // ListCategories is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req dto.ListCategoryRequest
-func (_e *MockCategoryRepository_Expecter) ListCategories(ctx interface{}, req interface{}) *MockCategoryRepository_ListCategories_Call {
-	return &MockCategoryRepository_ListCategories_Call{Call: _e.mock.On("ListCategories", ctx, req)}
+//   - filter repository.ListCategoryFilter
+func (_e *MockCategoryRepository_Expecter) ListCategories(ctx any, filter any) *MockCategoryRepository_ListCategories_Call {
+	return &MockCategoryRepository_ListCategories_Call{Call: _e.mock.On("ListCategories", ctx, filter)}
 }
 
-func (_c *MockCategoryRepository_ListCategories_Call) Run(run func(ctx context.Context, req dto.ListCategoryRequest)) *MockCategoryRepository_ListCategories_Call {
+func (_c *MockCategoryRepository_ListCategories_Call) Run(run func(ctx context.Context, filter repository.ListCategoryFilter)) *MockCategoryRepository_ListCategories_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 dto.ListCategoryRequest
+		var arg1 repository.ListCategoryFilter
 		if args[1] != nil {
-			arg1 = args[1].(dto.ListCategoryRequest)
+			arg1 = args[1].(repository.ListCategoryFilter)
 		}
 		run(
 			arg0,
@@ -108,7 +117,7 @@ func (_c *MockCategoryRepository_ListCategories_Call) Return(categorys []*models
 	return _c
 }
 
-func (_c *MockCategoryRepository_ListCategories_Call) RunAndReturn(run func(ctx context.Context, req dto.ListCategoryRequest) ([]*models.Category, int64, error)) *MockCategoryRepository_ListCategories_Call {
+func (_c *MockCategoryRepository_ListCategories_Call) RunAndReturn(run func(ctx context.Context, filter repository.ListCategoryFilter) ([]*models.Category, int64, error)) *MockCategoryRepository_ListCategories_Call {
 	_c.Call.Return(run)
 	return _c
 }

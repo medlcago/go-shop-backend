@@ -16,10 +16,19 @@ func NewMockRegistry(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockRegistry {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockRegistry{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -72,7 +81,7 @@ type MockRegistry_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ch notification.Channel
-func (_e *MockRegistry_Expecter) Get(ch interface{}) *MockRegistry_Get_Call {
+func (_e *MockRegistry_Expecter) Get(ch any) *MockRegistry_Get_Call {
 	return &MockRegistry_Get_Call{Call: _e.mock.On("Get", ch)}
 }
 
@@ -113,7 +122,7 @@ type MockRegistry_Register_Call struct {
 // Register is a helper method to define mock.On call
 //   - ch notification.Channel
 //   - s notification.Sender
-func (_e *MockRegistry_Expecter) Register(ch interface{}, s interface{}) *MockRegistry_Register_Call {
+func (_e *MockRegistry_Expecter) Register(ch any, s any) *MockRegistry_Register_Call {
 	return &MockRegistry_Register_Call{Call: _e.mock.On("Register", ch, s)}
 }
 

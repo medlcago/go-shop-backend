@@ -16,10 +16,19 @@ func NewMockManager(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockManager {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockManager{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -78,7 +87,7 @@ type MockManager_GenerateAccessToken_Call struct {
 
 // GenerateAccessToken is a helper method to define mock.On call
 //   - payload token.Payload
-func (_e *MockManager_Expecter) GenerateAccessToken(payload interface{}) *MockManager_GenerateAccessToken_Call {
+func (_e *MockManager_Expecter) GenerateAccessToken(payload any) *MockManager_GenerateAccessToken_Call {
 	return &MockManager_GenerateAccessToken_Call{Call: _e.mock.On("GenerateAccessToken", payload)}
 }
 
@@ -146,7 +155,7 @@ type MockManager_GeneratePartialToken_Call struct {
 
 // GeneratePartialToken is a helper method to define mock.On call
 //   - payload token.Payload
-func (_e *MockManager_Expecter) GeneratePartialToken(payload interface{}) *MockManager_GeneratePartialToken_Call {
+func (_e *MockManager_Expecter) GeneratePartialToken(payload any) *MockManager_GeneratePartialToken_Call {
 	return &MockManager_GeneratePartialToken_Call{Call: _e.mock.On("GeneratePartialToken", payload)}
 }
 
@@ -214,7 +223,7 @@ type MockManager_GenerateRefreshToken_Call struct {
 
 // GenerateRefreshToken is a helper method to define mock.On call
 //   - payload token.Payload
-func (_e *MockManager_Expecter) GenerateRefreshToken(payload interface{}) *MockManager_GenerateRefreshToken_Call {
+func (_e *MockManager_Expecter) GenerateRefreshToken(payload any) *MockManager_GenerateRefreshToken_Call {
 	return &MockManager_GenerateRefreshToken_Call{Call: _e.mock.On("GenerateRefreshToken", payload)}
 }
 
@@ -276,7 +285,7 @@ type MockManager_ValidateToken_Call struct {
 
 // ValidateToken is a helper method to define mock.On call
 //   - tokenString string
-func (_e *MockManager_Expecter) ValidateToken(tokenString interface{}) *MockManager_ValidateToken_Call {
+func (_e *MockManager_Expecter) ValidateToken(tokenString any) *MockManager_ValidateToken_Call {
 	return &MockManager_ValidateToken_Call{Call: _e.mock.On("ValidateToken", tokenString)}
 }
 

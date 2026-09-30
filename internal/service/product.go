@@ -51,7 +51,17 @@ func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID
 func (p *productService) ListProducts(ctx context.Context, req dto.ListProductRequest) ([]*dto.ProductResponse, int64, error) {
 	const op = "productService.ListProducts"
 
-	products, total, err := p.productRepo.ListProducts(ctx, req)
+	filter := repository.ListProductFilter{
+		Limit:      req.Limit,
+		Offset:     req.Offset,
+		OrderBy:    req.OrderBy,
+		OrderDesc:  req.OrderDesc,
+		CategoryID: req.CategoryID,
+		MinPrice:   req.MinPrice,
+		MaxPrice:   req.MaxPrice,
+	}
+
+	products, total, err := p.productRepo.ListProducts(ctx, filter)
 	if err != nil {
 		return nil, 0, apperror.Wrap(op, err)
 	}
@@ -147,7 +157,13 @@ func (p *productService) UpdateStock(ctx context.Context, productID uuid.UUID, r
 func (p *productService) Search(ctx context.Context, req dto.SearchProductRequest) ([]*dto.ProductResponse, int64, error) {
 	const op = "productService.Search"
 
-	products, total, err := p.productRepo.Search(ctx, req)
+	filter := repository.SearchProductFilter{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+		Query:  req.Query,
+	}
+
+	products, total, err := p.productRepo.Search(ctx, filter)
 	if err != nil {
 		return nil, 0, apperror.Wrap(op, err)
 	}

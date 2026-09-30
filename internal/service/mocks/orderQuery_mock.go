@@ -18,10 +18,19 @@ func NewMockOrderQuery(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrderQuery {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrderQuery{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -76,7 +85,7 @@ type MockOrderQuery_GetByID_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - preload bool
-func (_e *MockOrderQuery_Expecter) GetByID(ctx interface{}, id interface{}, preload interface{}) *MockOrderQuery_GetByID_Call {
+func (_e *MockOrderQuery_Expecter) GetByID(ctx any, id any, preload any) *MockOrderQuery_GetByID_Call {
 	return &MockOrderQuery_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, preload)}
 }
 
@@ -151,7 +160,7 @@ type MockOrderQuery_GetByPayment_Call struct {
 //   - providerName string
 //   - paymentID string
 //   - preload bool
-func (_e *MockOrderQuery_Expecter) GetByPayment(ctx interface{}, providerName interface{}, paymentID interface{}, preload interface{}) *MockOrderQuery_GetByPayment_Call {
+func (_e *MockOrderQuery_Expecter) GetByPayment(ctx any, providerName any, paymentID any, preload any) *MockOrderQuery_GetByPayment_Call {
 	return &MockOrderQuery_GetByPayment_Call{Call: _e.mock.On("GetByPayment", ctx, providerName, paymentID, preload)}
 }
 
@@ -218,7 +227,7 @@ type MockOrderQuery_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - order *models.Order
-func (_e *MockOrderQuery_Expecter) Update(ctx interface{}, order interface{}) *MockOrderQuery_Update_Call {
+func (_e *MockOrderQuery_Expecter) Update(ctx any, order any) *MockOrderQuery_Update_Call {
 	return &MockOrderQuery_Update_Call{Call: _e.mock.On("Update", ctx, order)}
 }
 

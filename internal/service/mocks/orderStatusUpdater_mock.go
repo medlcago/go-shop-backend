@@ -18,10 +18,19 @@ func NewMockOrderStatusUpdater(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrderStatusUpdater {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrderStatusUpdater{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -65,7 +74,7 @@ type MockOrderStatusUpdater_UpdateOrderStatus_Call struct {
 //   - ctx context.Context
 //   - orderID uuid.UUID
 //   - status models.OrderStatus
-func (_e *MockOrderStatusUpdater_Expecter) UpdateOrderStatus(ctx interface{}, orderID interface{}, status interface{}) *MockOrderStatusUpdater_UpdateOrderStatus_Call {
+func (_e *MockOrderStatusUpdater_Expecter) UpdateOrderStatus(ctx any, orderID any, status any) *MockOrderStatusUpdater_UpdateOrderStatus_Call {
 	return &MockOrderStatusUpdater_UpdateOrderStatus_Call{Call: _e.mock.On("UpdateOrderStatus", ctx, orderID, status)}
 }
 

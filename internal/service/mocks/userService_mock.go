@@ -18,10 +18,19 @@ func NewMockUserService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockUserService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockUserService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -74,7 +83,7 @@ type MockUserService_BeginPasskeyLogin_Call struct {
 
 // BeginPasskeyLogin is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockUserService_Expecter) BeginPasskeyLogin(ctx interface{}) *MockUserService_BeginPasskeyLogin_Call {
+func (_e *MockUserService_Expecter) BeginPasskeyLogin(ctx any) *MockUserService_BeginPasskeyLogin_Call {
 	return &MockUserService_BeginPasskeyLogin_Call{Call: _e.mock.On("BeginPasskeyLogin", ctx)}
 }
 
@@ -137,7 +146,7 @@ type MockUserService_BeginPasskeyRegistration_Call struct {
 // BeginPasskeyRegistration is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockUserService_Expecter) BeginPasskeyRegistration(ctx interface{}, userID interface{}) *MockUserService_BeginPasskeyRegistration_Call {
+func (_e *MockUserService_Expecter) BeginPasskeyRegistration(ctx any, userID any) *MockUserService_BeginPasskeyRegistration_Call {
 	return &MockUserService_BeginPasskeyRegistration_Call{Call: _e.mock.On("BeginPasskeyRegistration", ctx, userID)}
 }
 
@@ -195,7 +204,7 @@ type MockUserService_ChangePassword_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.ChangePasswordRequest
-func (_e *MockUserService_Expecter) ChangePassword(ctx interface{}, userID interface{}, req interface{}) *MockUserService_ChangePassword_Call {
+func (_e *MockUserService_Expecter) ChangePassword(ctx any, userID any, req any) *MockUserService_ChangePassword_Call {
 	return &MockUserService_ChangePassword_Call{Call: _e.mock.On("ChangePassword", ctx, userID, req)}
 }
 
@@ -258,7 +267,7 @@ type MockUserService_Confirm2FA_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.Confirm2FARequest
-func (_e *MockUserService_Expecter) Confirm2FA(ctx interface{}, userID interface{}, req interface{}) *MockUserService_Confirm2FA_Call {
+func (_e *MockUserService_Expecter) Confirm2FA(ctx any, userID any, req any) *MockUserService_Confirm2FA_Call {
 	return &MockUserService_Confirm2FA_Call{Call: _e.mock.On("Confirm2FA", ctx, userID, req)}
 }
 
@@ -332,7 +341,7 @@ type MockUserService_ConfirmEmail_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.ConfirmEmailRequest
-func (_e *MockUserService_Expecter) ConfirmEmail(ctx interface{}, userID interface{}, req interface{}) *MockUserService_ConfirmEmail_Call {
+func (_e *MockUserService_Expecter) ConfirmEmail(ctx any, userID any, req any) *MockUserService_ConfirmEmail_Call {
 	return &MockUserService_ConfirmEmail_Call{Call: _e.mock.On("ConfirmEmail", ctx, userID, req)}
 }
 
@@ -395,7 +404,7 @@ type MockUserService_DeletePasskey_Call struct {
 //   - ctx context.Context
 //   - passkeyID uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockUserService_Expecter) DeletePasskey(ctx interface{}, passkeyID interface{}, userID interface{}) *MockUserService_DeletePasskey_Call {
+func (_e *MockUserService_Expecter) DeletePasskey(ctx any, passkeyID any, userID any) *MockUserService_DeletePasskey_Call {
 	return &MockUserService_DeletePasskey_Call{Call: _e.mock.On("DeletePasskey", ctx, passkeyID, userID)}
 }
 
@@ -458,7 +467,7 @@ type MockUserService_Disable2FA_Call struct {
 //   - ctx context.Context
 //   - userID uuid.UUID
 //   - req dto.Disable2FARequest
-func (_e *MockUserService_Expecter) Disable2FA(ctx interface{}, userID interface{}, req interface{}) *MockUserService_Disable2FA_Call {
+func (_e *MockUserService_Expecter) Disable2FA(ctx any, userID any, req any) *MockUserService_Disable2FA_Call {
 	return &MockUserService_Disable2FA_Call{Call: _e.mock.On("Disable2FA", ctx, userID, req)}
 }
 
@@ -532,7 +541,7 @@ type MockUserService_FinishPasskeyLogin_Call struct {
 //   - ctx context.Context
 //   - sessionID string
 //   - data []byte
-func (_e *MockUserService_Expecter) FinishPasskeyLogin(ctx interface{}, sessionID interface{}, data interface{}) *MockUserService_FinishPasskeyLogin_Call {
+func (_e *MockUserService_Expecter) FinishPasskeyLogin(ctx any, sessionID any, data any) *MockUserService_FinishPasskeyLogin_Call {
 	return &MockUserService_FinishPasskeyLogin_Call{Call: _e.mock.On("FinishPasskeyLogin", ctx, sessionID, data)}
 }
 
@@ -596,7 +605,7 @@ type MockUserService_FinishPasskeyRegistration_Call struct {
 //   - userID uuid.UUID
 //   - sessionID string
 //   - data []byte
-func (_e *MockUserService_Expecter) FinishPasskeyRegistration(ctx interface{}, userID interface{}, sessionID interface{}, data interface{}) *MockUserService_FinishPasskeyRegistration_Call {
+func (_e *MockUserService_Expecter) FinishPasskeyRegistration(ctx any, userID any, sessionID any, data any) *MockUserService_FinishPasskeyRegistration_Call {
 	return &MockUserService_FinishPasskeyRegistration_Call{Call: _e.mock.On("FinishPasskeyRegistration", ctx, userID, sessionID, data)}
 }
 
@@ -674,7 +683,7 @@ type MockUserService_GetUserByID_Call struct {
 // GetUserByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockUserService_Expecter) GetUserByID(ctx interface{}, userID interface{}) *MockUserService_GetUserByID_Call {
+func (_e *MockUserService_Expecter) GetUserByID(ctx any, userID any) *MockUserService_GetUserByID_Call {
 	return &MockUserService_GetUserByID_Call{Call: _e.mock.On("GetUserByID", ctx, userID)}
 }
 
@@ -742,7 +751,7 @@ type MockUserService_GetUserPasskeys_Call struct {
 // GetUserPasskeys is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockUserService_Expecter) GetUserPasskeys(ctx interface{}, userID interface{}) *MockUserService_GetUserPasskeys_Call {
+func (_e *MockUserService_Expecter) GetUserPasskeys(ctx any, userID any) *MockUserService_GetUserPasskeys_Call {
 	return &MockUserService_GetUserPasskeys_Call{Call: _e.mock.On("GetUserPasskeys", ctx, userID)}
 }
 
@@ -810,7 +819,7 @@ type MockUserService_Login_Call struct {
 // Login is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.UserLoginRequest
-func (_e *MockUserService_Expecter) Login(ctx interface{}, req interface{}) *MockUserService_Login_Call {
+func (_e *MockUserService_Expecter) Login(ctx any, req any) *MockUserService_Login_Call {
 	return &MockUserService_Login_Call{Call: _e.mock.On("Login", ctx, req)}
 }
 
@@ -878,7 +887,7 @@ type MockUserService_RefreshToken_Call struct {
 // RefreshToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tokenString string
-func (_e *MockUserService_Expecter) RefreshToken(ctx interface{}, tokenString interface{}) *MockUserService_RefreshToken_Call {
+func (_e *MockUserService_Expecter) RefreshToken(ctx any, tokenString any) *MockUserService_RefreshToken_Call {
 	return &MockUserService_RefreshToken_Call{Call: _e.mock.On("RefreshToken", ctx, tokenString)}
 }
 
@@ -946,7 +955,7 @@ type MockUserService_Register_Call struct {
 // Register is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.UserRegisterRequest
-func (_e *MockUserService_Expecter) Register(ctx interface{}, req interface{}) *MockUserService_Register_Call {
+func (_e *MockUserService_Expecter) Register(ctx any, req any) *MockUserService_Register_Call {
 	return &MockUserService_Register_Call{Call: _e.mock.On("Register", ctx, req)}
 }
 
@@ -1014,7 +1023,7 @@ type MockUserService_SendEmailConfirmationCode_Call struct {
 // SendEmailConfirmationCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockUserService_Expecter) SendEmailConfirmationCode(ctx interface{}, userID interface{}) *MockUserService_SendEmailConfirmationCode_Call {
+func (_e *MockUserService_Expecter) SendEmailConfirmationCode(ctx any, userID any) *MockUserService_SendEmailConfirmationCode_Call {
 	return &MockUserService_SendEmailConfirmationCode_Call{Call: _e.mock.On("SendEmailConfirmationCode", ctx, userID)}
 }
 
@@ -1082,7 +1091,7 @@ type MockUserService_Setup2FA_Call struct {
 // Setup2FA is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *MockUserService_Expecter) Setup2FA(ctx interface{}, userID interface{}) *MockUserService_Setup2FA_Call {
+func (_e *MockUserService_Expecter) Setup2FA(ctx any, userID any) *MockUserService_Setup2FA_Call {
 	return &MockUserService_Setup2FA_Call{Call: _e.mock.On("Setup2FA", ctx, userID)}
 }
 
@@ -1141,7 +1150,7 @@ type MockUserService_UpdatePasskeyName_Call struct {
 //   - passkeyID uuid.UUID
 //   - userID uuid.UUID
 //   - req dto.UpdatePasskeyNameRequest
-func (_e *MockUserService_Expecter) UpdatePasskeyName(ctx interface{}, passkeyID interface{}, userID interface{}, req interface{}) *MockUserService_UpdatePasskeyName_Call {
+func (_e *MockUserService_Expecter) UpdatePasskeyName(ctx any, passkeyID any, userID any, req any) *MockUserService_UpdatePasskeyName_Call {
 	return &MockUserService_UpdatePasskeyName_Call{Call: _e.mock.On("UpdatePasskeyName", ctx, passkeyID, userID, req)}
 }
 

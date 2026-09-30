@@ -19,10 +19,19 @@ func NewMockInventoryService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockInventoryService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockInventoryService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -77,7 +86,7 @@ type MockInventoryService_CheckProduct_Call struct {
 //   - ctx context.Context
 //   - productID uuid.UUID
 //   - quantity int
-func (_e *MockInventoryService_Expecter) CheckProduct(ctx interface{}, productID interface{}, quantity interface{}) *MockInventoryService_CheckProduct_Call {
+func (_e *MockInventoryService_Expecter) CheckProduct(ctx any, productID any, quantity any) *MockInventoryService_CheckProduct_Call {
 	return &MockInventoryService_CheckProduct_Call{Call: _e.mock.On("CheckProduct", ctx, productID, quantity)}
 }
 
@@ -139,7 +148,7 @@ type MockInventoryService_DeductItems_Call struct {
 // DeductItems is a helper method to define mock.On call
 //   - ctx context.Context
 //   - items []dto.InventoryItem
-func (_e *MockInventoryService_Expecter) DeductItems(ctx interface{}, items interface{}) *MockInventoryService_DeductItems_Call {
+func (_e *MockInventoryService_Expecter) DeductItems(ctx any, items any) *MockInventoryService_DeductItems_Call {
 	return &MockInventoryService_DeductItems_Call{Call: _e.mock.On("DeductItems", ctx, items)}
 }
 
@@ -196,7 +205,7 @@ type MockInventoryService_ReleaseItems_Call struct {
 // ReleaseItems is a helper method to define mock.On call
 //   - ctx context.Context
 //   - items []dto.InventoryItem
-func (_e *MockInventoryService_Expecter) ReleaseItems(ctx interface{}, items interface{}) *MockInventoryService_ReleaseItems_Call {
+func (_e *MockInventoryService_Expecter) ReleaseItems(ctx any, items any) *MockInventoryService_ReleaseItems_Call {
 	return &MockInventoryService_ReleaseItems_Call{Call: _e.mock.On("ReleaseItems", ctx, items)}
 }
 
@@ -253,7 +262,7 @@ type MockInventoryService_ReserveItems_Call struct {
 // ReserveItems is a helper method to define mock.On call
 //   - ctx context.Context
 //   - items []dto.InventoryItem
-func (_e *MockInventoryService_Expecter) ReserveItems(ctx interface{}, items interface{}) *MockInventoryService_ReserveItems_Call {
+func (_e *MockInventoryService_Expecter) ReserveItems(ctx any, items any) *MockInventoryService_ReserveItems_Call {
 	return &MockInventoryService_ReserveItems_Call{Call: _e.mock.On("ReserveItems", ctx, items)}
 }
 
