@@ -94,20 +94,17 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_Success() {
 	suite.orderQuery.EXPECT().GetByID(suite.ctx, req.OrderID, false).
 		Return(order, nil).Once()
 
-	suite.provider.EXPECT().GetName().
+	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
 	suite.provider.EXPECT().CreatePayment(suite.ctx, &paymentprovider.CreatePaymentRequest{
-		Amount: paymentprovider.Amount{
-			Value:    decimal.NewFromInt(order.TotalAmount).Div(decimal.NewFromInt(100)).String(),
-			Currency: paymentprovider.CurrencyRUB,
-		},
+		Amount:   decimal.NewFromInt(order.TotalAmount).Div(decimal.NewFromInt(100)).String(),
+		Currency: paymentprovider.CurrencyRUB,
 		Metadata: paymentprovider.Metadata{
 			UserID:  suite.userID,
 			OrderID: order.ID,
 		},
 		PaymentType:       paymentprovider.PaymentType(req.PaymentType),
-		Capture:           true,
 		Description:       fmt.Sprintf("Оплата заказа № %s", order.ID),
 		SavePaymentMethod: req.SavePaymentMethod,
 	}, idempotencyKey).Return(payment, nil).Once()
@@ -162,23 +159,20 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_UseSavedPaymentMethod_Su
 	suite.orderQuery.EXPECT().GetByID(suite.ctx, req.OrderID, false).
 		Return(order, nil).Once()
 
-	suite.provider.EXPECT().GetName().
+	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
-	suite.userPaymentRepo.EXPECT().GetByID(suite.ctx, req.PaymentMethodID).
+	suite.userPaymentRepo.EXPECT().GetByProvider(suite.ctx, req.PaymentMethodID, suite.userID, suite.providerName).
 		Return(userPaymentMethod, nil).Once()
 
 	suite.provider.EXPECT().CreatePayment(suite.ctx, &paymentprovider.CreatePaymentRequest{
-		Amount: paymentprovider.Amount{
-			Value:    decimal.NewFromInt(order.TotalAmount).Div(decimal.NewFromInt(100)).String(),
-			Currency: paymentprovider.CurrencyRUB,
-		},
+		Amount:   decimal.NewFromInt(order.TotalAmount).Div(decimal.NewFromInt(100)).String(),
+		Currency: paymentprovider.CurrencyRUB,
 		Metadata: paymentprovider.Metadata{
 			UserID:  suite.userID,
 			OrderID: order.ID,
 		},
 		PaymentMethodID: userPaymentMethod.ProviderPaymentMethodID,
-		Capture:         true,
 		Description:     fmt.Sprintf("Оплата заказа № %s", order.ID),
 	}, idempotencyKey).Return(payment, nil).Once()
 
@@ -216,87 +210,16 @@ func (suite *PaymentServiceTestSuite) TestCreatePayment_UseSavedPaymentMethod_Pa
 	suite.orderQuery.EXPECT().GetByID(suite.ctx, req.OrderID, false).
 		Return(order, nil).Once()
 
-	suite.provider.EXPECT().GetName().
+	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
-	suite.userPaymentRepo.EXPECT().GetByID(suite.ctx, req.PaymentMethodID).
+	suite.userPaymentRepo.EXPECT().GetByProvider(suite.ctx, req.PaymentMethodID, suite.userID, suite.providerName).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.paymentService.CreatePayment(suite.ctx, suite.userID, req)
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrPaymentMethodNotFound)
-	suite.ErrorContains(err, "paymentService.CreatePayment")
-}
-
-func (suite *PaymentServiceTestSuite) TestCreatePayment_UseSavedPaymentMethod_UserNotOwner() {
-	req := dto.CreatePaymentRequest{
-		OrderID:         suite.orderID,
-		PaymentMethodID: suite.paymentMethodID,
-	}
-
-	order := &models.Order{
-		ID:          suite.orderID,
-		UserID:      &suite.userID,
-		Status:      models.OrderStatusPending,
-		ExpiresAt:   new(time.Now().UTC().Add(10 * time.Minute)),
-		TotalAmount: 100_000,
-	}
-
-	userPaymentMethod := &models.UserPaymentMethod{
-		ID:     suite.paymentMethodID,
-		UserID: uuid.New(),
-	}
-
-	suite.orderQuery.EXPECT().GetByID(suite.ctx, req.OrderID, false).
-		Return(order, nil).Once()
-
-	suite.provider.EXPECT().GetName().
-		Return(suite.providerName).Once()
-
-	suite.userPaymentRepo.EXPECT().GetByID(suite.ctx, req.PaymentMethodID).
-		Return(userPaymentMethod, nil).Once()
-
-	response, err := suite.paymentService.CreatePayment(suite.ctx, suite.userID, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.ErrForbidden)
-	suite.ErrorContains(err, "paymentService.CreatePayment")
-}
-
-func (suite *PaymentServiceTestSuite) TestCreatePayment_UseSavedPaymentMethod_InvalidProvider() {
-	req := dto.CreatePaymentRequest{
-		OrderID:         suite.orderID,
-		PaymentMethodID: suite.paymentMethodID,
-	}
-
-	order := &models.Order{
-		ID:          suite.orderID,
-		UserID:      &suite.userID,
-		Status:      models.OrderStatusPending,
-		ExpiresAt:   new(time.Now().UTC().Add(10 * time.Minute)),
-		TotalAmount: 100_000,
-	}
-
-	userPaymentMethod := &models.UserPaymentMethod{
-		ID:       suite.paymentMethodID,
-		UserID:   suite.userID,
-		Provider: "test123",
-	}
-
-	suite.orderQuery.EXPECT().GetByID(suite.ctx, req.OrderID, false).
-		Return(order, nil).Once()
-
-	suite.userPaymentRepo.EXPECT().GetByID(suite.ctx, req.PaymentMethodID).
-		Return(userPaymentMethod, nil).Once()
-
-	suite.provider.EXPECT().GetName().
-		Return(suite.providerName).Once()
-
-	response, err := suite.paymentService.CreatePayment(suite.ctx, suite.userID, req)
-
-	suite.Nil(response)
-	suite.ErrorIs(err, apperror.ErrForbidden)
 	suite.ErrorContains(err, "paymentService.CreatePayment")
 }
 
@@ -456,7 +379,7 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_PaymentStatusSucceeded()
 	suite.provider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
 		Return(event, nil).Once()
 
-	suite.provider.EXPECT().GetName().
+	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
@@ -480,7 +403,6 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_PaymentStatusSucceeded_S
 		PaymentMethod: paymentprovider.PaymentMethod{
 			ID:    uuid.NewString(),
 			Title: "Bank card *4444",
-			Saved: true,
 			Type:  "bank_card",
 		},
 	}
@@ -503,8 +425,8 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_PaymentStatusSucceeded_S
 	suite.provider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
 		Return(event, nil).Once()
 
-	suite.provider.EXPECT().GetName().
-		Return(suite.providerName).Times(2)
+	suite.provider.EXPECT().Name().
+		Return(suite.providerName).Once()
 
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
 		Return(order, nil).Once()
@@ -535,7 +457,7 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_PaymentStatusCanceled() 
 	suite.provider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
 		Return(event, nil).Once()
 
-	suite.provider.EXPECT().GetName().
+	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
@@ -557,7 +479,7 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_OrderNotFound() {
 	suite.provider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
 		Return(event, nil).Once()
 
-	suite.provider.EXPECT().GetName().
+	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
@@ -610,7 +532,7 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_OrderStatusNotPending() 
 			suite.provider.EXPECT().ParseWebhook(mock.AnythingOfType("[]uint8")).
 				Return(event, nil).Once()
 
-			suite.provider.EXPECT().GetName().
+			suite.provider.EXPECT().Name().
 				Return(suite.providerName).Once()
 
 			suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).

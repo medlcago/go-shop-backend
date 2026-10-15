@@ -35,11 +35,12 @@ func (p *userPaymentMethodRepository) Upsert(ctx context.Context, paymentMethod 
 	return repository.HandleError(err)
 }
 
-func (p *userPaymentMethodRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.UserPaymentMethod, error) {
+func (p *userPaymentMethodRepository) GetByProvider(ctx context.Context, id uuid.UUID, userID uuid.UUID, providerName string) (*models.UserPaymentMethod, error) {
 	db := p.db.GetDB(ctx)
 
 	var paymentMethod models.UserPaymentMethod
-	if err := db.First(&paymentMethod, id).Error; err != nil {
+	if err := db.Where("id = ? AND user_id = ? AND provider = ?", id, userID, providerName).
+		First(&paymentMethod).Error; err != nil {
 		return nil, repository.HandleError(err)
 	}
 

@@ -81,7 +81,7 @@ type AddressRepository interface {
 
 type UserPaymentMethodRepository interface {
 	Upsert(ctx context.Context, paymentMethod *models.UserPaymentMethod) error
-	GetByID(ctx context.Context, id uuid.UUID) (*models.UserPaymentMethod, error)
+	GetByProvider(ctx context.Context, id uuid.UUID, userID uuid.UUID, providerName string) (*models.UserPaymentMethod, error)
 	GetListByUser(ctx context.Context, userID uuid.UUID) ([]*models.UserPaymentMethod, int64, error)
 	SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error

@@ -20,34 +20,11 @@ const (
 	PaymentTypeEmbedded PaymentType = "embedded"
 )
 
-func (p PaymentType) IsValid() bool {
-	switch p {
-	case PaymentTypeRedirect, PaymentTypeEmbedded:
-		return true
-	}
-
-	return false
-}
-
 type Currency string
 
 const (
 	CurrencyRUB Currency = "RUB"
 )
-
-func (c Currency) IsValid() bool {
-	switch c {
-	case CurrencyRUB:
-		return true
-	}
-
-	return false
-}
-
-type Amount struct {
-	Value    string   `json:"value"`
-	Currency Currency `json:"currency"`
-}
 
 type Metadata struct {
 	UserID  uuid.UUID `json:"user_id"`
@@ -65,14 +42,13 @@ type PaymentMethod struct {
 	Type  string `json:"type"`
 	ID    string `json:"id"`
 	Title string `json:"title"`
-	Saved bool   `json:"saved"`
 	Card  Card   `json:"card"`
 }
 
 type CreatePaymentRequest struct {
-	Amount            Amount      `json:"amount"`
+	Amount            string      `json:"amount"`
+	Currency          Currency    `json:"currency"`
 	PaymentType       PaymentType `json:"payment_type"`
-	Capture           bool        `json:"capture"`
 	PaymentMethodID   string      `json:"payment_method_id"`
 	SavePaymentMethod bool        `json:"save_payment_method"`
 	Description       string      `json:"description"`
@@ -86,9 +62,10 @@ type CancellationDetails struct {
 
 type Payment struct {
 	ID                  string               `json:"id"`
+	Amount              string               `json:"amount"`
+	Currency            Currency             `json:"currency"`
 	Metadata            Metadata             `json:"metadata"`
 	Status              PaymentStatus        `json:"status"`
-	Amount              Amount               `json:"amount"`
 	Description         string               `json:"description"`
 	ConfirmationURL     string               `json:"confirmation_url,omitempty"`
 	ConfirmationToken   string               `json:"confirmation_token,omitempty"`
@@ -96,8 +73,10 @@ type Payment struct {
 }
 
 type WebhookEvent struct {
+	Event               string               `json:"event"`
 	Status              PaymentStatus        `json:"status"`
-	Amount              Amount               `json:"amount"`
+	Amount              string               `json:"amount"`
+	Currency            Currency             `json:"currency"`
 	PaymentID           string               `json:"payment_id"`
 	Metadata            Metadata             `json:"metadata"`
 	PaymentMethod       PaymentMethod        `json:"payment_method"`

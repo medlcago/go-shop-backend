@@ -64,7 +64,7 @@ func (p *paymentService) CreatePayment(ctx context.Context, userID uuid.UUID, re
 		return nil, apperror.Wrap(op, err)
 	}
 
-	providerName := p.provider.GetName()
+	providerName := p.provider.Name()
 
 	createPaymentRequest, err := p.createPaymentRequest(ctx, order, userID, req, providerName)
 	if err != nil {
@@ -98,8 +98,10 @@ func (p *paymentService) HandleWebhook(ctx context.Context, body []byte) error {
 		return apperror.Wrap(op, err)
 	}
 
+	providerName := p.provider.Name()
+
 	err = p.txManager.Wrap(ctx, func(ctx context.Context) error {
-		order, err := p.orderQuery.GetByPayment(ctx, p.provider.GetName(), event.PaymentID, true)
+		order, err := p.orderQuery.GetByPayment(ctx, providerName, event.PaymentID, true)
 		switch {
 		case repository.IsRecordNotFound(err):
 			return nil
@@ -113,8 +115,8 @@ func (p *paymentService) HandleWebhook(ctx context.Context, body []byte) error {
 
 		switch event.Status {
 		case paymentprovider.PaymentStatusSucceeded:
-			if event.PaymentMethod.Saved {
-				if err := p.savePaymentMethod(ctx, event.Metadata.UserID, event.PaymentMethod); err != nil {
+			if event.PaymentMethod.ID != "" {
+				if err := p.savePaymentMethod(ctx, event.Metadata.UserID, event.PaymentMethod, providerName); err != nil {
 					p.logger.ErrorContext(
 						ctx,
 						"failed to save user payment method",
@@ -233,15 +235,12 @@ func (p *paymentService) createPaymentRequest(
 	rubles := decimal.NewFromInt(order.TotalAmount).Div(decimal.NewFromInt(100))
 
 	createPaymentRequest := &paymentprovider.CreatePaymentRequest{
-		Amount: paymentprovider.Amount{
-			Value:    rubles.String(),
-			Currency: paymentprovider.CurrencyRUB,
-		},
+		Amount:   rubles.String(),
+		Currency: paymentprovider.CurrencyRUB,
 		Metadata: paymentprovider.Metadata{
 			UserID:  userID,
 			OrderID: order.ID,
 		},
-		Capture:     true,
 		Description: fmt.Sprintf("Оплата заказа № %s", order.ID),
 	}
 
@@ -268,20 +267,12 @@ func (p *paymentService) getUserPaymentMethod(
 ) (*models.UserPaymentMethod, error) {
 	const op = "paymentService.getUserPaymentMethod"
 
-	userPaymentMethod, err := p.userPaymentMethodRepo.GetByID(ctx, paymentMethodID)
+	userPaymentMethod, err := p.userPaymentMethodRepo.GetByProvider(ctx, paymentMethodID, userID, providerName)
 	switch {
 	case repository.IsRecordNotFound(err):
 		return nil, apperror.Wrap(op, apperror.ErrPaymentMethodNotFound)
 	case err != nil:
 		return nil, apperror.Wrap(op, err)
-	}
-
-	if userPaymentMethod.UserID != userID {
-		return nil, apperror.Wrap(op, apperror.ErrForbidden)
-	}
-
-	if userPaymentMethod.Provider != providerName {
-		return nil, apperror.Wrap(op, apperror.ErrForbidden)
 	}
 
 	return userPaymentMethod, nil
@@ -291,13 +282,14 @@ func (p *paymentService) savePaymentMethod(
 	ctx context.Context,
 	userID uuid.UUID,
 	method paymentprovider.PaymentMethod,
+	providerName string,
 ) error {
 	const op = "paymentService.savePaymentMethod"
 
 	userPaymentMethod := &models.UserPaymentMethod{
 		UserID:                  userID,
 		Title:                   method.Title,
-		Provider:                p.provider.GetName(),
+		Provider:                providerName,
 		ProviderPaymentMethodID: method.ID,
 		Type:                    method.Type,
 		Brand:                   utils.StringPtr(method.Card.CardType),

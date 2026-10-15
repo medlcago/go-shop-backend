@@ -111,47 +111,49 @@ func (_c *MockUserPaymentMethodRepository_Delete_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
-// GetByID provides a mock function for the type MockUserPaymentMethodRepository
-func (_mock *MockUserPaymentMethodRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.UserPaymentMethod, error) {
-	ret := _mock.Called(ctx, id)
+// GetByProvider provides a mock function for the type MockUserPaymentMethodRepository
+func (_mock *MockUserPaymentMethodRepository) GetByProvider(ctx context.Context, id uuid.UUID, userID uuid.UUID, providerName string) (*models.UserPaymentMethod, error) {
+	ret := _mock.Called(ctx, id, userID, providerName)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByID")
+		panic("no return value specified for GetByProvider")
 	}
 
 	var r0 *models.UserPaymentMethod
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*models.UserPaymentMethod, error)); ok {
-		return returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, string) (*models.UserPaymentMethod, error)); ok {
+		return returnFunc(ctx, id, userID, providerName)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *models.UserPaymentMethod); ok {
-		r0 = returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, string) *models.UserPaymentMethod); ok {
+		r0 = returnFunc(ctx, id, userID, providerName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.UserPaymentMethod)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID, string) error); ok {
+		r1 = returnFunc(ctx, id, userID, providerName)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockUserPaymentMethodRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
-type MockUserPaymentMethodRepository_GetByID_Call struct {
+// MockUserPaymentMethodRepository_GetByProvider_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByProvider'
+type MockUserPaymentMethodRepository_GetByProvider_Call struct {
 	*mock.Call
 }
 
-// GetByID is a helper method to define mock.On call
+// GetByProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUserPaymentMethodRepository_Expecter) GetByID(ctx any, id any) *MockUserPaymentMethodRepository_GetByID_Call {
-	return &MockUserPaymentMethodRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
+//   - userID uuid.UUID
+//   - providerName string
+func (_e *MockUserPaymentMethodRepository_Expecter) GetByProvider(ctx any, id any, userID any, providerName any) *MockUserPaymentMethodRepository_GetByProvider_Call {
+	return &MockUserPaymentMethodRepository_GetByProvider_Call{Call: _e.mock.On("GetByProvider", ctx, id, userID, providerName)}
 }
 
-func (_c *MockUserPaymentMethodRepository_GetByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUserPaymentMethodRepository_GetByID_Call {
+func (_c *MockUserPaymentMethodRepository_GetByProvider_Call) Run(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID, providerName string)) *MockUserPaymentMethodRepository_GetByProvider_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -161,20 +163,30 @@ func (_c *MockUserPaymentMethodRepository_GetByID_Call) Run(run func(ctx context
 		if args[1] != nil {
 			arg1 = args[1].(uuid.UUID)
 		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *MockUserPaymentMethodRepository_GetByID_Call) Return(userPaymentMethod *models.UserPaymentMethod, err error) *MockUserPaymentMethodRepository_GetByID_Call {
+func (_c *MockUserPaymentMethodRepository_GetByProvider_Call) Return(userPaymentMethod *models.UserPaymentMethod, err error) *MockUserPaymentMethodRepository_GetByProvider_Call {
 	_c.Call.Return(userPaymentMethod, err)
 	return _c
 }
 
-func (_c *MockUserPaymentMethodRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*models.UserPaymentMethod, error)) *MockUserPaymentMethodRepository_GetByID_Call {
+func (_c *MockUserPaymentMethodRepository_GetByProvider_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID, providerName string) (*models.UserPaymentMethod, error)) *MockUserPaymentMethodRepository_GetByProvider_Call {
 	_c.Call.Return(run)
 	return _c
 }
