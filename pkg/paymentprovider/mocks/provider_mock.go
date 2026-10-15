@@ -184,12 +184,12 @@ func (_c *MockProvider_CreatePayment_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
-// GetName provides a mock function for the type MockProvider
-func (_mock *MockProvider) GetName() string {
+// Name provides a mock function for the type MockProvider
+func (_mock *MockProvider) Name() string {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetName")
+		panic("no return value specified for Name")
 	}
 
 	var r0 string
@@ -201,29 +201,29 @@ func (_mock *MockProvider) GetName() string {
 	return r0
 }
 
-// MockProvider_GetName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetName'
-type MockProvider_GetName_Call struct {
+// MockProvider_Name_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Name'
+type MockProvider_Name_Call struct {
 	*mock.Call
 }
 
-// GetName is a helper method to define mock.On call
-func (_e *MockProvider_Expecter) GetName() *MockProvider_GetName_Call {
-	return &MockProvider_GetName_Call{Call: _e.mock.On("GetName")}
+// Name is a helper method to define mock.On call
+func (_e *MockProvider_Expecter) Name() *MockProvider_Name_Call {
+	return &MockProvider_Name_Call{Call: _e.mock.On("Name")}
 }
 
-func (_c *MockProvider_GetName_Call) Run(run func()) *MockProvider_GetName_Call {
+func (_c *MockProvider_Name_Call) Run(run func()) *MockProvider_Name_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *MockProvider_GetName_Call) Return(s string) *MockProvider_GetName_Call {
+func (_c *MockProvider_Name_Call) Return(s string) *MockProvider_Name_Call {
 	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *MockProvider_GetName_Call) RunAndReturn(run func() string) *MockProvider_GetName_Call {
+func (_c *MockProvider_Name_Call) RunAndReturn(run func() string) *MockProvider_Name_Call {
 	_c.Call.Return(run)
 	return _c
 }
