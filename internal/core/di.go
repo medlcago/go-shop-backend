@@ -281,9 +281,9 @@ func (c *Container) Cache() cache.Cache {
 
 func (c *Container) TemplateManager() template.Manager {
 	return c.templateManager.Get(func() template.Manager {
-		templateManager := template.NewManager()
-		if err := templateManager.LoadFromFS(templates.FS, "*.gohtml"); err != nil {
-			logger.Fatal(c.Logger(), "failed to load templates from FS", err)
+		templateManager, err := template.NewManager(templates.FS, "*.gohtml")
+		if err != nil {
+			logger.Fatal(c.Logger(), "template.NewManager", err)
 		}
 
 		return templateManager

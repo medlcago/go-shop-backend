@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 	"go-shop-backend/internal/models"
+	"go-shop-backend/internal/repository"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -172,8 +173,8 @@ func (_c *MockUserRepository_ExistsByEmail_Call) RunAndReturn(run func(ctx conte
 }
 
 // GetByEmail provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
-	ret := _mock.Called(ctx, email)
+func (_mock *MockUserRepository) GetByEmail(ctx context.Context, email string, filter repository.GetUserFilter) (*models.User, error) {
+	ret := _mock.Called(ctx, email, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByEmail")
@@ -181,18 +182,18 @@ func (_mock *MockUserRepository) GetByEmail(ctx context.Context, email string) (
 
 	var r0 *models.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.User, error)); ok {
-		return returnFunc(ctx, email)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, repository.GetUserFilter) (*models.User, error)); ok {
+		return returnFunc(ctx, email, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.User); ok {
-		r0 = returnFunc(ctx, email)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, repository.GetUserFilter) *models.User); ok {
+		r0 = returnFunc(ctx, email, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, email)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, repository.GetUserFilter) error); ok {
+		r1 = returnFunc(ctx, email, filter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -207,11 +208,12 @@ type MockUserRepository_GetByEmail_Call struct {
 // GetByEmail is a helper method to define mock.On call
 //   - ctx context.Context
 //   - email string
-func (_e *MockUserRepository_Expecter) GetByEmail(ctx any, email any) *MockUserRepository_GetByEmail_Call {
-	return &MockUserRepository_GetByEmail_Call{Call: _e.mock.On("GetByEmail", ctx, email)}
+//   - filter repository.GetUserFilter
+func (_e *MockUserRepository_Expecter) GetByEmail(ctx any, email any, filter any) *MockUserRepository_GetByEmail_Call {
+	return &MockUserRepository_GetByEmail_Call{Call: _e.mock.On("GetByEmail", ctx, email, filter)}
 }
 
-func (_c *MockUserRepository_GetByEmail_Call) Run(run func(ctx context.Context, email string)) *MockUserRepository_GetByEmail_Call {
+func (_c *MockUserRepository_GetByEmail_Call) Run(run func(ctx context.Context, email string, filter repository.GetUserFilter)) *MockUserRepository_GetByEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -221,9 +223,14 @@ func (_c *MockUserRepository_GetByEmail_Call) Run(run func(ctx context.Context, 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 repository.GetUserFilter
+		if args[2] != nil {
+			arg2 = args[2].(repository.GetUserFilter)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -234,82 +241,14 @@ func (_c *MockUserRepository_GetByEmail_Call) Return(user *models.User, err erro
 	return _c
 }
 
-func (_c *MockUserRepository_GetByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*models.User, error)) *MockUserRepository_GetByEmail_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetByEmailIncludingDeleted provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) GetByEmailIncludingDeleted(ctx context.Context, email string) (*models.User, error) {
-	ret := _mock.Called(ctx, email)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByEmailIncludingDeleted")
-	}
-
-	var r0 *models.User
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.User, error)); ok {
-		return returnFunc(ctx, email)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.User); ok {
-		r0 = returnFunc(ctx, email)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, email)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockUserRepository_GetByEmailIncludingDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByEmailIncludingDeleted'
-type MockUserRepository_GetByEmailIncludingDeleted_Call struct {
-	*mock.Call
-}
-
-// GetByEmailIncludingDeleted is a helper method to define mock.On call
-//   - ctx context.Context
-//   - email string
-func (_e *MockUserRepository_Expecter) GetByEmailIncludingDeleted(ctx any, email any) *MockUserRepository_GetByEmailIncludingDeleted_Call {
-	return &MockUserRepository_GetByEmailIncludingDeleted_Call{Call: _e.mock.On("GetByEmailIncludingDeleted", ctx, email)}
-}
-
-func (_c *MockUserRepository_GetByEmailIncludingDeleted_Call) Run(run func(ctx context.Context, email string)) *MockUserRepository_GetByEmailIncludingDeleted_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserRepository_GetByEmailIncludingDeleted_Call) Return(user *models.User, err error) *MockUserRepository_GetByEmailIncludingDeleted_Call {
-	_c.Call.Return(user, err)
-	return _c
-}
-
-func (_c *MockUserRepository_GetByEmailIncludingDeleted_Call) RunAndReturn(run func(ctx context.Context, email string) (*models.User, error)) *MockUserRepository_GetByEmailIncludingDeleted_Call {
+func (_c *MockUserRepository_GetByEmail_Call) RunAndReturn(run func(ctx context.Context, email string, filter repository.GetUserFilter) (*models.User, error)) *MockUserRepository_GetByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	ret := _mock.Called(ctx, id)
+func (_mock *MockUserRepository) GetByID(ctx context.Context, id uuid.UUID, filter repository.GetUserFilter) (*models.User, error) {
+	ret := _mock.Called(ctx, id, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
@@ -317,18 +256,18 @@ func (_mock *MockUserRepository) GetByID(ctx context.Context, id uuid.UUID) (*mo
 
 	var r0 *models.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*models.User, error)); ok {
-		return returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, repository.GetUserFilter) (*models.User, error)); ok {
+		return returnFunc(ctx, id, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *models.User); ok {
-		r0 = returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, repository.GetUserFilter) *models.User); ok {
+		r0 = returnFunc(ctx, id, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, repository.GetUserFilter) error); ok {
+		r1 = returnFunc(ctx, id, filter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -343,11 +282,12 @@ type MockUserRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockUserRepository_Expecter) GetByID(ctx any, id any) *MockUserRepository_GetByID_Call {
-	return &MockUserRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
+//   - filter repository.GetUserFilter
+func (_e *MockUserRepository_Expecter) GetByID(ctx any, id any, filter any) *MockUserRepository_GetByID_Call {
+	return &MockUserRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, filter)}
 }
 
-func (_c *MockUserRepository_GetByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUserRepository_GetByID_Call {
+func (_c *MockUserRepository_GetByID_Call) Run(run func(ctx context.Context, id uuid.UUID, filter repository.GetUserFilter)) *MockUserRepository_GetByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -357,9 +297,14 @@ func (_c *MockUserRepository_GetByID_Call) Run(run func(ctx context.Context, id 
 		if args[1] != nil {
 			arg1 = args[1].(uuid.UUID)
 		}
+		var arg2 repository.GetUserFilter
+		if args[2] != nil {
+			arg2 = args[2].(repository.GetUserFilter)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -370,75 +315,7 @@ func (_c *MockUserRepository_GetByID_Call) Return(user *models.User, err error) 
 	return _c
 }
 
-func (_c *MockUserRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*models.User, error)) *MockUserRepository_GetByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetByIDIncludingDeleted provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) GetByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByIDIncludingDeleted")
-	}
-
-	var r0 *models.User
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*models.User, error)); ok {
-		return returnFunc(ctx, id)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *models.User); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockUserRepository_GetByIDIncludingDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDIncludingDeleted'
-type MockUserRepository_GetByIDIncludingDeleted_Call struct {
-	*mock.Call
-}
-
-// GetByIDIncludingDeleted is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id uuid.UUID
-func (_e *MockUserRepository_Expecter) GetByIDIncludingDeleted(ctx any, id any) *MockUserRepository_GetByIDIncludingDeleted_Call {
-	return &MockUserRepository_GetByIDIncludingDeleted_Call{Call: _e.mock.On("GetByIDIncludingDeleted", ctx, id)}
-}
-
-func (_c *MockUserRepository_GetByIDIncludingDeleted_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUserRepository_GetByIDIncludingDeleted_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserRepository_GetByIDIncludingDeleted_Call) Return(user *models.User, err error) *MockUserRepository_GetByIDIncludingDeleted_Call {
-	_c.Call.Return(user, err)
-	return _c
-}
-
-func (_c *MockUserRepository_GetByIDIncludingDeleted_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*models.User, error)) *MockUserRepository_GetByIDIncludingDeleted_Call {
+func (_c *MockUserRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, filter repository.GetUserFilter) (*models.User, error)) *MockUserRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

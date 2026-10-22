@@ -357,6 +357,9 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_UpdateAllFields(
 	suite.productRepo.EXPECT().Update(suite.ctx, product).
 		Return(nil).Once()
 
+	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, true).
+		Return(product, nil).Once()
+
 	response, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
 
 	suite.NoError(err)
@@ -395,6 +398,9 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_Success_PartialUpdate() 
 
 	suite.productRepo.EXPECT().Update(suite.ctx, product).
 		Return(nil).Once()
+
+	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, true).
+		Return(product, nil).Once()
 
 	response, err := suite.productService.UpdateProduct(suite.ctx, suite.productID, req)
 
@@ -463,6 +469,9 @@ func (suite *ProductServiceTestSuite) TestUpdateStock_Success() {
 		return p.Stock == req.Stock && p.Reserved == product.Reserved
 	})).Return(nil).Once()
 
+	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, true).
+		Return(product, nil).Once()
+
 	response, err := suite.productService.UpdateStock(suite.ctx, suite.productID, req)
 
 	suite.NoError(err)
@@ -508,6 +517,9 @@ func (suite *ProductServiceTestSuite) TestUpdateStock_StockEqualToReserved() {
 
 	suite.productRepo.EXPECT().Update(suite.ctx, product).
 		Return(nil).Once()
+
+	suite.productRepo.EXPECT().GetByID(suite.ctx, suite.productID, true).
+		Return(product, nil).Once()
 
 	response, err := suite.productService.UpdateStock(suite.ctx, suite.productID, req)
 

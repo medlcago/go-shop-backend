@@ -26,8 +26,12 @@ func (u *userRepository) Create(ctx context.Context, user *models.User) error {
 	return repository.HandleError(err)
 }
 
-func (u *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (u *userRepository) GetByID(ctx context.Context, id uuid.UUID, filter repository.GetUserFilter) (*models.User, error) {
 	db := u.db.GetDB(ctx)
+
+	if filter.IncludeDeleted {
+		db = db.Unscoped()
+	}
 
 	var user models.User
 	if err := db.First(&user, id).Error; err != nil {
@@ -37,33 +41,15 @@ func (u *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Use
 	return &user, nil
 }
 
-func (u *userRepository) GetByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (u *userRepository) GetByEmail(ctx context.Context, email string, filter repository.GetUserFilter) (*models.User, error) {
 	db := u.db.GetDB(ctx)
 
-	var user models.User
-	if err := db.Unscoped().First(&user, id).Error; err != nil {
-		return nil, repository.HandleError(err)
+	if filter.IncludeDeleted {
+		db = db.Unscoped()
 	}
-
-	return &user, nil
-}
-
-func (u *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
-	db := u.db.GetDB(ctx)
 
 	var user models.User
 	if err := db.Where("email = ?", email).First(&user).Error; err != nil {
-		return nil, repository.HandleError(err)
-	}
-
-	return &user, nil
-}
-
-func (u *userRepository) GetByEmailIncludingDeleted(ctx context.Context, email string) (*models.User, error) {
-	db := u.db.GetDB(ctx)
-
-	var user models.User
-	if err := db.Unscoped().Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, repository.HandleError(err)
 	}
 

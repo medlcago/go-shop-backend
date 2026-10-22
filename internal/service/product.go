@@ -35,12 +35,7 @@ func NewProductService(
 func (p *productService) GetProductByID(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error) {
 	const op = "productService.GetProductByID"
 
-	product, err := p.getProductByID(ctx, productID, true)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	response, err := p.mapProduct(product)
+	response, err := p.getProductResponse(ctx, productID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -120,7 +115,7 @@ func (p *productService) UpdateProduct(ctx context.Context, productID uuid.UUID,
 		return nil, apperror.Wrap(op, err)
 	}
 
-	response, err := p.mapProduct(product)
+	response, err := p.getProductResponse(ctx, productID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -146,7 +141,7 @@ func (p *productService) UpdateStock(ctx context.Context, productID uuid.UUID, r
 		return nil, apperror.Wrap(op, err)
 	}
 
-	response, err := p.mapProduct(product)
+	response, err := p.getProductResponse(ctx, productID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -257,6 +252,22 @@ func (p *productService) productExists(ctx context.Context, productID uuid.UUID)
 	}
 
 	return nil
+}
+
+func (p *productService) getProductResponse(ctx context.Context, productID uuid.UUID) (*dto.ProductResponse, error) {
+	const op = "productService.getProductResponse"
+
+	product, err := p.getProductByID(ctx, productID, true)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	response, err := p.mapProduct(product)
+	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return response, nil
 }
 
 func (p *productService) mapProduct(product *models.Product) (*dto.ProductResponse, error) {

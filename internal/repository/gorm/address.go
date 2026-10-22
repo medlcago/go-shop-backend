@@ -31,7 +31,7 @@ func (a *addressRepository) GetByID(ctx context.Context, id uuid.UUID, userID uu
 	db := a.db.GetDB(ctx)
 
 	var address models.Address
-	err := db.Model(&models.Address{}).Where("id = ? AND user_id = ?", id, userID).First(&address).Error
+	err := db.Where("id = ? AND user_id = ?", id, userID).First(&address).Error
 	if err != nil {
 		return nil, repository.HandleError(err)
 	}
@@ -43,7 +43,7 @@ func (a *addressRepository) ListByUser(ctx context.Context, userID uuid.UUID) ([
 	db := a.db.GetDB(ctx)
 
 	var addresses []*models.Address
-	err := db.Model(&models.Address{}).Where("user_id = ?", userID).Find(&addresses).Error
+	err := db.Where("user_id = ?", userID).Find(&addresses).Error
 	if err != nil {
 		return nil, repository.HandleError(err)
 	}

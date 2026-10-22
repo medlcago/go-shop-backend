@@ -140,6 +140,12 @@ func (p *paymentService) HandleWebhook(ctx context.Context, body []byte) error {
 
 			return p.orderStatusUpdater.UpdateOrderStatus(ctx, order.ID, models.OrderStatusCanceled)
 		default:
+			p.logger.InfoContext(
+				ctx,
+				"unsupported event status",
+				slog.String("status", string(event.Status)),
+				logger.Op(op),
+			)
 			return nil
 		}
 	})

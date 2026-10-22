@@ -93,32 +93,9 @@ func (s *Storage) TemporaryURL(ctx context.Context, objectKey string, expires ti
 func (s *Storage) TemporaryUploadURL(ctx context.Context, opts storage.TemporaryUploadURLOptions) (*storage.TemporaryUploadURL, error) {
 	const op = "minio.Storage.TemporaryUploadURL"
 
-	policy := minio.NewPostPolicy()
-
-	if err := policy.SetBucket(s.bucket); err != nil {
-		return nil, fmt.Errorf("%s: set bucket: %w", op, err)
-	}
-
-	if err := policy.SetKey(opts.ObjectKey); err != nil {
-		return nil, fmt.Errorf("%s: set key: %w", op, err)
-	}
-
-	if err := policy.SetContentType(opts.ContentType); err != nil {
-		return nil, fmt.Errorf("%s: set content type: %w", op, err)
-	}
-
-	if err := policy.SetContentLengthRange(opts.MinSize, opts.MaxSize); err != nil {
-		return nil, fmt.Errorf("%s: set length range: %w", op, err)
-	}
-
-	if err := policy.SetExpires(opts.Expires); err != nil {
-		return nil, fmt.Errorf("%s: set expiry: %w", op, err)
-	}
-
-	for k, v := range opts.Metadata {
-		if err := policy.SetUserMetadata(k, v); err != nil {
-			return nil, fmt.Errorf("%s: set metadata %s: %w", op, k, err)
-		}
+	policy, err := s.newPostPolicy(opts)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	u, formData, err := s.client.PresignedPostPolicy(ctx, policy)
@@ -177,7 +154,12 @@ func (s *Storage) GetObjectInfo(ctx context.Context, objectKey string) (*storage
 
 	info, err := s.client.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		switch {
+		case s.isNoSuchKey(err):
+			return nil, fmt.Errorf("%s: %w", op, storage.ErrNotFound)
+		default:
+			return nil, fmt.Errorf("%s: stat failed: %w", op, err)
+		}
 	}
 
 	return &storage.ObjectInfo{
@@ -193,4 +175,38 @@ func (s *Storage) GetObjectInfo(ctx context.Context, objectKey string) (*storage
 func (s *Storage) isNoSuchKey(err error) bool {
 	errResp := minio.ToErrorResponse(err)
 	return errResp.Code == minio.NoSuchKey
+}
+
+func (s *Storage) newPostPolicy(opts storage.TemporaryUploadURLOptions) (*minio.PostPolicy, error) {
+	const op = "minio.Storage.newPostPolicy"
+
+	policy := minio.NewPostPolicy()
+
+	if err := policy.SetBucket(s.bucket); err != nil {
+		return nil, fmt.Errorf("%s: set bucket: %w", op, err)
+	}
+
+	if err := policy.SetKey(opts.ObjectKey); err != nil {
+		return nil, fmt.Errorf("%s: set key: %w", op, err)
+	}
+
+	if err := policy.SetContentType(opts.ContentType); err != nil {
+		return nil, fmt.Errorf("%s: set content type: %w", op, err)
+	}
+
+	if err := policy.SetContentLengthRange(opts.MinSize, opts.MaxSize); err != nil {
+		return nil, fmt.Errorf("%s: set length range: %w", op, err)
+	}
+
+	if err := policy.SetExpires(opts.Expires); err != nil {
+		return nil, fmt.Errorf("%s: set expiry: %w", op, err)
+	}
+
+	for k, v := range opts.Metadata {
+		if err := policy.SetUserMetadata(k, v); err != nil {
+			return nil, fmt.Errorf("%s: set metadata %s: %w", op, k, err)
+		}
+	}
+
+	return policy, nil
 }

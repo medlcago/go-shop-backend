@@ -7,6 +7,10 @@ type LimitOffsetFilter struct {
 	Offset int
 }
 
+type GetUserFilter struct {
+	IncludeDeleted bool
+}
+
 type ListProductFilter struct {
 	LimitOffsetFilter
 	OrderBy    string

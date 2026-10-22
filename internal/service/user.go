@@ -79,7 +79,9 @@ func NewUserService(
 func (u *userService) Login(ctx context.Context, req dto.UserLoginRequest) (*dto.UserTokenResponse, error) {
 	const op = "userService.Login"
 
-	user, err := u.userRepo.GetByEmailIncludingDeleted(ctx, req.Email)
+	user, err := u.userRepo.GetByEmail(ctx, req.Email, repository.GetUserFilter{
+		IncludeDeleted: true,
+	})
 	if err != nil {
 		if repository.IsRecordNotFound(err) {
 			return nil, apperror.Wrap(op, apperror.ErrInvalidCredentials)
@@ -143,7 +145,9 @@ func (u *userService) Register(ctx context.Context, req dto.UserRegisterRequest)
 func (u *userService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setup2FAResponse, error) {
 	const op = "userService.Setup2FA"
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -177,7 +181,9 @@ func (u *userService) Setup2FA(ctx context.Context, userID uuid.UUID) (*dto.Setu
 func (u *userService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.Confirm2FARequest) error {
 	const op = "userService.Confirm2FA"
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return apperror.Wrap(op, err)
 	}
@@ -211,7 +217,9 @@ func (u *userService) Confirm2FA(ctx context.Context, userID uuid.UUID, req dto.
 func (u *userService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.Disable2FARequest) error {
 	const op = "userService.Disable2FA"
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return apperror.Wrap(op, err)
 	}
@@ -242,7 +250,9 @@ func (u *userService) Disable2FA(ctx context.Context, userID uuid.UUID, req dto.
 func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error) {
 	const op = "userService.GetUserByID"
 
-	user, err := u.getUserByIDIncludingDeleted(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: true,
+	})
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -272,7 +282,9 @@ func (u *userService) SendEmailConfirmationCode(ctx context.Context, userID uuid
 		return nil, apperror.Wrap(op, apperror.ErrEmailConfirmationCodeAlreadySent)
 	}
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -306,7 +318,9 @@ func (u *userService) SendEmailConfirmationCode(ctx context.Context, userID uuid
 func (u *userService) ConfirmEmail(ctx context.Context, userID uuid.UUID, req dto.ConfirmEmailRequest) (*dto.ConfirmEmailResponse, error) {
 	const op = "userService.ConfirmEmail"
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -334,7 +348,9 @@ func (u *userService) ConfirmEmail(ctx context.Context, userID uuid.UUID, req dt
 func (u *userService) ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error {
 	const op = "userService.ChangePassword"
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return apperror.Wrap(op, err)
 	}
@@ -383,7 +399,9 @@ func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dt
 		return nil, apperror.Wrap(op, apperror.ErrInvalidToken)
 	}
 
-	user, err := u.getUserByIDIncludingDeleted(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: true,
+	})
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -407,7 +425,9 @@ func (u *userService) RefreshToken(ctx context.Context, tokenString string) (*dt
 func (u *userService) BeginPasskeyRegistration(ctx context.Context, userID uuid.UUID) (*dto.BeginPasskeyRegistrationResponse, error) {
 	const op = "userService.BeginPasskeyRegistration"
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -439,7 +459,9 @@ func (u *userService) BeginPasskeyRegistration(ctx context.Context, userID uuid.
 func (u *userService) FinishPasskeyRegistration(ctx context.Context, userID uuid.UUID, sessionID string, data []byte) error {
 	const op = "userService.FinishPasskeyRegistration"
 
-	user, err := u.getUserByID(ctx, userID)
+	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+		IncludeDeleted: false,
+	})
 	if err != nil {
 		return apperror.Wrap(op, err)
 	}
@@ -458,6 +480,10 @@ func (u *userService) FinishPasskeyRegistration(ctx context.Context, userID uuid
 			logger.Err(err),
 			logger.Op(op),
 		)
+
+		if errors.Is(err, passkey.ErrSessionNotFound) {
+			return apperror.Wrap(op, apperror.ErrInvalidCredentials)
+		}
 
 		return apperror.Wrap(op, err)
 	}
@@ -506,9 +532,15 @@ func (u *userService) FinishPasskeyLogin(ctx context.Context, sessionID string, 
 			return nil, fmt.Errorf("failed to parse user handle: %w", err)
 		}
 
-		user, err := u.getUserByID(ctx, userID)
+		user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
+			IncludeDeleted: true,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to get user by id: %w", err)
+		}
+
+		if user.DeletedAt.Valid {
+			return nil, apperror.ErrUserProfileDeleted
 		}
 
 		userPasskeys, err := u.passkeyRepo.GetListByUser(ctx, userID)
@@ -527,6 +559,10 @@ func (u *userService) FinishPasskeyLogin(ctx context.Context, sessionID string, 
 			logger.Err(err),
 			logger.Op(op),
 		)
+
+		if errors.Is(err, passkey.ErrSessionNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrInvalidCredentials)
+		}
 
 		return nil, apperror.Wrap(op, err)
 	}
@@ -713,24 +749,10 @@ func (u *userService) verify2FACode(ctx context.Context, secret string, code str
 	return nil
 }
 
-func (u *userService) getUserByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+func (u *userService) getUserByID(ctx context.Context, userID uuid.UUID, filter repository.GetUserFilter) (*models.User, error) {
 	const op = "userService.getUserByID"
 
-	user, err := u.userRepo.GetByID(ctx, userID)
-	switch {
-	case repository.IsRecordNotFound(err):
-		return nil, apperror.Wrap(op, apperror.ErrUserNotFound)
-	case err != nil:
-		return nil, apperror.Wrap(op, err)
-	}
-
-	return user, nil
-}
-
-func (u *userService) getUserByIDIncludingDeleted(ctx context.Context, userID uuid.UUID) (*models.User, error) {
-	const op = "userService.getUserByIDIncludingDeleted"
-
-	user, err := u.userRepo.GetByIDIncludingDeleted(ctx, userID)
+	user, err := u.userRepo.GetByID(ctx, userID, filter)
 	switch {
 	case repository.IsRecordNotFound(err):
 		return nil, apperror.Wrap(op, apperror.ErrUserNotFound)

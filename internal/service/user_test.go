@@ -106,7 +106,7 @@ func (suite *UserServiceTestSuite) TestLogin_Success() {
 		EmailConfirmedAt: new(time.Now()),
 	}
 
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmail(suite.ctx, req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -118,7 +118,7 @@ func (suite *UserServiceTestSuite) TestLogin_Success() {
 		EmailConfirmed: user.EmailConfirmed(),
 	}
 
-	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+	claims := &token.UserClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
 		Return("test_access_token", claims, nil).Once()
@@ -148,7 +148,7 @@ func (suite *UserServiceTestSuite) TestLogin_UserNotFound() {
 		Password: "password123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmail(suite.ctx, req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.userService.Login(suite.ctx, req)
@@ -168,7 +168,7 @@ func (suite *UserServiceTestSuite) TestLogin_ProfileDeleted() {
 		DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true}),
 	}
 
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmail(suite.ctx, req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, mock.AnythingOfType("string")).
@@ -195,7 +195,7 @@ func (suite *UserServiceTestSuite) TestLogin_ProfileDeleted_2FAEnabled() {
 		TwoFAConfirmedAt: new(time.Now()),
 	}
 
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmail(suite.ctx, req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, mock.AnythingOfType("string")).
@@ -225,7 +225,7 @@ func (suite *UserServiceTestSuite) TestLogin_InvalidPassword() {
 		PasswordHash: "test123",
 	}
 
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmail(suite.ctx, req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -245,7 +245,7 @@ func (suite *UserServiceTestSuite) TestLogin_RepositoryError() {
 	}
 
 	repoErr := errors.New("database error")
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmail(suite.ctx, req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(nil, repoErr).Once()
 
 	response, err := suite.userService.Login(suite.ctx, req)
@@ -272,7 +272,7 @@ func (suite *UserServiceTestSuite) TestLogin_2FAEnabled_Success() {
 		TwoFAConfirmedAt: new(time.Now().UTC()),
 	}
 
-	suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, req.Email).
+	suite.userRepo.EXPECT().GetByEmail(suite.ctx, req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -290,7 +290,7 @@ func (suite *UserServiceTestSuite) TestLogin_2FAEnabled_Success() {
 		TwoFAEnabled: user.TwoFAEnabled,
 	}
 
-	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+	claims := &token.UserClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
 		Return("test_access_token", claims, nil).Once()
@@ -350,7 +350,7 @@ func (suite *UserServiceTestSuite) TestLogin_2FAEnabled_Invalid2FACode() {
 				TwoFAConfirmedAt: new(time.Now().UTC()),
 			}
 
-			suite.userRepo.EXPECT().GetByEmailIncludingDeleted(suite.ctx, tt.req.Email).
+			suite.userRepo.EXPECT().GetByEmail(suite.ctx, tt.req.Email, repository.GetUserFilter{IncludeDeleted: true}).
 				Return(user, nil).Once()
 
 			suite.hasher.EXPECT().Verify(tt.req.Password, user.PasswordHash).
@@ -397,7 +397,7 @@ func (suite *UserServiceTestSuite) TestRegister_Success() {
 		UserRole: string(models.UserRoleCustomer),
 	}
 
-	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+	claims := &token.UserClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
 		Return("test_access_token", claims, nil).Once()
@@ -465,7 +465,7 @@ func (suite *UserServiceTestSuite) TestSetup2FA_Success() {
 	encrypted := "encrypted_secret"
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.totpManager.EXPECT().
@@ -499,7 +499,7 @@ func (suite *UserServiceTestSuite) TestSetup2FA_2FAAlreadyEnabled() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	response, err := suite.userService.Setup2FA(suite.ctx, suite.userID)
@@ -516,7 +516,7 @@ func (suite *UserServiceTestSuite) TestSetup2FA_EncryptionError() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.totpManager.EXPECT().
@@ -537,7 +537,7 @@ func (suite *UserServiceTestSuite) TestSetup2FA_EncryptionError() {
 
 func (suite *UserServiceTestSuite) TestSetup2FA_UserNotFound() {
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.userService.Setup2FA(suite.ctx, suite.userID)
@@ -565,7 +565,7 @@ func (suite *UserServiceTestSuite) TestConfirm2FA_Success() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -601,7 +601,7 @@ func (suite *UserServiceTestSuite) TestConfirm2FA_2FANotInitialized() {
 	req := dto.Confirm2FARequest{Password: "123123"}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -624,7 +624,7 @@ func (suite *UserServiceTestSuite) TestConfirm2FA_2FAAlreadyEnabled() {
 	req := dto.Confirm2FARequest{Password: "123123"}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -644,7 +644,7 @@ func (suite *UserServiceTestSuite) TestConfirm2FA_InvalidPassword() {
 	req := dto.Confirm2FARequest{Password: "wrong"}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -670,7 +670,7 @@ func (suite *UserServiceTestSuite) TestConfirm2FA_InvalidCode() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -697,7 +697,7 @@ func (suite *UserServiceTestSuite) TestConfirm2FA_UserNotFound() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	err := suite.userService.Confirm2FA(suite.ctx, suite.userID, req)
@@ -722,7 +722,7 @@ func (suite *UserServiceTestSuite) TestDisable2FA_Success() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -757,7 +757,7 @@ func (suite *UserServiceTestSuite) TestDisable2FA_2FANotEnabled() {
 	req := dto.Disable2FARequest{Password: "123123"}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -777,7 +777,7 @@ func (suite *UserServiceTestSuite) TestDisable2FA_InvalidPassword() {
 	req := dto.Disable2FARequest{Password: "wrong"}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -807,7 +807,7 @@ func (suite *UserServiceTestSuite) TestDisable2FA_InvalidCode() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().
@@ -834,7 +834,7 @@ func (suite *UserServiceTestSuite) TestDisable2FA_UserNotFound() {
 	}
 
 	suite.userRepo.EXPECT().
-		GetByID(suite.ctx, suite.userID).
+		GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	err := suite.userService.Disable2FA(suite.ctx, suite.userID, req)
@@ -845,26 +845,26 @@ func (suite *UserServiceTestSuite) TestDisable2FA_UserNotFound() {
 // ==================== GetUserByID Tests ====================
 
 func (suite *UserServiceTestSuite) TestGetUserByID_Success() {
-	mockUser := &models.User{
+	user := &models.User{
 		ID:        suite.userID,
 		Email:     "test@example.com",
 		CreatedAt: time.Now(),
 	}
 
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
-		Return(mockUser, nil).Once()
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
+		Return(user, nil).Once()
 
 	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
 
 	suite.NoError(err)
 	suite.NotNil(response)
 	suite.Equal(suite.userID, response.ID)
-	suite.Equal(mockUser.Email, response.Email)
+	suite.Equal(user.Email, response.Email)
 	suite.NotZero(response.CreatedAt)
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
@@ -875,7 +875,7 @@ func (suite *UserServiceTestSuite) TestGetUserByID_NotFound() {
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID_ProfileDeleted() {
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(&models.User{ID: suite.userID, DeletedAt: gorm.DeletedAt(sql.NullTime{Time: time.Now(), Valid: true})}, nil).Once()
 
 	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
@@ -887,7 +887,7 @@ func (suite *UserServiceTestSuite) TestGetUserByID_ProfileDeleted() {
 
 func (suite *UserServiceTestSuite) TestGetUserByID_RepositoryError() {
 	repoErr := errors.New("database error")
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(nil, repoErr).Once()
 
 	response, err := suite.userService.GetUserByID(suite.ctx, suite.userID)
@@ -910,7 +910,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_Success() {
 	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
 		Return(false, nil).Once()
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.cache.EXPECT().Set(suite.ctx, cacheKey, mock.AnythingOfType("string"), suite.userEmailConfig.EmailConfirmationCodeTTL).
@@ -953,7 +953,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_EmailAlreadyCon
 	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
 		Return(false, nil).Once()
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	response, err := suite.userService.SendEmailConfirmationCode(suite.ctx, suite.userID)
@@ -967,7 +967,7 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_UserNotFound() 
 	suite.cache.EXPECT().Exists(suite.ctx, mock.AnythingOfType("string")).
 		Return(false, nil).Once()
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.userService.SendEmailConfirmationCode(suite.ctx, suite.userID)
@@ -1003,7 +1003,7 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_Success() {
 
 	cacheKey := fmt.Sprintf("email_confirmation:%s", suite.userID)
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.cache.EXPECT().Get(suite.ctx, cacheKey).
@@ -1037,7 +1037,7 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_EmailAlreadyConfirmed() {
 		EmailConfirmedAt: new(time.Now()),
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	response, err := suite.userService.ConfirmEmail(suite.ctx, suite.userID, req)
@@ -1047,7 +1047,7 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_EmailAlreadyConfirmed() {
 	suite.ErrorContains(err, "userService.ConfirmEmail")
 }
 
-func (suite *UserServiceTestSuite) TestConfirmEmail_InvalidCode_NotFoundInCache() {
+func (suite *UserServiceTestSuite) TestConfirmEmail_InvalidCode_CacheMiss() {
 	req := dto.ConfirmEmailRequest{
 		Code: "123456",
 	}
@@ -1057,7 +1057,7 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_InvalidCode_NotFoundInCache(
 		Email: "test@example.com",
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.cache.EXPECT().Get(suite.ctx, mock.AnythingOfType("string")).
@@ -1080,7 +1080,7 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_InvalidCode() {
 		Email: "test@example.com",
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.cache.EXPECT().Get(suite.ctx, mock.AnythingOfType("string")).
@@ -1098,7 +1098,7 @@ func (suite *UserServiceTestSuite) TestConfirmEmail_UserNotFound() {
 		Code: "123456",
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.userService.ConfirmEmail(suite.ctx, suite.userID, req)
@@ -1121,7 +1121,7 @@ func (suite *UserServiceTestSuite) TestChangePassword_Success() {
 		PasswordHash: "passwordHash",
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -1144,7 +1144,7 @@ func (suite *UserServiceTestSuite) TestChangePassword_UserNotFound() {
 		NewPassword: "newPassword123",
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	err := suite.userService.ChangePassword(suite.ctx, suite.userID, req)
@@ -1164,7 +1164,7 @@ func (suite *UserServiceTestSuite) TestChangePassword_InvalidCurrentPassword() {
 		PasswordHash: "passwordHash",
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -1190,7 +1190,7 @@ func (suite *UserServiceTestSuite) TestChangePassword_2FAEnabled_Success() {
 		TwoFASecret:  new("secret"),
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -1227,7 +1227,7 @@ func (suite *UserServiceTestSuite) TestChangePassword_2FAEnabled_InvalidCode() {
 		TwoFASecret:  new("secret"),
 	}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.hasher.EXPECT().Verify(req.Password, user.PasswordHash).
@@ -1267,20 +1267,18 @@ func (suite *UserServiceTestSuite) TestRefreshToken_Success() {
 	userClaims := &token.UserClaims{
 		Payload:   payload,
 		TokenType: token.RefreshTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.NewString(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		},
+		ID:        uuid.NewString(),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
 
-	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+	claims := &token.UserClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}
 
 	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, userClaims.ID)
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(userClaims, nil).Once()
 
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
@@ -1325,9 +1323,7 @@ func (suite *UserServiceTestSuite) TestRefreshToken_InvalidTokenType() {
 
 	claims := &token.UserClaims{
 		TokenType: token.AccessTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID: uuid.NewString(),
-		},
+		ID:        uuid.NewString(),
 	}
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
@@ -1345,13 +1341,9 @@ func (suite *UserServiceTestSuite) TestRefreshToken_InvalidUserID() {
 	tokenString := "refresh-token"
 
 	claims := &token.UserClaims{
-		Payload: token.Payload{
-			UserID: "invalid-uuid",
-		},
+		UserID:    "invalid-uuid",
 		TokenType: token.RefreshTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID: uuid.NewString(),
-		},
+		ID:        uuid.NewString(),
 	}
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
@@ -1373,14 +1365,10 @@ func (suite *UserServiceTestSuite) TestRefreshToken_TokenAlreadyRevoked() {
 	}
 
 	claims := &token.UserClaims{
-		Payload: token.Payload{
-			UserID: suite.userID.String(),
-		},
+		UserID:    suite.userID.String(),
 		TokenType: token.RefreshTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.NewString(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		},
+		ID:        uuid.NewString(),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
 
 	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, claims.ID)
@@ -1388,7 +1376,7 @@ func (suite *UserServiceTestSuite) TestRefreshToken_TokenAlreadyRevoked() {
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	suite.cache.EXPECT().SetNX(suite.ctx, key, "1", mock.AnythingOfType("time.Duration")).
@@ -1406,20 +1394,16 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserNotFound() {
 	tokenString := "refresh-token"
 
 	claims := &token.UserClaims{
-		Payload: token.Payload{
-			UserID: suite.userID.String(),
-		},
+		UserID:    suite.userID.String(),
 		TokenType: token.RefreshTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.NewString(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		},
+		ID:        uuid.NewString(),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
@@ -1434,14 +1418,10 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserProfileDeleted() {
 	tokenString := "refresh-token"
 
 	claims := &token.UserClaims{
-		Payload: token.Payload{
-			UserID: suite.userID.String(),
-		},
+		UserID:    suite.userID.String(),
 		TokenType: token.RefreshTokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.NewString(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		},
+		ID:        uuid.NewString(),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
 
 	user := &models.User{
@@ -1452,7 +1432,7 @@ func (suite *UserServiceTestSuite) TestRefreshToken_UserProfileDeleted() {
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
 
-	suite.userRepo.EXPECT().GetByIDIncludingDeleted(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
 		Return(user, nil).Once()
 
 	response, err := suite.userService.RefreshToken(suite.ctx, tokenString)
@@ -1476,7 +1456,7 @@ func (suite *UserServiceTestSuite) TestBeginPasskeyRegistration_Success() {
 
 	passkeys := []models.PasskeyCredential{{ID: suite.passkeyID}}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.passkeyRepo.EXPECT().GetListByUser(suite.ctx, suite.userID).
@@ -1508,7 +1488,7 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_Success() {
 
 	passkeys := []models.PasskeyCredential{{ID: suite.passkeyID}}
 
-	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID).
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
 	suite.passkeyRepo.EXPECT().GetListByUser(suite.ctx, suite.userID).
@@ -1528,6 +1508,30 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_Success() {
 
 	suite.NoError(err)
 	suite.Equal(user.Passkeys, passkeys)
+}
+
+func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_SessionNotFound() {
+	user := &models.User{
+		ID: suite.userID,
+	}
+
+	sid := "test123"
+
+	passkeys := []models.PasskeyCredential{{ID: suite.passkeyID}}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
+		Return(user, nil).Once()
+
+	suite.passkeyRepo.EXPECT().GetListByUser(suite.ctx, suite.userID).
+		Return(passkeys, nil).Once()
+
+	suite.passkeyManager.EXPECT().FinishRegistration(suite.ctx, user, sid, mock.AnythingOfType("[]uint8")).
+		Return(nil, passkey.ErrSessionNotFound).Once()
+
+	err := suite.userService.FinishPasskeyRegistration(suite.ctx, suite.userID, sid, []byte("test"))
+
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
+	suite.ErrorContains(err, "userService.FinishPasskeyRegistration")
 }
 
 // ==================== BeginPasskeyLogin Tests ====================
@@ -1564,7 +1568,7 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_Success() {
 
 	sid := "test123"
 
-	claims := &token.UserClaims{RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}}
+	claims := &token.UserClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}
 
 	payload := token.Payload{
 		UserID:         user.ID.String(),
@@ -1595,6 +1599,20 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_Success() {
 	suite.NotNil(response)
 	suite.NotNil(response.User)
 	suite.Equal(response.User.ID, suite.userID)
+}
+
+func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_UserProfileDeleted() {
+	sid := "test123"
+
+	suite.passkeyManager.EXPECT().
+		FinishDiscoverableLogin(suite.ctx, mock.AnythingOfType("webauthn.DiscoverableUserHandler"), sid, mock.AnythingOfType("[]uint8")).
+		Return(nil, nil, apperror.ErrUserProfileDeleted).Once()
+
+	response, err := suite.userService.FinishPasskeyLogin(suite.ctx, sid, []byte("test"))
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
+	suite.ErrorContains(err, "userService.FinishPasskeyLogin")
 }
 
 // ==================== UpdatePasskeyName Tests ====================
