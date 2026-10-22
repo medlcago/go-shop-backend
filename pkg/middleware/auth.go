@@ -3,6 +3,7 @@ package middleware
 import (
 	"errors"
 	"go-shop-backend/pkg/apperror"
+	"go-shop-backend/pkg/auth"
 	"go-shop-backend/pkg/token"
 
 	"github.com/gofiber/fiber/v3"
@@ -23,6 +24,7 @@ func IdentityUser(manager token.Manager) fiber.Handler {
 		}
 
 		ctx.Locals(CtxUserContext, userCtx)
+		syncToStandardContext(ctx, userCtx)
 
 		tokenString, err := ExtractBearer(ctx)
 		if err != nil {
@@ -45,9 +47,23 @@ func IdentityUser(manager token.Manager) fiber.Handler {
 		userCtx.TokenType = claims.TokenType
 
 		ctx.Locals(CtxUserContext, userCtx)
+		syncToStandardContext(ctx, userCtx)
 
 		return ctx.Next()
 	}
+}
+
+func syncToStandardContext(ctx fiber.Ctx, userCtx UserContext) {
+	stdCtx := ctx.Context()
+
+	user := auth.User{
+		UserID:    userCtx.UserID,
+		SessionID: userCtx.SessionID,
+		Role:      userCtx.Role,
+	}
+
+	stdCtx = auth.WithUser(stdCtx, user)
+	ctx.SetContext(stdCtx)
 }
 
 func RequireAuth() fiber.Handler {

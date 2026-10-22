@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"go-shop-backend/pkg/auth"
 	"go-shop-backend/pkg/token"
 	tokenMocks "go-shop-backend/pkg/token/mocks"
 	"net/http/httptest"
@@ -47,10 +48,8 @@ func TestIdentityUser(t *testing.T) {
 				m.EXPECT().
 					ValidateToken("valid-token").
 					Return(&token.UserClaims{
-						Payload: token.Payload{
-							UserID:   "not-a-uuid",
-							UserRole: "customer",
-						},
+						UserID:    "not-a-uuid",
+						UserRole:  "customer",
 						TokenType: token.AccessTokenType,
 					}, nil)
 			},
@@ -63,10 +62,8 @@ func TestIdentityUser(t *testing.T) {
 				m.EXPECT().
 					ValidateToken("valid-token").
 					Return(&token.UserClaims{
-						Payload: token.Payload{
-							UserID:   userID.String(),
-							UserRole: "customer",
-						},
+						UserID:    userID.String(),
+						UserRole:  "customer",
 						TokenType: token.AccessTokenType,
 					}, nil).Once()
 			},
@@ -95,12 +92,16 @@ func TestIdentityUser(t *testing.T) {
 
 			app := fiber.New()
 
-			var userCtx UserContext
+			var (
+				userCtx  UserContext
+				authUser auth.User
+			)
 
 			app.Use(IdentityUser(tokenManager))
 
 			app.Get("/", func(ctx fiber.Ctx) error {
 				userCtx = GetUserContext(ctx)
+				authUser, _ = auth.UserFromContext(ctx.Context())
 				return ctx.SendStatus(fiber.StatusOK)
 			})
 
@@ -119,11 +120,17 @@ func TestIdentityUser(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 
+			// user ctx
 			assert.Equal(t, tt.expectedUserID, userCtx.UserID)
 			assert.Equal(t, tt.expectedRole, userCtx.Role)
 			assert.Equal(t, tt.expectedToken, userCtx.Token)
 			assert.Equal(t, tt.expectedType, userCtx.TokenType)
 			assert.Equal(t, tt.expectedSessionID, userCtx.SessionID)
+
+			// auth user
+			assert.Equal(t, tt.expectedUserID, authUser.UserID)
+			assert.Equal(t, tt.expectedSessionID, authUser.SessionID)
+			assert.Equal(t, tt.expectedRole, authUser.Role)
 		})
 	}
 }
