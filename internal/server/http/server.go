@@ -10,6 +10,7 @@ import (
 	orderHttp "go-shop-backend/internal/delivery/http/order"
 	paymentHttp "go-shop-backend/internal/delivery/http/payment"
 	productHttp "go-shop-backend/internal/delivery/http/product"
+	uploadHttp "go-shop-backend/internal/delivery/http/upload"
 	userHttp "go-shop-backend/internal/delivery/http/user"
 	wishlistHttp "go-shop-backend/internal/delivery/http/wishlist"
 	"go-shop-backend/pkg/logger"
@@ -115,4 +116,7 @@ func (s *Server) Init() {
 
 	favoriteHandler := favoriteHttp.NewHandler(s.container.FavoriteService())
 	favoriteHttp.RegisterRoutes(v1, favoriteHandler)
+
+	uploadHandler := uploadHttp.NewHandler(s.container.UploadManager())
+	uploadHttp.RegisterRoutes(v1, uploadHandler)
 }

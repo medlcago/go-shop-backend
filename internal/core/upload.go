@@ -1,8 +1,8 @@
 package core
 
 import (
-	"go-shop-backend/internal/service"
 	"go-shop-backend/internal/upload"
+	uploadHandlers "go-shop-backend/internal/upload/handlers"
 )
 
 var (
@@ -20,11 +20,29 @@ var (
 	}
 )
 
-func NewUploadRegistry() upload.Registry {
+func newUploadHandlers(container *Container) map[upload.Purpose]upload.Handler {
+	handlers := map[upload.Purpose]upload.Handler{
+		upload.ProductImagePurpose: uploadHandlers.NewProductImageHandler(
+			container.ProductRepo(),
+			container.UploadRepo(),
+			container.Config().Upload.MaxImagesPerProduct,
+		),
+	}
+
+	return handlers
+}
+
+func newUploadRegistry(container *Container) upload.Registry {
+	handlers := newUploadHandlers(container)
+
 	registry := upload.NewRegistry()
+
 	registry.Register(
-		service.ProductImageType,
-		productImagePolicy,
+		upload.ProductImagePurpose,
+		&upload.Registration{
+			Policy:  productImagePolicy,
+			Handler: handlers[upload.ProductImagePurpose],
+		},
 	)
 
 	return registry

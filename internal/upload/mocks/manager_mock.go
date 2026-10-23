@@ -7,9 +7,7 @@ package mocks
 import (
 	"context"
 	"go-shop-backend/internal/dto"
-	"go-shop-backend/internal/upload"
 
-	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -50,27 +48,27 @@ func (_m *MockManager) EXPECT() *MockManager_Expecter {
 }
 
 // Attach provides a mock function for the type MockManager
-func (_mock *MockManager) Attach(ctx context.Context, req dto.AttachFileRequest, uploadType upload.Type) (*dto.UploadResponse, error) {
-	ret := _mock.Called(ctx, req, uploadType)
+func (_mock *MockManager) Attach(ctx context.Context, req dto.AttachFileRequest) (*dto.AttachFileResponse, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Attach")
 	}
 
-	var r0 *dto.UploadResponse
+	var r0 *dto.AttachFileResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.AttachFileRequest, upload.Type) (*dto.UploadResponse, error)); ok {
-		return returnFunc(ctx, req, uploadType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.AttachFileRequest) (*dto.AttachFileResponse, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.AttachFileRequest, upload.Type) *dto.UploadResponse); ok {
-		r0 = returnFunc(ctx, req, uploadType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.AttachFileRequest) *dto.AttachFileResponse); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.UploadResponse)
+			r0 = ret.Get(0).(*dto.AttachFileResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.AttachFileRequest, upload.Type) error); ok {
-		r1 = returnFunc(ctx, req, uploadType)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.AttachFileRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -85,12 +83,11 @@ type MockManager_Attach_Call struct {
 // Attach is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.AttachFileRequest
-//   - uploadType upload.Type
-func (_e *MockManager_Expecter) Attach(ctx any, req any, uploadType any) *MockManager_Attach_Call {
-	return &MockManager_Attach_Call{Call: _e.mock.On("Attach", ctx, req, uploadType)}
+func (_e *MockManager_Expecter) Attach(ctx any, req any) *MockManager_Attach_Call {
+	return &MockManager_Attach_Call{Call: _e.mock.On("Attach", ctx, req)}
 }
 
-func (_c *MockManager_Attach_Call) Run(run func(ctx context.Context, req dto.AttachFileRequest, uploadType upload.Type)) *MockManager_Attach_Call {
+func (_c *MockManager_Attach_Call) Run(run func(ctx context.Context, req dto.AttachFileRequest)) *MockManager_Attach_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -100,68 +97,6 @@ func (_c *MockManager_Attach_Call) Run(run func(ctx context.Context, req dto.Att
 		if args[1] != nil {
 			arg1 = args[1].(dto.AttachFileRequest)
 		}
-		var arg2 upload.Type
-		if args[2] != nil {
-			arg2 = args[2].(upload.Type)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockManager_Attach_Call) Return(uploadResponse *dto.UploadResponse, err error) *MockManager_Attach_Call {
-	_c.Call.Return(uploadResponse, err)
-	return _c
-}
-
-func (_c *MockManager_Attach_Call) RunAndReturn(run func(ctx context.Context, req dto.AttachFileRequest, uploadType upload.Type) (*dto.UploadResponse, error)) *MockManager_Attach_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DeleteByID provides a mock function for the type MockManager
-func (_mock *MockManager) DeleteByID(ctx context.Context, id uuid.UUID) error {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteByID")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockManager_DeleteByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByID'
-type MockManager_DeleteByID_Call struct {
-	*mock.Call
-}
-
-// DeleteByID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id uuid.UUID
-func (_e *MockManager_Expecter) DeleteByID(ctx any, id any) *MockManager_DeleteByID_Call {
-	return &MockManager_DeleteByID_Call{Call: _e.mock.On("DeleteByID", ctx, id)}
-}
-
-func (_c *MockManager_DeleteByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockManager_DeleteByID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
 		run(
 			arg0,
 			arg1,
@@ -170,12 +105,12 @@ func (_c *MockManager_DeleteByID_Call) Run(run func(ctx context.Context, id uuid
 	return _c
 }
 
-func (_c *MockManager_DeleteByID_Call) Return(err error) *MockManager_DeleteByID_Call {
-	_c.Call.Return(err)
+func (_c *MockManager_Attach_Call) Return(attachFileResponse *dto.AttachFileResponse, err error) *MockManager_Attach_Call {
+	_c.Call.Return(attachFileResponse, err)
 	return _c
 }
 
-func (_c *MockManager_DeleteByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockManager_DeleteByID_Call {
+func (_c *MockManager_Attach_Call) RunAndReturn(run func(ctx context.Context, req dto.AttachFileRequest) (*dto.AttachFileResponse, error)) *MockManager_Attach_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -232,8 +167,8 @@ func (_c *MockManager_PublicURL_Call) RunAndReturn(run func(objectKey string) st
 }
 
 // SignURL provides a mock function for the type MockManager
-func (_mock *MockManager) SignURL(ctx context.Context, req dto.GeneratePresignedURLRequest, uploadType upload.Type) (*dto.GeneratePresignedURLResponse, error) {
-	ret := _mock.Called(ctx, req, uploadType)
+func (_mock *MockManager) SignURL(ctx context.Context, req dto.GeneratePresignedURLRequest) (*dto.GeneratePresignedURLResponse, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SignURL")
@@ -241,18 +176,18 @@ func (_mock *MockManager) SignURL(ctx context.Context, req dto.GeneratePresigned
 
 	var r0 *dto.GeneratePresignedURLResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.GeneratePresignedURLRequest, upload.Type) (*dto.GeneratePresignedURLResponse, error)); ok {
-		return returnFunc(ctx, req, uploadType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.GeneratePresignedURLRequest) (*dto.GeneratePresignedURLResponse, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.GeneratePresignedURLRequest, upload.Type) *dto.GeneratePresignedURLResponse); ok {
-		r0 = returnFunc(ctx, req, uploadType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.GeneratePresignedURLRequest) *dto.GeneratePresignedURLResponse); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dto.GeneratePresignedURLResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.GeneratePresignedURLRequest, upload.Type) error); ok {
-		r1 = returnFunc(ctx, req, uploadType)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.GeneratePresignedURLRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -267,12 +202,11 @@ type MockManager_SignURL_Call struct {
 // SignURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req dto.GeneratePresignedURLRequest
-//   - uploadType upload.Type
-func (_e *MockManager_Expecter) SignURL(ctx any, req any, uploadType any) *MockManager_SignURL_Call {
-	return &MockManager_SignURL_Call{Call: _e.mock.On("SignURL", ctx, req, uploadType)}
+func (_e *MockManager_Expecter) SignURL(ctx any, req any) *MockManager_SignURL_Call {
+	return &MockManager_SignURL_Call{Call: _e.mock.On("SignURL", ctx, req)}
 }
 
-func (_c *MockManager_SignURL_Call) Run(run func(ctx context.Context, req dto.GeneratePresignedURLRequest, uploadType upload.Type)) *MockManager_SignURL_Call {
+func (_c *MockManager_SignURL_Call) Run(run func(ctx context.Context, req dto.GeneratePresignedURLRequest)) *MockManager_SignURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -282,14 +216,9 @@ func (_c *MockManager_SignURL_Call) Run(run func(ctx context.Context, req dto.Ge
 		if args[1] != nil {
 			arg1 = args[1].(dto.GeneratePresignedURLRequest)
 		}
-		var arg2 upload.Type
-		if args[2] != nil {
-			arg2 = args[2].(upload.Type)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -300,7 +229,7 @@ func (_c *MockManager_SignURL_Call) Return(generatePresignedURLResponse *dto.Gen
 	return _c
 }
 
-func (_c *MockManager_SignURL_Call) RunAndReturn(run func(ctx context.Context, req dto.GeneratePresignedURLRequest, uploadType upload.Type) (*dto.GeneratePresignedURLResponse, error)) *MockManager_SignURL_Call {
+func (_c *MockManager_SignURL_Call) RunAndReturn(run func(ctx context.Context, req dto.GeneratePresignedURLRequest) (*dto.GeneratePresignedURLResponse, error)) *MockManager_SignURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

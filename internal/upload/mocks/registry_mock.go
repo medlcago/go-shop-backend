@@ -47,25 +47,27 @@ func (_m *MockRegistry) EXPECT() *MockRegistry_Expecter {
 }
 
 // Get provides a mock function for the type MockRegistry
-func (_mock *MockRegistry) Get(t upload.Type) (upload.Policy, error) {
-	ret := _mock.Called(t)
+func (_mock *MockRegistry) Get(purpose upload.Purpose) (*upload.Registration, error) {
+	ret := _mock.Called(purpose)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 upload.Policy
+	var r0 *upload.Registration
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(upload.Type) (upload.Policy, error)); ok {
-		return returnFunc(t)
+	if returnFunc, ok := ret.Get(0).(func(upload.Purpose) (*upload.Registration, error)); ok {
+		return returnFunc(purpose)
 	}
-	if returnFunc, ok := ret.Get(0).(func(upload.Type) upload.Policy); ok {
-		r0 = returnFunc(t)
+	if returnFunc, ok := ret.Get(0).(func(upload.Purpose) *upload.Registration); ok {
+		r0 = returnFunc(purpose)
 	} else {
-		r0 = ret.Get(0).(upload.Policy)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*upload.Registration)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(upload.Type) error); ok {
-		r1 = returnFunc(t)
+	if returnFunc, ok := ret.Get(1).(func(upload.Purpose) error); ok {
+		r1 = returnFunc(purpose)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -78,16 +80,16 @@ type MockRegistry_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//   - t upload.Type
-func (_e *MockRegistry_Expecter) Get(t any) *MockRegistry_Get_Call {
-	return &MockRegistry_Get_Call{Call: _e.mock.On("Get", t)}
+//   - purpose upload.Purpose
+func (_e *MockRegistry_Expecter) Get(purpose any) *MockRegistry_Get_Call {
+	return &MockRegistry_Get_Call{Call: _e.mock.On("Get", purpose)}
 }
 
-func (_c *MockRegistry_Get_Call) Run(run func(t upload.Type)) *MockRegistry_Get_Call {
+func (_c *MockRegistry_Get_Call) Run(run func(purpose upload.Purpose)) *MockRegistry_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 upload.Type
+		var arg0 upload.Purpose
 		if args[0] != nil {
-			arg0 = args[0].(upload.Type)
+			arg0 = args[0].(upload.Purpose)
 		}
 		run(
 			arg0,
@@ -96,19 +98,65 @@ func (_c *MockRegistry_Get_Call) Run(run func(t upload.Type)) *MockRegistry_Get_
 	return _c
 }
 
-func (_c *MockRegistry_Get_Call) Return(policy upload.Policy, err error) *MockRegistry_Get_Call {
-	_c.Call.Return(policy, err)
+func (_c *MockRegistry_Get_Call) Return(registration *upload.Registration, err error) *MockRegistry_Get_Call {
+	_c.Call.Return(registration, err)
 	return _c
 }
 
-func (_c *MockRegistry_Get_Call) RunAndReturn(run func(t upload.Type) (upload.Policy, error)) *MockRegistry_Get_Call {
+func (_c *MockRegistry_Get_Call) RunAndReturn(run func(purpose upload.Purpose) (*upload.Registration, error)) *MockRegistry_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Purposes provides a mock function for the type MockRegistry
+func (_mock *MockRegistry) Purposes() []upload.Purpose {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Purposes")
+	}
+
+	var r0 []upload.Purpose
+	if returnFunc, ok := ret.Get(0).(func() []upload.Purpose); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]upload.Purpose)
+		}
+	}
+	return r0
+}
+
+// MockRegistry_Purposes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Purposes'
+type MockRegistry_Purposes_Call struct {
+	*mock.Call
+}
+
+// Purposes is a helper method to define mock.On call
+func (_e *MockRegistry_Expecter) Purposes() *MockRegistry_Purposes_Call {
+	return &MockRegistry_Purposes_Call{Call: _e.mock.On("Purposes")}
+}
+
+func (_c *MockRegistry_Purposes_Call) Run(run func()) *MockRegistry_Purposes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockRegistry_Purposes_Call) Return(purposes []upload.Purpose) *MockRegistry_Purposes_Call {
+	_c.Call.Return(purposes)
+	return _c
+}
+
+func (_c *MockRegistry_Purposes_Call) RunAndReturn(run func() []upload.Purpose) *MockRegistry_Purposes_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Register provides a mock function for the type MockRegistry
-func (_mock *MockRegistry) Register(t upload.Type, policy upload.Policy) {
-	_mock.Called(t, policy)
+func (_mock *MockRegistry) Register(purpose upload.Purpose, reg *upload.Registration) {
+	_mock.Called(purpose, reg)
 	return
 }
 
@@ -118,21 +166,21 @@ type MockRegistry_Register_Call struct {
 }
 
 // Register is a helper method to define mock.On call
-//   - t upload.Type
-//   - policy upload.Policy
-func (_e *MockRegistry_Expecter) Register(t any, policy any) *MockRegistry_Register_Call {
-	return &MockRegistry_Register_Call{Call: _e.mock.On("Register", t, policy)}
+//   - purpose upload.Purpose
+//   - reg *upload.Registration
+func (_e *MockRegistry_Expecter) Register(purpose any, reg any) *MockRegistry_Register_Call {
+	return &MockRegistry_Register_Call{Call: _e.mock.On("Register", purpose, reg)}
 }
 
-func (_c *MockRegistry_Register_Call) Run(run func(t upload.Type, policy upload.Policy)) *MockRegistry_Register_Call {
+func (_c *MockRegistry_Register_Call) Run(run func(purpose upload.Purpose, reg *upload.Registration)) *MockRegistry_Register_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 upload.Type
+		var arg0 upload.Purpose
 		if args[0] != nil {
-			arg0 = args[0].(upload.Type)
+			arg0 = args[0].(upload.Purpose)
 		}
-		var arg1 upload.Policy
+		var arg1 *upload.Registration
 		if args[1] != nil {
-			arg1 = args[1].(upload.Policy)
+			arg1 = args[1].(*upload.Registration)
 		}
 		run(
 			arg0,
@@ -147,7 +195,7 @@ func (_c *MockRegistry_Register_Call) Return() *MockRegistry_Register_Call {
 	return _c
 }
 
-func (_c *MockRegistry_Register_Call) RunAndReturn(run func(t upload.Type, policy upload.Policy)) *MockRegistry_Register_Call {
+func (_c *MockRegistry_Register_Call) RunAndReturn(run func(purpose upload.Purpose, reg *upload.Registration)) *MockRegistry_Register_Call {
 	_c.Run(run)
 	return _c
 }

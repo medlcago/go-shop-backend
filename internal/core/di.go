@@ -254,7 +254,7 @@ func (c *Container) TaskFactory() *tasks.Factory {
 
 func (c *Container) UploadRegistry() upload.Registry {
 	return c.uploadRegistry.Get(func() upload.Registry {
-		return NewUploadRegistry()
+		return newUploadRegistry(c)
 	})
 }
 

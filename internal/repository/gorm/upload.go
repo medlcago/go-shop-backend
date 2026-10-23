@@ -46,3 +46,17 @@ func (u *uploadRepository) DeleteByID(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+
+func (u *uploadRepository) Count(ctx context.Context, entityType string, entityID uuid.UUID) (int64, error) {
+	db := u.db.GetDB(ctx)
+
+	var count int64
+	if err := db.Model(&models.Upload{}).
+		Where("entity_type = ? AND entity_id = ?",
+			entityType, entityID).
+		Count(&count).Error; err != nil {
+		return 0, repository.HandleError(err)
+	}
+
+	return count, nil
+}

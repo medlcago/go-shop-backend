@@ -4,56 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"sync"
 )
-
-var (
-	ErrPolicyNotFound        = errors.New("upload policy not found")
-	ErrTypeAlreadyRegistered = errors.New("upload type already registered")
-)
-
-type Type string
-
-type Registry interface {
-	Get(t Type) (Policy, error)
-	Register(t Type, policy Policy)
-}
-
-type registry struct {
-	policies map[Type]Policy
-	mu       sync.RWMutex
-}
-
-func NewRegistry() *registry {
-	r := &registry{
-		policies: make(map[Type]Policy),
-	}
-
-	return r
-}
-
-func (r *registry) Get(t Type) (Policy, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	policy, ok := r.policies[t]
-	if !ok {
-		return Policy{}, fmt.Errorf("%w: %s", ErrPolicyNotFound, t)
-	}
-
-	return policy, nil
-}
-
-func (r *registry) Register(t Type, policy Policy) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if _, ok := r.policies[t]; ok {
-		panic(fmt.Errorf("%w: %s", ErrTypeAlreadyRegistered, t))
-	}
-
-	r.policies[t] = policy
-}
 
 type Format struct {
 	Extensions  []string
@@ -86,4 +37,34 @@ func (p *Policy) IsValidContentType(ct string) bool {
 		}
 	}
 	return false
+}
+
+func (p *Policy) validate() error {
+	if p.MinSize < 0 {
+		return fmt.Errorf("min size must be >= 0, got %d", p.MinSize)
+	}
+
+	if p.MaxSize <= 0 {
+		return fmt.Errorf("max size must be > 0, got %d", p.MaxSize)
+	}
+
+	if p.MinSize > p.MaxSize {
+		return fmt.Errorf("min size %d > max size %d", p.MinSize, p.MaxSize)
+	}
+
+	if len(p.AllowedFormats) == 0 {
+		return errors.New("allowed formats must not be empty")
+	}
+
+	for i, f := range p.AllowedFormats {
+		if f.ContentType == "" {
+			return fmt.Errorf("format[%d]: empty content type", i)
+		}
+
+		if len(f.Extensions) == 0 {
+			return fmt.Errorf("format[%d]: no extensions", i)
+		}
+	}
+
+	return nil
 }

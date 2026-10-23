@@ -39,8 +39,6 @@ type ProductService interface {
 	UpdateProduct(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateRequest) (*dto.ProductResponse, error)
 	UpdateStock(ctx context.Context, productID uuid.UUID, req dto.ProductUpdateStockRequest) (*dto.ProductResponse, error)
 	Search(ctx context.Context, req dto.SearchProductRequest) ([]*dto.ProductResponse, int64, error)
-	UploadImage(ctx context.Context, productID uuid.UUID, req dto.UploadProductImageSignURLRequest) (*dto.GeneratePresignedURLResponse, error)
-	AttachImage(ctx context.Context, productID uuid.UUID, req dto.AttachProductImageRequest) (*dto.UploadResponse, error)
 }
 
 type CategoryService interface {

@@ -22,22 +22,30 @@ type GeneratePresignedURLRequest struct {
 	ContentType string       `json:"content_type" validate:"required"`
 	Entity      UploadEntity `json:"entity" validate:"required"`
 	Ext         string       `json:"ext" validate:"required"`
+	Purpose     string       `json:"purpose" validate:"required"`
 }
 
 type GeneratePresignedURLResponse struct {
 	UploadID    uuid.UUID `json:"upload_id"`
 	UploadURL   string    `json:"upload_url"`
+	Method      string    `json:"method"`
 	Filename    string    `json:"filename"`
 	ContentType string    `json:"content_type"`
 	ExpireDate  time.Time `json:"expire_date"`
 
-	FormData map[string]string `json:"form_data,omitempty"`
+	FormData map[string]string `json:"form_data"`
 }
 
 type AttachFileRequest struct {
 	UploadID  uuid.UUID    `json:"upload_id" validate:"required"`
 	ObjectKey string       `json:"object_key" validate:"required"`
 	Entity    UploadEntity `json:"entity" validate:"required"`
+	Purpose   string       `json:"purpose" validate:"required"`
+}
+
+type AttachFileResponse struct {
+	ID  uuid.UUID `json:"id"`
+	URL string    `json:"url"`
 }
 
 type UploadResponse struct {

@@ -34,6 +34,7 @@ type UploadRepository interface {
 	Create(ctx context.Context, req *models.Upload) error
 	ExistsByObjectKey(ctx context.Context, objectKey string) (bool, error)
 	DeleteByID(ctx context.Context, id uuid.UUID) error
+	Count(ctx context.Context, entityType string, entityID uuid.UUID) (int64, error)
 }
 
 type OrderRepository interface {

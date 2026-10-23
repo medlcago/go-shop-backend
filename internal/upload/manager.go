@@ -18,11 +18,14 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	MethodPOST = "POST"
+)
+
 type Manager interface {
-	SignURL(ctx context.Context, req dto.GeneratePresignedURLRequest, uploadType Type) (*dto.GeneratePresignedURLResponse, error)
-	Attach(ctx context.Context, req dto.AttachFileRequest, uploadType Type) (*dto.UploadResponse, error)
+	SignURL(ctx context.Context, req dto.GeneratePresignedURLRequest) (*dto.GeneratePresignedURLResponse, error)
+	Attach(ctx context.Context, req dto.AttachFileRequest) (*dto.AttachFileResponse, error)
 	PublicURL(objectKey string) string
-	DeleteByID(ctx context.Context, id uuid.UUID) error
 }
 
 type uploadManager struct {
@@ -52,41 +55,23 @@ func New(
 	}
 }
 
-func (m *uploadManager) SignURL(ctx context.Context, req dto.GeneratePresignedURLRequest, uploadType Type) (*dto.GeneratePresignedURLResponse, error) {
+func (m *uploadManager) SignURL(ctx context.Context, req dto.GeneratePresignedURLRequest) (*dto.GeneratePresignedURLResponse, error) {
 	const op = "uploadManager.SignURL"
 
-	policy, err := m.registry.Get(uploadType)
+	reg, err := m.resolveRegistry(ctx, op, Purpose(req.Purpose))
 	if err != nil {
-		if errors.Is(err, ErrPolicyNotFound) {
-			return nil, apperror.Wrap(op, apperror.ErrInvalidUploadType)
-		}
+		return nil, err
+	}
 
+	if err := m.validateSignURLRequest(req, reg.Policy); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if err := m.validateSignURLRequest(req, policy); err != nil {
+	if err := reg.Handler.CanSignURL(ctx, req.Entity.Type, req.Entity.ID); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	uploadID := uuid.New()
-	metadata := map[string]string{
-		"Upload-Id":   uploadID.String(),
-		"Entity-Type": req.Entity.Type,
-		"Entity-Id":   req.Entity.ID.String(),
-	}
-
-	objectKey := m.generateObjectKey(req.Entity, uploadID, req.Ext)
-	effectiveMaxSize := policy.CalculateEffectiveMaxSize(m.uploadConfig.MaxFileSize)
-	expireDate := time.Now().UTC().Add(m.uploadConfig.PresignedUrlTTL)
-
-	options := storage.TemporaryUploadURLOptions{
-		ObjectKey:   objectKey,
-		ContentType: req.ContentType,
-		MinSize:     policy.MinSize,
-		MaxSize:     effectiveMaxSize,
-		Expires:     expireDate,
-		Metadata:    metadata,
-	}
+	uploadID, expireDate, options := m.prepareUploadOptions(req, reg.Policy)
 
 	result, err := m.storage.TemporaryUploadURL(ctx, options)
 	if err != nil {
@@ -96,7 +81,8 @@ func (m *uploadManager) SignURL(ctx context.Context, req dto.GeneratePresignedUR
 	response := &dto.GeneratePresignedURLResponse{
 		UploadID:    uploadID,
 		UploadURL:   result.URL,
-		Filename:    objectKey,
+		Method:      MethodPOST,
+		Filename:    options.ObjectKey,
 		ContentType: req.ContentType,
 		ExpireDate:  expireDate,
 		FormData:    result.Fields,
@@ -105,32 +91,37 @@ func (m *uploadManager) SignURL(ctx context.Context, req dto.GeneratePresignedUR
 	return response, nil
 }
 
-func (m *uploadManager) Attach(ctx context.Context, req dto.AttachFileRequest, uploadType Type) (*dto.UploadResponse, error) {
+func (m *uploadManager) Attach(ctx context.Context, req dto.AttachFileRequest) (*dto.AttachFileResponse, error) {
 	const op = "uploadManager.Attach"
 
-	obj, err := m.storage.GetObjectInfo(ctx, req.ObjectKey)
+	reg, err := m.resolveRegistry(ctx, op, Purpose(req.Purpose))
 	if err != nil {
-		m.logger.ErrorContext(
-			ctx,
-			"failed to get object info",
-			logger.Err(err),
-			logger.Op(op),
-		)
-
-		return nil, apperror.Wrap(op, apperror.ErrNotFound)
+		return nil, err
 	}
 
-	policy, err := m.registry.Get(uploadType)
+	obj, err := m.fetchObjectInfo(ctx, op, req.ObjectKey)
 	if err != nil {
-		if errors.Is(err, ErrPolicyNotFound) {
-			return nil, apperror.Wrap(op, apperror.ErrInvalidUploadType)
-		}
+		return nil, err
+	}
 
+	if err := m.validateMetadata(req, obj.Metadata); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
-	contentType, err := m.prepareAttach(ctx, obj, req, policy)
+	if err := m.ensureNotDuplicate(ctx, req.ObjectKey); err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	if err := m.ensureWithinSize(ctx, req.ObjectKey, obj.Size, reg.Policy); err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	contentType, err := m.resolveContentType(ctx, req.ObjectKey, reg.Policy)
 	if err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	if err := reg.Handler.CanAttach(ctx, req.Entity.Type, req.Entity.ID); err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -144,19 +135,14 @@ func (m *uploadManager) Attach(ctx context.Context, req dto.AttachFileRequest, u
 	}
 
 	if err := m.uploadRepo.Create(ctx, upload); err != nil {
-		m.delete(ctx, req.ObjectKey)
 		return nil, apperror.Wrap(op, err)
 	}
 
 	url := m.PublicURL(req.ObjectKey)
 
-	response := &dto.UploadResponse{
-		ID:          upload.ID,
-		URL:         url,
-		ContentType: upload.ContentType,
-		MediaType:   string(upload.MediaType),
-		CreatedAt:   upload.CreatedAt,
-		UpdatedAt:   upload.UpdatedAt,
+	response := &dto.AttachFileResponse{
+		ID:  upload.ID,
+		URL: url,
 	}
 
 	return response, nil
@@ -166,14 +152,85 @@ func (m *uploadManager) PublicURL(objectKey string) string {
 	return m.storage.PublicURL(objectKey)
 }
 
-func (m *uploadManager) DeleteByID(ctx context.Context, id uuid.UUID) error {
-	const op = "uploadManager.Delete"
+func (m *uploadManager) resolveRegistry(ctx context.Context, op string, purpose Purpose) (*Registration, error) {
+	reg, err := m.registry.Get(purpose)
+	if err != nil {
+		m.logger.InfoContext(
+			ctx,
+			"unknown purpose",
+			slog.String("purpose", string(purpose)),
+			logger.Err(err),
+			logger.Op(op),
+		)
 
-	if err := m.uploadRepo.DeleteByID(ctx, id); err != nil {
-		return apperror.Wrap(op, err)
+		if errors.Is(err, ErrPurposeNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrInvalidPurpose)
+		}
+
+		return nil, apperror.Wrap(op, err)
 	}
 
-	return nil
+	return reg, nil
+}
+
+func (m *uploadManager) fetchObjectInfo(ctx context.Context, op string, objectKey string) (*storage.ObjectInfo, error) {
+	obj, err := m.storage.GetObjectInfo(ctx, objectKey)
+	if err != nil {
+		m.logger.ErrorContext(
+			ctx,
+			"failed to get object info",
+			logger.Err(err),
+			logger.Op(op),
+		)
+
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, apperror.Wrap(op, apperror.ErrFileNotFound)
+		}
+
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return obj, nil
+}
+
+func (m *uploadManager) ensureWithinSize(ctx context.Context, objectKey string, size int64, policy Policy) error {
+	const op = "uploadManager.ensureWithinSize"
+
+	effectiveMax := policy.CalculateEffectiveMaxSize(m.uploadConfig.MaxFileSize)
+	if size <= effectiveMax {
+		return nil
+	}
+
+	m.delete(ctx, objectKey)
+	return apperror.Wrap(op, apperror.ErrFileTooLarge)
+}
+
+func (m *uploadManager) prepareUploadOptions(
+	req dto.GeneratePresignedURLRequest,
+	policy Policy,
+) (uuid.UUID, time.Time, storage.TemporaryUploadURLOptions) {
+	uploadID := uuid.New()
+	expireDate := time.Now().UTC().Add(m.uploadConfig.PresignedURLTTL)
+	objectKey := m.generateObjectKey(req.Entity, uploadID, req.Ext)
+	effectiveMaxSize := policy.CalculateEffectiveMaxSize(m.uploadConfig.MaxFileSize)
+
+	metadata := map[string]string{
+		"Upload-Id":   uploadID.String(),
+		"Entity-Type": req.Entity.Type,
+		"Entity-Id":   req.Entity.ID.String(),
+		"Purpose":     req.Purpose,
+	}
+
+	options := storage.TemporaryUploadURLOptions{
+		ObjectKey:   objectKey,
+		ContentType: req.ContentType,
+		MinSize:     policy.MinSize,
+		MaxSize:     effectiveMaxSize,
+		Expires:     expireDate,
+		Metadata:    metadata,
+	}
+
+	return uploadID, expireDate, options
 }
 
 func (m *uploadManager) validateSignURLRequest(req dto.GeneratePresignedURLRequest, policy Policy) error {
@@ -184,41 +241,6 @@ func (m *uploadManager) validateSignURLRequest(req dto.GeneratePresignedURLReque
 	}
 
 	return nil
-}
-
-func (m *uploadManager) prepareAttach(
-	ctx context.Context,
-	obj *storage.ObjectInfo,
-	req dto.AttachFileRequest,
-	policy Policy,
-) (contentType string, err error) {
-	const op = "uploadManager.prepareAttach"
-
-	if err = m.validateMetadata(req, obj.Metadata); err != nil {
-		return "", apperror.Wrap(op, err)
-	}
-
-	if err = m.ensureNotDuplicate(ctx, req.ObjectKey); err != nil {
-		return "", apperror.Wrap(op, err)
-	}
-
-	effectiveMaxSize := policy.CalculateEffectiveMaxSize(m.uploadConfig.MaxFileSize)
-	if obj.Size > effectiveMaxSize {
-		m.delete(ctx, req.ObjectKey)
-		return "", apperror.Wrap(op, apperror.ErrFileTooLarge)
-	}
-
-	contentType, err = m.detectContentType(ctx, req.ObjectKey)
-	if err != nil {
-		return "", apperror.Wrap(op, err)
-	}
-
-	if !policy.IsValidContentType(contentType) {
-		m.delete(ctx, req.ObjectKey)
-		return "", apperror.Wrap(op, apperror.ErrInvalidFileType)
-	}
-
-	return contentType, nil
 }
 
 func (m *uploadManager) generateObjectKey(entity dto.UploadEntity, uploadID uuid.UUID, ext string) string {
@@ -264,6 +286,26 @@ func (m *uploadManager) detectContentType(ctx context.Context, objectKey string)
 	return ct, nil
 }
 
+func (m *uploadManager) resolveContentType(
+	ctx context.Context,
+	objectKey string,
+	policy Policy,
+) (string, error) {
+	const op = "uploadManager.resolveContentType"
+
+	contentType, err := m.detectContentType(ctx, objectKey)
+	if err != nil {
+		return "", apperror.Wrap(op, err)
+	}
+
+	if !policy.IsValidContentType(contentType) {
+		m.delete(ctx, objectKey)
+		return "", apperror.Wrap(op, apperror.ErrInvalidFileType)
+	}
+
+	return contentType, nil
+}
+
 func (m *uploadManager) delete(ctx context.Context, objectKey string) {
 	const op = "uploadManager.delete"
 
@@ -290,6 +332,10 @@ func (m *uploadManager) validateMetadata(req dto.AttachFileRequest, metadata map
 
 	if metadata["Entity-Type"] != req.Entity.Type {
 		return apperror.Wrap(op, apperror.ErrInvalidEntityType)
+	}
+
+	if metadata["Purpose"] != req.Purpose {
+		return apperror.Wrap(op, apperror.ErrInvalidPurpose)
 	}
 
 	return nil

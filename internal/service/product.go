@@ -13,10 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	ProductImageType upload.Type = "product_image"
-)
-
 type productService struct {
 	productRepo   repository.ProductRepository
 	uploadManager upload.Manager
@@ -169,56 +165,6 @@ func (p *productService) Search(ctx context.Context, req dto.SearchProductReques
 	}
 
 	return response, total, nil
-}
-
-func (p *productService) UploadImage(
-	ctx context.Context,
-	productID uuid.UUID,
-	req dto.UploadProductImageSignURLRequest,
-) (*dto.GeneratePresignedURLResponse, error) {
-	const op = "productService.UploadImage"
-
-	if err := p.productExists(ctx, productID); err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	signRequest := dto.GeneratePresignedURLRequest{
-		ContentType: req.ContentType,
-		Entity:      dto.NewUploadEntity(productID, string(models.EntityTypeProduct)),
-		Ext:         req.Ext,
-	}
-
-	response, err := p.uploadManager.SignURL(ctx, signRequest, ProductImageType)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	return response, nil
-}
-
-func (p *productService) AttachImage(
-	ctx context.Context,
-	productID uuid.UUID,
-	req dto.AttachProductImageRequest,
-) (*dto.UploadResponse, error) {
-	const op = "productService.AttachImage"
-
-	if err := p.productExists(ctx, productID); err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	attachRequest := dto.AttachFileRequest{
-		UploadID:  req.UploadID,
-		ObjectKey: req.ObjectKey,
-		Entity:    dto.NewUploadEntity(productID, string(models.EntityTypeProduct)),
-	}
-
-	response, err := p.uploadManager.Attach(ctx, attachRequest, ProductImageType)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	return response, nil
 }
 
 func (p *productService) getProductByID(
