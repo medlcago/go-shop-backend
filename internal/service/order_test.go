@@ -12,7 +12,7 @@ import (
 	tasksMocks "go-shop-backend/internal/tasks/mocks"
 	uploadMocks "go-shop-backend/internal/upload/mocks"
 	"go-shop-backend/pkg/apperror"
-	"go-shop-backend/pkg/database"
+	databaseMocks "go-shop-backend/pkg/database/mocks"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 	"testing"
 	"time"
@@ -27,7 +27,7 @@ type OrderServiceTestSuite struct {
 	orderRepo        *repoMocks.MockOrderRepository
 	orderItemRepo    *repoMocks.MockOrderItemRepository
 	addressRepo      *repoMocks.MockAddressRepository
-	txManager        *database.NoopTxManager
+	txManager        *databaseMocks.MockTxManager
 	paymentProvider  *paymentproviderMocks.MockProvider
 	orderTask        *tasksMocks.MockOrderTask
 	publicURLBuilder *uploadMocks.MockPublicURLBuilder
@@ -52,7 +52,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.orderRepo = repoMocks.NewMockOrderRepository(suite.T())
 	suite.orderItemRepo = repoMocks.NewMockOrderItemRepository(suite.T())
 	suite.addressRepo = repoMocks.NewMockAddressRepository(suite.T())
-	suite.txManager = database.NewNoopTxManager()
+	suite.txManager = databaseMocks.NewMockTxManager(suite.T())
 	suite.orderTask = tasksMocks.NewMockOrderTask(suite.T())
 	suite.publicURLBuilder = uploadMocks.NewMockPublicURLBuilder(suite.T())
 	suite.inventoryService = serviceMocks.NewMockInventoryService(suite.T())
@@ -103,15 +103,21 @@ func (suite *OrderServiceTestSuite) TestCreateOrder_Success() {
 }
 
 func (suite *OrderServiceTestSuite) TestCreateOrder_WithNilUserID() {
-	suite.orderRepo.EXPECT().Create(suite.ctx, mock.MatchedBy(func(order *models.Order) bool {
-		return order.UserID == nil && order.SessionID == suite.sessionID
-	})).
+	order := &models.Order{
+		UserID:    nil,
+		SessionID: suite.sessionID,
+		Status:    models.OrderStatusDraft,
+	}
+
+	suite.orderRepo.EXPECT().Create(suite.ctx, order).
 		Return(nil).Once()
 
 	response, err := suite.orderService.CreateOrder(suite.ctx, nil, suite.sessionID)
 
-	suite.NoError(err)
 	suite.NotNil(response)
+	suite.NoError(err)
+	suite.Equal(order.ID, response.ID)
+	suite.Equal(models.OrderStatusDraft, models.OrderStatus(response.Status))
 }
 
 func (suite *OrderServiceTestSuite) TestCreateOrder_RepositoryError() {
@@ -122,7 +128,8 @@ func (suite *OrderServiceTestSuite) TestCreateOrder_RepositoryError() {
 	response, err := suite.orderService.CreateOrder(suite.ctx, &suite.userID, suite.sessionID)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, dbError.Error())
+	suite.ErrorIs(err, dbError)
+	suite.ErrorContains(err, "orderService.CreateOrder")
 }
 
 // ==================== GetOrder Tests ====================
@@ -169,6 +176,7 @@ func (suite *OrderServiceTestSuite) TestGetOrder_NotFound() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
+	suite.ErrorContains(err, "orderService.GetOrder")
 }
 
 func (suite *OrderServiceTestSuite) TestGetOrder_RepositoryError() {
@@ -180,6 +188,7 @@ func (suite *OrderServiceTestSuite) TestGetOrder_RepositoryError() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbError)
+	suite.ErrorContains(err, "orderService.GetOrder")
 }
 
 // ==================== GetOrders Tests ====================
@@ -265,7 +274,8 @@ func (suite *OrderServiceTestSuite) TestGetOrders_RepositoryError() {
 	response, total, err := suite.orderService.GetOrders(suite.ctx, &suite.userID, suite.sessionID, req)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, dbError.Error())
+	suite.ErrorIs(err, dbError)
+	suite.ErrorContains(err, "orderService.GetOrders")
 	suite.Equal(int64(0), total)
 }
 
@@ -314,6 +324,11 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 			},
 		},
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
@@ -375,6 +390,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidQuantity() {
 
 			suite.Nil(response)
 			suite.ErrorIs(err, tt.err)
+			suite.ErrorContains(err, "orderService.AddItem")
 		})
 	}
 }
@@ -385,6 +401,11 @@ func (suite *OrderServiceTestSuite) TestAddItem_OrderNotFound() {
 		Quantity:  2,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
@@ -392,6 +413,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_OrderNotFound() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
+	suite.ErrorContains(err, "orderService.AddItem")
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
@@ -407,6 +429,11 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
 		Quantity:  2,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -414,9 +441,10 @@ func (suite *OrderServiceTestSuite) TestAddItem_InvalidOrderStatus() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
+	suite.ErrorContains(err, "orderService.AddItem")
 }
 
-func (suite *OrderServiceTestSuite) TestAddItem_CheckProductError() {
+func (suite *OrderServiceTestSuite) TestAddItem_InsufficientStock() {
 	order := &models.Order{
 		ID:        suite.orderID,
 		UserID:    &suite.userID,
@@ -429,6 +457,11 @@ func (suite *OrderServiceTestSuite) TestAddItem_CheckProductError() {
 		Quantity:  10,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -439,6 +472,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_CheckProductError() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInsufficientStock)
+	suite.ErrorContains(err, "orderService.AddItem")
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_RepositoryError() {
@@ -448,6 +482,11 @@ func (suite *OrderServiceTestSuite) TestAddItem_RepositoryError() {
 		Quantity:  2,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, dbError).Once()
 
@@ -455,6 +494,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_RepositoryError() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbError)
+	suite.ErrorContains(err, "orderService.AddItem")
 }
 
 // ==================== RemoveItem Tests ====================
@@ -491,6 +531,11 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_Success() {
 		Items:       []models.OrderItem{order.Items[1]},
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -513,6 +558,11 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_Success() {
 }
 
 func (suite *OrderServiceTestSuite) TestRemoveItem_OrderNotFound() {
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
@@ -520,6 +570,7 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_OrderNotFound() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
+	suite.ErrorContains(err, "orderService.RemoveItem")
 }
 
 func (suite *OrderServiceTestSuite) TestRemoveItem_InvalidOrderStatus() {
@@ -530,6 +581,11 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_InvalidOrderStatus() {
 		Status:    models.OrderStatusCompleted,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -537,6 +593,7 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_InvalidOrderStatus() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
+	suite.ErrorContains(err, "orderService.RemoveItem")
 }
 
 func (suite *OrderServiceTestSuite) TestRemoveItem_ItemNotFound() {
@@ -556,6 +613,11 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_ItemNotFound() {
 		},
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -566,10 +628,17 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_ItemNotFound() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrItemNotFound)
+	suite.ErrorContains(err, "orderService.RemoveItem")
 }
 
 func (suite *OrderServiceTestSuite) TestRemoveItem_RepositoryError() {
 	dbError := errors.New("db error")
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, dbError).Once()
 
@@ -577,6 +646,7 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_RepositoryError() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbError)
+	suite.ErrorContains(err, "orderService.RemoveItem")
 }
 
 // ==================== Clear Tests ====================
@@ -602,6 +672,11 @@ func (suite *OrderServiceTestSuite) TestClear_Success() {
 		Items:       []models.OrderItem{},
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -623,6 +698,11 @@ func (suite *OrderServiceTestSuite) TestClear_Success() {
 }
 
 func (suite *OrderServiceTestSuite) TestClear_OrderNotFound() {
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
@@ -630,6 +710,7 @@ func (suite *OrderServiceTestSuite) TestClear_OrderNotFound() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrForbidden)
+	suite.ErrorContains(err, "orderService.Clear")
 }
 
 func (suite *OrderServiceTestSuite) TestClear_InvalidOrderStatus() {
@@ -640,6 +721,11 @@ func (suite *OrderServiceTestSuite) TestClear_InvalidOrderStatus() {
 		Status:    models.OrderStatusPending,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -647,6 +733,7 @@ func (suite *OrderServiceTestSuite) TestClear_InvalidOrderStatus() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
+	suite.ErrorContains(err, "orderService.Clear")
 }
 
 func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
@@ -659,6 +746,11 @@ func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
 
 	dbError := errors.New("database error")
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, false).
 		Return(order, nil).Once()
 
@@ -669,6 +761,7 @@ func (suite *OrderServiceTestSuite) TestClear_RepositoryError() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbError)
+	suite.ErrorContains(err, "orderService.Clear")
 }
 
 // ==================== Checkout Tests ====================
@@ -708,6 +801,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 		OrderID: suite.orderID,
 		UserID:  suite.userID,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
@@ -770,6 +868,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 		UserID:  suite.userID,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
@@ -800,6 +903,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_AddressNotFound() {
 	req := dto.OrderCheckoutRequest{
 		AddressID: suite.addressID,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(nil, repository.ErrRecordNotFound).Once()
@@ -836,6 +944,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 		AddressID: suite.addressID,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
@@ -865,6 +978,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
 	req := dto.OrderCheckoutRequest{
 		AddressID: suite.addressID,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
@@ -915,6 +1033,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_UnavailableItemError() {
 		AddressID: suite.addressID,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
@@ -952,6 +1075,11 @@ func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
 		AddressID: suite.addressID,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
@@ -987,10 +1115,15 @@ func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 		AddressID: suite.addressID,
 	}
 
+	dbError := errors.New("db error")
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
-
-	dbError := errors.New("db error")
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
 		Return(nil, dbError).Once()
@@ -1017,6 +1150,11 @@ func (suite *OrderServiceTestSuite) TestCancelOrder_Success() {
 		},
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(order, nil).Once()
 
@@ -1033,6 +1171,11 @@ func (suite *OrderServiceTestSuite) TestCancelOrder_Success() {
 }
 
 func (suite *OrderServiceTestSuite) TestCancelOrder_OrderNotFound_ReturnsErrOrderNotFound() {
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
@@ -1044,6 +1187,11 @@ func (suite *OrderServiceTestSuite) TestCancelOrder_OrderNotFound_ReturnsErrOrde
 
 func (suite *OrderServiceTestSuite) TestCancelOrder_GetByIDDatabaseError_ReturnsError() {
 	dbErr := errors.New("database error")
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(nil, dbErr).Once()
@@ -1067,6 +1215,11 @@ func (suite *OrderServiceTestSuite) TestCancelOrder_InvalidOrderStatus_ReturnsEr
 		},
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(order, nil).Once()
 
@@ -1081,6 +1234,11 @@ func (suite *OrderServiceTestSuite) TestCancelOrder_DifferentUserCancelsOrder_Re
 		ID:     suite.orderID,
 		UserID: new(uuid.New()),
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(order, nil).Once()
@@ -1097,6 +1255,11 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_Success_OrderStatusPai
 		ID:     suite.orderID,
 		Status: models.OrderStatusPending,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(order, nil).Once()
@@ -1118,6 +1281,11 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_Success_OrderStatusCan
 		Status: models.OrderStatusPending,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(order, nil).Once()
 
@@ -1133,6 +1301,11 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_Success_OrderStatusCan
 }
 
 func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_InvalidOrderStatus() {
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	err := suite.orderService.UpdateOrderStatus(suite.ctx, suite.orderID, "test")
 
 	suite.ErrorIs(err, apperror.ErrInvalidOrderStatus)
@@ -1144,6 +1317,11 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus_InvalidTransitionStatu
 		ID:     suite.orderID,
 		Status: models.OrderStatusCanceled,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.orderRepo.EXPECT().GetByID(suite.ctx, suite.orderID, true).
 		Return(order, nil).Once()

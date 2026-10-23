@@ -7,10 +7,11 @@ import (
 	"go-shop-backend/internal/repository"
 	repoMocks "go-shop-backend/internal/repository/mocks"
 	"go-shop-backend/pkg/apperror"
-	"go-shop-backend/pkg/database"
+	databaseMocks "go-shop-backend/pkg/database/mocks"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -18,7 +19,7 @@ type InventoryServiceTestSuite struct {
 	suite.Suite
 
 	productRepo      *repoMocks.MockProductRepository
-	txManager        *database.NoopTxManager
+	txManager        *databaseMocks.MockTxManager
 	inventoryService *inventoryService
 
 	ctx       context.Context
@@ -28,7 +29,7 @@ type InventoryServiceTestSuite struct {
 
 func (suite *InventoryServiceTestSuite) SetupTest() {
 	suite.productRepo = repoMocks.NewMockProductRepository(suite.T())
-	suite.txManager = database.NewNoopTxManager()
+	suite.txManager = databaseMocks.NewMockTxManager(suite.T())
 	suite.inventoryService = NewInventoryService(
 		suite.productRepo,
 		suite.txManager,
@@ -148,6 +149,11 @@ func (suite *InventoryServiceTestSuite) TestReserveItems_Success() {
 		},
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, productIDs).
 		Return(products, nil).Once()
 
@@ -177,6 +183,11 @@ func (suite *InventoryServiceTestSuite) TestReserveItems_ProductNotActive() {
 		Stock:    20,
 		IsActive: false,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, []uuid.UUID{suite.productID}).
 		Return([]*models.Product{product}, nil).Once()
@@ -227,6 +238,11 @@ func (suite *InventoryServiceTestSuite) TestReserveItems_InsufficientStock() {
 		},
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, productIDs).
 		Return(products, nil).Once()
 
@@ -259,6 +275,11 @@ func (suite *InventoryServiceTestSuite) TestReleaseItems_Success() {
 		Reserved: 20,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, []uuid.UUID{suite.productID}).
 		Return([]*models.Product{product}, nil).Once()
 
@@ -286,6 +307,11 @@ func (suite *InventoryServiceTestSuite) TestReleaseItems_InconsistentStock() {
 		Stock:    100,
 		Reserved: 20,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, []uuid.UUID{suite.productID}).
 		Return([]*models.Product{product}, nil).Once()
@@ -319,6 +345,11 @@ func (suite *InventoryServiceTestSuite) TestDeductItems_Success() {
 		Reserved: 70,
 	}
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, []uuid.UUID{suite.productID}).
 		Return([]*models.Product{product}, nil).Once()
 
@@ -346,6 +377,11 @@ func (suite *InventoryServiceTestSuite) TestDeductItems_InconsistentStock() {
 		Stock:    100,
 		Reserved: 70,
 	}
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.productRepo.EXPECT().GetByIDsForUpdate(suite.ctx, []uuid.UUID{suite.productID}).
 		Return([]*models.Product{product}, nil).Once()

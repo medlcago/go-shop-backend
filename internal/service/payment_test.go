@@ -15,7 +15,7 @@ import (
 	"time"
 
 	serviceMocks "go-shop-backend/internal/service/mocks"
-	"go-shop-backend/pkg/database"
+	databaseMocks "go-shop-backend/pkg/database/mocks"
 	paymentproviderMocks "go-shop-backend/pkg/paymentprovider/mocks"
 
 	"github.com/google/uuid"
@@ -30,7 +30,7 @@ type PaymentServiceTestSuite struct {
 	orderQuery         *serviceMocks.MockOrderQuery
 	orderStatusUpdater *serviceMocks.MockOrderStatusUpdater
 	userPaymentRepo    *repoMocks.MockUserPaymentMethodRepository
-	txManager          *database.NoopTxManager
+	txManager          *databaseMocks.MockTxManager
 	paymentService     *paymentService
 
 	ctx             context.Context
@@ -45,7 +45,7 @@ func (suite *PaymentServiceTestSuite) SetupTest() {
 	suite.orderQuery = serviceMocks.NewMockOrderQuery(suite.T())
 	suite.orderStatusUpdater = serviceMocks.NewMockOrderStatusUpdater(suite.T())
 	suite.userPaymentRepo = repoMocks.NewMockUserPaymentMethodRepository(suite.T())
-	suite.txManager = database.NewNoopTxManager()
+	suite.txManager = databaseMocks.NewMockTxManager(suite.T())
 	suite.paymentService = NewPaymentService(
 		suite.provider,
 		suite.orderQuery,
@@ -382,6 +382,11 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_PaymentStatusSucceeded()
 	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
 		Return(order, nil).Once()
 
@@ -428,6 +433,11 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_PaymentStatusSucceeded_S
 	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
 		Return(order, nil).Once()
 
@@ -460,6 +470,11 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_PaymentStatusCanceled() 
 	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
 
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
+
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
 		Return(order, nil).Once()
 
@@ -481,6 +496,11 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_OrderNotFound() {
 
 	suite.provider.EXPECT().Name().
 		Return(suite.providerName).Once()
+
+	suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+		RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		}).Once()
 
 	suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
 		Return(nil, repository.ErrRecordNotFound).Once()
@@ -534,6 +554,11 @@ func (suite *PaymentServiceTestSuite) TestHandleWebhook_OrderStatusNotPending() 
 
 			suite.provider.EXPECT().Name().
 				Return(suite.providerName).Once()
+
+			suite.txManager.EXPECT().Wrap(suite.ctx, mock.AnythingOfType("func(context.Context) error")).
+				RunAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+					return fn(ctx)
+				}).Once()
 
 			suite.orderQuery.EXPECT().GetByPayment(suite.ctx, suite.providerName, event.PaymentID, true).
 				Return(order, nil).Once()

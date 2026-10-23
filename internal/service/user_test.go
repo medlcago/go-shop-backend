@@ -1473,6 +1473,17 @@ func (suite *UserServiceTestSuite) TestBeginPasskeyRegistration_Success() {
 	suite.Equal(user.Passkeys, passkeys)
 }
 
+func (suite *UserServiceTestSuite) TestBeginPasskeyRegistration_UserNotFound() {
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	response, err := suite.userService.BeginPasskeyRegistration(suite.ctx, suite.userID)
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrUserNotFound)
+	suite.ErrorContains(err, "userService.BeginPasskeyRegistration")
+}
+
 // ==================== FinishPasskeyRegistration Tests ====================
 
 func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_Success() {
@@ -1508,6 +1519,18 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_Success() {
 
 	suite.NoError(err)
 	suite.Equal(user.Passkeys, passkeys)
+}
+
+func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_UserNotFound() {
+	sid := "test123"
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
+		Return(nil, repository.ErrRecordNotFound).Once()
+
+	err := suite.userService.FinishPasskeyRegistration(suite.ctx, suite.userID, sid, []byte("test"))
+
+	suite.ErrorIs(err, apperror.ErrUserNotFound)
+	suite.ErrorContains(err, "userService.FinishPasskeyRegistration")
 }
 
 func (suite *UserServiceTestSuite) TestFinishPasskeyRegistration_SessionNotFound() {
@@ -1576,9 +1599,27 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_Success() {
 		EmailConfirmed: user.EmailConfirmed(),
 	}
 
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
+		Return(user, nil).Once()
+
+	suite.passkeyRepo.EXPECT().GetListByUser(suite.ctx, suite.userID).
+		Return([]models.PasskeyCredential{*passkeyCredential}, nil).Once()
+
 	suite.passkeyManager.EXPECT().
-		FinishDiscoverableLogin(suite.ctx, mock.AnythingOfType("webauthn.DiscoverableUserHandler"), sid, mock.AnythingOfType("[]uint8")).
-		Return(user, validatedCredential, nil).Once()
+		FinishDiscoverableLogin(
+			suite.ctx,
+			mock.AnythingOfType("webauthn.DiscoverableUserHandler"),
+			sid,
+			mock.AnythingOfType("[]uint8"),
+		).
+		RunAndReturn(func(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, data []byte) (passkey.User, *passkey.Credential, error) {
+			resolvedUser, err := handler(validatedCredential.ID, suite.userID[:])
+			if err != nil {
+				return nil, nil, err
+			}
+
+			return resolvedUser, validatedCredential, nil
+		}).Once()
 
 	suite.passkeyRepo.EXPECT().GetByCredentialID(suite.ctx, validatedCredential.ID).
 		Return(passkeyCredential, nil).Once()
@@ -1588,10 +1629,10 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_Success() {
 	})).Return(nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateAccessToken(payload).
-		Return("accessToken", claims, nil)
+		Return("accessToken", claims, nil).Once()
 
 	suite.tokenManager.EXPECT().GenerateRefreshToken(payload).
-		Return("refreshToken", claims, nil)
+		Return("refreshToken", claims, nil).Once()
 
 	response, err := suite.userService.FinishPasskeyLogin(suite.ctx, sid, []byte("test"))
 
@@ -1604,14 +1645,59 @@ func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_Success() {
 func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_UserProfileDeleted() {
 	sid := "test123"
 
+	validatedCredential := &passkey.Credential{
+		ID: []byte{1, 2, 3},
+	}
+
+	user := &models.User{
+		ID:        suite.userID,
+		DeletedAt: gorm.DeletedAt{Time: time.Now(), Valid: true},
+	}
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: true}).
+		Return(user, nil).Once()
+
 	suite.passkeyManager.EXPECT().
-		FinishDiscoverableLogin(suite.ctx, mock.AnythingOfType("webauthn.DiscoverableUserHandler"), sid, mock.AnythingOfType("[]uint8")).
-		Return(nil, nil, apperror.ErrUserProfileDeleted).Once()
+		FinishDiscoverableLogin(
+			suite.ctx,
+			mock.AnythingOfType("webauthn.DiscoverableUserHandler"),
+			sid,
+			mock.AnythingOfType("[]uint8"),
+		).
+		RunAndReturn(func(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, data []byte) (passkey.User, *passkey.Credential, error) {
+			resolvedUser, err := handler(validatedCredential.ID, suite.userID[:])
+			if err != nil {
+				return nil, nil, err
+			}
+
+			return resolvedUser, validatedCredential, nil
+		}).Once()
 
 	response, err := suite.userService.FinishPasskeyLogin(suite.ctx, sid, []byte("test"))
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrUserProfileDeleted)
+	suite.ErrorContains(err, "userService.FinishPasskeyLogin")
+}
+
+func (suite *UserServiceTestSuite) TestFinishPasskeyLogin_SessionNotFound() {
+	sid := "test123"
+
+	suite.passkeyManager.EXPECT().
+		FinishDiscoverableLogin(
+			suite.ctx,
+			mock.AnythingOfType("webauthn.DiscoverableUserHandler"),
+			sid,
+			mock.AnythingOfType("[]uint8"),
+		).
+		RunAndReturn(func(ctx context.Context, handler passkey.DiscoverableUserHandler, sessionID string, data []byte) (passkey.User, *passkey.Credential, error) {
+			return nil, nil, passkey.ErrSessionNotFound
+		}).Once()
+
+	response, err := suite.userService.FinishPasskeyLogin(suite.ctx, sid, []byte("test"))
+
+	suite.Nil(response)
+	suite.ErrorIs(err, apperror.ErrInvalidCredentials)
 	suite.ErrorContains(err, "userService.FinishPasskeyLogin")
 }
 

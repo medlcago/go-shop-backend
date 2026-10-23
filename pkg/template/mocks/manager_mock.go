@@ -5,8 +5,6 @@
 package mocks
 
 import (
-	"io/fs"
-
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -44,123 +42,6 @@ type MockManager_Expecter struct {
 
 func (_m *MockManager) EXPECT() *MockManager_Expecter {
 	return &MockManager_Expecter{mock: &_m.Mock}
-}
-
-// Load provides a mock function for the type MockManager
-func (_mock *MockManager) Load(pattern string) error {
-	ret := _mock.Called(pattern)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Load")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(pattern)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockManager_Load_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Load'
-type MockManager_Load_Call struct {
-	*mock.Call
-}
-
-// Load is a helper method to define mock.On call
-//   - pattern string
-func (_e *MockManager_Expecter) Load(pattern any) *MockManager_Load_Call {
-	return &MockManager_Load_Call{Call: _e.mock.On("Load", pattern)}
-}
-
-func (_c *MockManager_Load_Call) Run(run func(pattern string)) *MockManager_Load_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
-		if args[0] != nil {
-			arg0 = args[0].(string)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockManager_Load_Call) Return(err error) *MockManager_Load_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockManager_Load_Call) RunAndReturn(run func(pattern string) error) *MockManager_Load_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// LoadFromFS provides a mock function for the type MockManager
-func (_mock *MockManager) LoadFromFS(fs1 fs.FS, patterns ...string) error {
-	var tmpRet mock.Arguments
-	if len(patterns) > 0 {
-		tmpRet = _mock.Called(fs1, patterns)
-	} else {
-		tmpRet = _mock.Called(fs1)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for LoadFromFS")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(fs.FS, ...string) error); ok {
-		r0 = returnFunc(fs1, patterns...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockManager_LoadFromFS_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadFromFS'
-type MockManager_LoadFromFS_Call struct {
-	*mock.Call
-}
-
-// LoadFromFS is a helper method to define mock.On call
-//   - fs1 fs.FS
-//   - patterns ...string
-func (_e *MockManager_Expecter) LoadFromFS(fs1 any, patterns ...any) *MockManager_LoadFromFS_Call {
-	return &MockManager_LoadFromFS_Call{Call: _e.mock.On("LoadFromFS",
-		append([]any{fs1}, patterns...)...)}
-}
-
-func (_c *MockManager_LoadFromFS_Call) Run(run func(fs1 fs.FS, patterns ...string)) *MockManager_LoadFromFS_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 fs.FS
-		if args[0] != nil {
-			arg0 = args[0].(fs.FS)
-		}
-		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *MockManager_LoadFromFS_Call) Return(err error) *MockManager_LoadFromFS_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockManager_LoadFromFS_Call) RunAndReturn(run func(fs1 fs.FS, patterns ...string) error) *MockManager_LoadFromFS_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // Render provides a mock function for the type MockManager

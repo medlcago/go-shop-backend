@@ -95,6 +95,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_NotFound() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrProductNotFound)
+	suite.ErrorContains(err, "productService.GetProductByID")
 }
 
 func (suite *ProductServiceTestSuite) TestGetProductByID_RepositoryError() {
@@ -105,7 +106,8 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_RepositoryError() {
 	response, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, repoErr.Error())
+	suite.ErrorIs(err, repoErr)
+	suite.ErrorContains(err, "productService.GetProductByID")
 }
 
 // ==================== ListProducts Tests ====================
@@ -280,7 +282,8 @@ func (suite *ProductServiceTestSuite) TestListProducts_RepositoryError() {
 
 	suite.Nil(response)
 	suite.Equal(int64(0), total)
-	suite.ErrorContains(err, repoErr.Error())
+	suite.ErrorIs(err, repoErr)
+	suite.ErrorContains(err, "productService.ListProducts")
 }
 
 // ==================== CreateProduct Tests ====================
@@ -323,7 +326,8 @@ func (suite *ProductServiceTestSuite) TestCreateProduct_RepositoryError() {
 	response, err := suite.productService.CreateProduct(suite.ctx, req)
 
 	suite.Nil(response)
-	suite.ErrorContains(err, repoErr.Error())
+	suite.ErrorIs(err, repoErr)
+	suite.ErrorContains(err, "productService.CreateProduct")
 }
 
 // ==================== UpdateProduct Tests ====================
@@ -429,6 +433,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_ProductNotFound() {
 
 	suite.Nil(response)
 	suite.ErrorIs(err, apperror.ErrProductNotFound)
+	suite.ErrorContains(err, "productService.UpdateProduct")
 }
 
 func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() {
@@ -447,6 +452,7 @@ func (suite *ProductServiceTestSuite) TestUpdateProduct_UpdateRepositoryError() 
 
 	suite.Nil(response)
 	suite.ErrorIs(err, dbErr)
+	suite.ErrorContains(err, "productService.UpdateProduct")
 }
 
 // ==================== UpdateStock Tests ====================
