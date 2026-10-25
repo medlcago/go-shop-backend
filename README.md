@@ -29,17 +29,22 @@
 | POST   | `/api/v1/users/me/confirm-email`           | Confirm email address (auth)        |
 | POST   | `/api/v1/users/me/change-password`         | Change password (auth)              |
 
+### Uploads
+
+| Method | Endpoint                  | Description                                 |
+|--------|---------------------------|---------------------------------------------|
+| POST   | `/api/v1/uploads/signurl` | Generate a presigned upload URL (auth)      |
+| POST   | `/api/v1/uploads/attach`  | Attach an uploaded file to an entity (auth) |
+
 ### Products
 
-| Method | Endpoint                                 | Description                 |
-|--------|------------------------------------------|-----------------------------|
-| GET    | `/api/v1/products`                       | List products               |
-| GET    | `/api/v1/products/:id`                   | Get product                 |
-| GET    | `/api/v1/products/search`                | Search products             |
-| POST   | `/api/v1/products`                       | Create product (auth)       |
-| PATCH  | `/api/v1/products/:id`                   | Update product (auth)       |
-| POST   | `/api/v1/products/:id/images/upload-url` | Upload product image (auth) |
-| POST   | `/api/v1/products/:id/images/attach`     | Attach image (auth)         |
+| Method | Endpoint                  | Description           |
+|--------|---------------------------|-----------------------|
+| GET    | `/api/v1/products`        | List products         |
+| GET    | `/api/v1/products/:id`    | Get product           |
+| GET    | `/api/v1/products/search` | Search products       |
+| POST   | `/api/v1/products`        | Create product (auth) |
+| PATCH  | `/api/v1/products/:id`    | Update product (auth) |
 
 ### Orders
 
