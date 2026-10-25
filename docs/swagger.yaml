@@ -52,15 +52,28 @@ definitions:
       updated_at:
         type: string
     type: object
-  go-shop-backend_internal_dto.AttachProductImageRequest:
+  go-shop-backend_internal_dto.AttachFileRequest:
     properties:
+      entity:
+        $ref: '#/definitions/go-shop-backend_internal_dto.UploadEntity'
       object_key:
+        type: string
+      purpose:
         type: string
       upload_id:
         type: string
     required:
+    - entity
     - object_key
+    - purpose
     - upload_id
+    type: object
+  go-shop-backend_internal_dto.AttachFileResponse:
+    properties:
+      id:
+        type: string
+      url:
+        type: string
     type: object
   go-shop-backend_internal_dto.BeginPasskeyDiscoverableLoginResponse:
     properties:
@@ -243,6 +256,22 @@ definitions:
       product_id:
         type: string
     type: object
+  go-shop-backend_internal_dto.GeneratePresignedURLRequest:
+    properties:
+      content_type:
+        type: string
+      entity:
+        $ref: '#/definitions/go-shop-backend_internal_dto.UploadEntity'
+      ext:
+        type: string
+      purpose:
+        type: string
+    required:
+    - content_type
+    - entity
+    - ext
+    - purpose
+    type: object
   go-shop-backend_internal_dto.GeneratePresignedURLResponse:
     properties:
       content_type:
@@ -255,6 +284,8 @@ definitions:
         additionalProperties:
           type: string
         type: object
+      method:
+        type: string
       upload_id:
         type: string
       upload_url:
@@ -519,18 +550,15 @@ definitions:
         minLength: 1
         type: string
     type: object
-  go-shop-backend_internal_dto.UploadProductImageSignURLRequest:
+  go-shop-backend_internal_dto.UploadEntity:
     properties:
-      content_type:
+      id:
         type: string
-      ext:
-        enum:
-        - jpg
-        - png
+      type:
         type: string
     required:
-    - content_type
-    - ext
+    - id
+    - type
     type: object
   go-shop-backend_internal_dto.UploadResponse:
     properties:
@@ -786,6 +814,16 @@ definitions:
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.AddressResponse'
     type: object
+  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AttachFileResponse:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      error:
+        type: string
+      result:
+        $ref: '#/definitions/go-shop-backend_internal_dto.AttachFileResponse'
+    type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_BeginPasskeyDiscoverableLoginResponse:
     properties:
       details:
@@ -885,16 +923,6 @@ definitions:
         type: string
       result:
         $ref: '#/definitions/go-shop-backend_internal_dto.Setup2FAResponse'
-    type: object
-  go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse:
-    properties:
-      details:
-        additionalProperties: {}
-        type: object
-      error:
-        type: string
-      result:
-        $ref: '#/definitions/go-shop-backend_internal_dto.UploadResponse'
     type: object
   go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UserResponse:
     properties:
@@ -2887,112 +2915,6 @@ paths:
       summary: Update an existing product
       tags:
       - Products
-  /products/{id}/images/attach:
-    post:
-      consumes:
-      - application/json
-      description: Confirm successful image upload and attach the image to the product.
-        After uploading to the presigned URL, call this endpoint to finalize the process.
-      parameters:
-      - description: Product ID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Image attach request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.AttachProductImageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_UploadResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Attach the image to the product
-      tags:
-      - Products
-  /products/{id}/images/upload-url:
-    post:
-      consumes:
-      - application/json
-      description: Initiate image upload for a product. Returns a presigned URL for
-        uploading the image to cloud storage.
-      parameters:
-      - description: Product ID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Image upload request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/go-shop-backend_internal_dto.UploadProductImageSignURLRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
-      security:
-      - BearerAuth: []
-      summary: Upload product image
-      tags:
-      - Products
   /products/{id}/stock:
     patch:
       consumes:
@@ -3085,6 +3007,96 @@ paths:
       summary: Search products
       tags:
       - Products
+  /uploads/attach:
+    post:
+      consumes:
+      - application/json
+      description: Persists a successfully uploaded file and links it to an entity
+        (e.g. product, user avatar, etc.). Requires authentication.
+      parameters:
+      - description: File attachment parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.AttachFileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_AttachFileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Attach an uploaded file to an entity
+      tags:
+      - Uploads
+  /uploads/signurl:
+    post:
+      consumes:
+      - application/json
+      description: Generates a presigned URL (and optional form-data) for direct upload
+        to an S3-compatible object storage. Requires authentication.
+      parameters:
+      - description: Presigned URL generation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/go-shop-backend_internal_dto.GeneratePresignedURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-go-shop-backend_internal_dto_GeneratePresignedURLResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/go-shop-backend_pkg_response.Response-any'
+      security:
+      - BearerAuth: []
+      summary: Generate a presigned upload URL
+      tags:
+      - Uploads
   /users/me:
     get:
       consumes:

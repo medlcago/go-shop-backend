@@ -20,6 +20,22 @@ func NewHandler(uploadManager upload.Manager) *Handler {
 	}
 }
 
+// SignURL godoc
+//
+//	@Summary		Generate a presigned upload URL
+//	@Description	Generates a presigned URL (and optional form-data) for direct upload to an S3-compatible object storage. Requires authentication.
+//	@Tags			Uploads
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		dto.GeneratePresignedURLRequest	true	"Presigned URL generation parameters"
+//	@Success		200		{object}	response.Response[dto.GeneratePresignedURLResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		403		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/uploads/signurl [post]
 func (h *Handler) SignURL(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
@@ -39,6 +55,22 @@ func (h *Handler) SignURL(ctx fiber.Ctx) error {
 	return response.JSON(ctx, fiber.StatusOK, resp)
 }
 
+// Attach godoc
+//
+//	@Summary		Attach an uploaded file to an entity
+//	@Description	Persists a successfully uploaded file and links it to an entity (e.g. product, user avatar, etc.). Requires authentication.
+//	@Tags			Uploads
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		dto.AttachFileRequest	true	"File attachment parameters"
+//	@Success		200		{object}	response.Response[dto.AttachFileResponse]
+//	@Failure		400		{object}	response.Response[any]
+//	@Failure		401		{object}	response.Response[any]
+//	@Failure		403		{object}	response.Response[any]
+//	@Failure		404		{object}	response.Response[any]
+//	@Failure		500		{object}	response.Response[any]
+//	@Router			/uploads/attach [post]
 func (h *Handler) Attach(ctx fiber.Ctx) error {
 	userCtx := middleware.GetUserContext(ctx)
 	if userCtx.UserID == nil {
