@@ -30,7 +30,8 @@ services:
       - internal
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: quay.io/minio/aistor/minio:latest
+    container_name: aistor-server
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -41,7 +42,11 @@ services:
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
     volumes:
       - minio_data:/data
-    command: server /data --console-address ":9001"
+      - ./minio.license:/minio.license:ro
+    command: >
+      minio server /data
+      --license /minio.license
+      --console-address ":9001"
     healthcheck:
       test: [ "CMD", "mc", "ready", "local" ]
       interval: 30s
