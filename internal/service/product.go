@@ -219,7 +219,7 @@ func (p *productService) getProductResponse(ctx context.Context, productID uuid.
 func (p *productService) mapProduct(product *models.Product) (*dto.ProductResponse, error) {
 	const op = "productService.mapProduct"
 
-	upload.AssignPublicURLs(product.Images, p.uploadManager)
+	upload.AssignPublicURLs(product.Uploads, p.uploadManager)
 
 	response, err := mapper.MapOne[*models.Product, dto.ProductResponse](product)
 	if err != nil {
@@ -233,7 +233,7 @@ func (p *productService) mapProducts(products []*models.Product) ([]*dto.Product
 	const op = "productService.mapProducts"
 
 	for _, product := range products {
-		upload.AssignPublicURLs(product.Images, p.uploadManager)
+		upload.AssignPublicURLs(product.Uploads, p.uploadManager)
 	}
 
 	response, err := mapper.MapList[*models.Product, *dto.ProductResponse](products)

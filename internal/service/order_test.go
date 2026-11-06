@@ -142,7 +142,7 @@ func (suite *OrderServiceTestSuite) TestGetOrder_Success() {
 				ID: suite.itemID,
 				Product: models.Product{
 					ID: suite.productID,
-					Images: []*models.Upload{
+					Uploads: []*models.Upload{
 						{
 							ObjectKey: "key1",
 						},
@@ -205,7 +205,7 @@ func (suite *OrderServiceTestSuite) TestGetOrders_Success() {
 					ID: suite.itemID,
 					Product: models.Product{
 						ID: suite.productID,
-						Images: []*models.Upload{
+						Uploads: []*models.Upload{
 							{
 								ObjectKey: "key",
 							},
@@ -312,7 +312,7 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 				UnitPrice:   1000,
 				Product: models.Product{
 					ID: suite.productID,
-					Images: []*models.Upload{
+					Uploads: []*models.Upload{
 						{
 							ObjectKey: "test1.png",
 						},
@@ -355,9 +355,9 @@ func (suite *OrderServiceTestSuite) TestAddItem_Success() {
 	suite.Equal(suite.orderID, response.ID)
 	suite.Len(response.Items, 1)
 	suite.Equal(response.Items[0].ProductID, suite.productID)
-	suite.Len(response.Items[0].Product.Images, 2)
-	suite.NotEmpty(response.Items[0].Product.Images[0].URL)
-	suite.NotEmpty(response.Items[0].Product.Images[1].URL)
+	suite.Len(response.Items[0].Product.Uploads, 2)
+	suite.NotEmpty(response.Items[0].Product.Uploads[0].URL)
+	suite.NotEmpty(response.Items[0].Product.Uploads[1].URL)
 }
 
 func (suite *OrderServiceTestSuite) TestAddItem_InvalidQuantity() {
@@ -512,7 +512,7 @@ func (suite *OrderServiceTestSuite) TestRemoveItem_Success() {
 			{
 				ID: uuid.New(),
 				Product: models.Product{
-					Images: []*models.Upload{
+					Uploads: []*models.Upload{
 						{
 							ObjectKey: "test.png",
 						},
@@ -807,7 +807,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Success() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
@@ -873,7 +873,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_LinkUser() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
@@ -909,7 +909,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_AddressNotFound() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
@@ -949,7 +949,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InvalidOrderStatus() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
@@ -984,7 +984,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_EmptyOrder() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
@@ -1038,7 +1038,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_UnavailableItemError() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).
@@ -1080,7 +1080,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_Forbidden() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	response, err := suite.orderService.Checkout(suite.ctx, suite.userID, suite.sessionID, suite.orderID, req)
@@ -1122,7 +1122,7 @@ func (suite *OrderServiceTestSuite) TestCheckout_InternalError() {
 			return fn(ctx)
 		}).Once()
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	suite.orderRepo.EXPECT().GetByOwner(suite.ctx, suite.orderID, &suite.userID, suite.sessionID, true).

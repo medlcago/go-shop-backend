@@ -27,7 +27,7 @@ type Product struct {
 	DeletedAt   gorm.DeletedAt `gorm:"type:timestamptz;index:idx_products_deleted_at"`
 
 	Categories []*Category `gorm:"many2many:product_categories;constraint:OnDelete:CASCADE"`
-	Images     []*Upload   `gorm:"polymorphic:Entity;polymorphicId:EntityID;polymorphicValue:products"`
+	Uploads    []*Upload   `gorm:"polymorphic:Entity;polymorphicId:EntityID;polymorphicValue:products"`
 }
 
 func (p *Product) Available() int {

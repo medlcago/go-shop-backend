@@ -61,7 +61,7 @@ func (a *addressService) ListAddresses(ctx context.Context, userID uuid.UUID) ([
 func (a *addressService) GetAddress(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.AddressResponse, error) {
 	const op = "addressService.GetAddress"
 
-	address, err := a.getAddressByID(ctx, id, userID)
+	address, err := a.getAddressByUser(ctx, id, userID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -77,7 +77,7 @@ func (a *addressService) GetAddress(ctx context.Context, id uuid.UUID, userID uu
 func (a *addressService) UpdateAddress(ctx context.Context, id uuid.UUID, userID uuid.UUID, req dto.UpdateAddressRequest) (*dto.AddressResponse, error) {
 	const op = "addressService.UpdateAddress"
 
-	address, err := a.getAddressByID(ctx, id, userID)
+	address, err := a.getAddressByUser(ctx, id, userID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
@@ -124,10 +124,10 @@ func (a *addressService) SetDefault(ctx context.Context, id uuid.UUID, userID uu
 	}
 }
 
-func (a *addressService) getAddressByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error) {
-	const op = "addressService.getAddressByID"
+func (a *addressService) getAddressByUser(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error) {
+	const op = "addressService.getAddressByUser"
 
-	address, err := a.addressRepo.GetByID(ctx, id, userID)
+	address, err := a.addressRepo.GetByUser(ctx, id, userID)
 	switch {
 	case repository.IsRecordNotFound(err):
 		return nil, apperror.Wrap(op, apperror.ErrAddressNotFound)

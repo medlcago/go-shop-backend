@@ -59,7 +59,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 				Name: "Test Category 2",
 			},
 		},
-		Images: []*models.Upload{
+		Uploads: []*models.Upload{
 			{
 				ObjectKey: uuid.NewString(),
 			},
@@ -73,7 +73,7 @@ func (suite *ProductServiceTestSuite) TestGetProductByID_Success() {
 		Return(product, nil).Once()
 
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
-		Return(uuid.NewString()).Times(len(product.Images))
+		Return(uuid.NewString()).Times(len(product.Uploads))
 
 	response, err := suite.productService.GetProductByID(suite.ctx, suite.productID)
 
@@ -137,7 +137,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 					Name: "Test Category 1",
 				},
 			},
-			Images: []*models.Upload{
+			Uploads: []*models.Upload{
 				{
 					ObjectKey: uuid.NewString(),
 				},
@@ -159,7 +159,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 					Name: "Test Category 2",
 				},
 			},
-			Images: []*models.Upload{
+			Uploads: []*models.Upload{
 				{
 					ObjectKey: uuid.NewString(),
 				},
@@ -171,7 +171,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_Success() {
 		Return(products, 2, nil).Once()
 
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
-		Return(uuid.NewString()).Times(len(products[0].Images) + len(products[1].Images))
+		Return(uuid.NewString()).Times(len(products[0].Uploads) + len(products[1].Uploads))
 
 	response, total, err := suite.productService.ListProducts(suite.ctx, req)
 
@@ -213,7 +213,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 					ID: suite.categoryID,
 				},
 			},
-			Images: []*models.Upload{
+			Uploads: []*models.Upload{
 				{
 					ObjectKey: uuid.NewString(),
 				},
@@ -228,7 +228,7 @@ func (suite *ProductServiceTestSuite) TestListProducts_WithCategoryFilter() {
 		Return(products, 1, nil).Once()
 
 	suite.uploadManager.EXPECT().PublicURL(mock.Anything).
-		Return(uuid.NewString()).Times(len(products[0].Images))
+		Return(uuid.NewString()).Times(len(products[0].Uploads))
 
 	response, total, err := suite.productService.ListProducts(suite.ctx, req)
 

@@ -102,7 +102,7 @@ func (suite *AddressServiceTestSuite) TestListAddresses_RepositoryError() {
 // ==================== GetAddress Tests ====================
 
 func (suite *AddressServiceTestSuite) TestGetAddress_Success() {
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(&models.Address{ID: suite.addressID, UserID: suite.userID}, nil).Once()
 
 	response, err := suite.addressService.GetAddress(suite.ctx, suite.addressID, suite.userID)
@@ -113,7 +113,7 @@ func (suite *AddressServiceTestSuite) TestGetAddress_Success() {
 }
 
 func (suite *AddressServiceTestSuite) TestGetAddress_AddressNotFound() {
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.addressService.GetAddress(suite.ctx, suite.addressID, suite.userID)
@@ -126,7 +126,7 @@ func (suite *AddressServiceTestSuite) TestGetAddress_AddressNotFound() {
 func (suite *AddressServiceTestSuite) TestGetAddress_RepositoryError() {
 	repoErr := errors.New("repoErr")
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(nil, repoErr).Once()
 
 	response, err := suite.addressService.GetAddress(suite.ctx, suite.addressID, suite.userID)
@@ -155,7 +155,7 @@ func (suite *AddressServiceTestSuite) TestUpdateAddress_Success() {
 		Apartment: new("14"),
 	}
 
-	suite.addressRepo.EXPECT().GetByID(suite.ctx, suite.addressID, suite.userID).
+	suite.addressRepo.EXPECT().GetByUser(suite.ctx, suite.addressID, suite.userID).
 		Return(address, nil).Once()
 
 	suite.addressRepo.EXPECT().Update(suite.ctx, mock.MatchedBy(func(address *models.Address) bool {

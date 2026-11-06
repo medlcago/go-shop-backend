@@ -17,7 +17,7 @@ import (
 )
 
 type AddressQuery interface {
-	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)
+	GetByUser(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)
 }
 
 type orderService struct {
@@ -269,7 +269,7 @@ func (o *orderService) Checkout(
 	const op = "orderService.Checkout"
 
 	order, err := database.Transaction(ctx, o.txManager, func(ctx context.Context) (*models.Order, error) {
-		address, err := o.addressQuery.GetByID(ctx, req.AddressID, userID)
+		address, err := o.addressQuery.GetByUser(ctx, req.AddressID, userID)
 		switch {
 		case repository.IsRecordNotFound(err):
 			return nil, apperror.ErrAddressNotFound
@@ -468,7 +468,7 @@ func (o *orderService) mapOrder(order *models.Order) (*dto.OrderResponse, error)
 	const op = "orderService.mapOrder"
 
 	for _, item := range order.Items {
-		upload.AssignPublicURLs(item.Product.Images, o.publicURLBuilder)
+		upload.AssignPublicURLs(item.Product.Uploads, o.publicURLBuilder)
 	}
 
 	response, err := mapper.MapOne[*models.Order, dto.OrderResponse](order)
@@ -484,7 +484,7 @@ func (o *orderService) mapOrders(orders []*models.Order) ([]*dto.OrderResponse, 
 
 	for _, order := range orders {
 		for _, item := range order.Items {
-			upload.AssignPublicURLs(item.Product.Images, o.publicURLBuilder)
+			upload.AssignPublicURLs(item.Product.Uploads, o.publicURLBuilder)
 		}
 	}
 

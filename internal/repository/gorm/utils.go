@@ -7,22 +7,26 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetDefault(tx *gorm.DB, id uuid.UUID, userID uuid.UUID, value any) error {
-	if err := tx.Model(value).Where("user_id = ?", userID).
-		Update("is_default", false).Error; err != nil {
-		return err
-	}
+func SetDefault[T any](db *gorm.DB, id uuid.UUID, userID uuid.UUID) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		model := new(T)
 
-	result := tx.Model(value).Where("id = ? AND user_id = ?", id, userID).
-		Update("is_default", true)
+		if err := tx.Model(model).Where("user_id = ?", userID).
+			Update("is_default", false).Error; err != nil {
+			return err
+		}
 
-	if result.Error != nil {
-		return result.Error
-	}
+		result := tx.Model(model).Where("id = ? AND user_id = ?", id, userID).
+			Update("is_default", true)
 
-	if result.RowsAffected == 0 {
-		return repository.ErrRecordNotFound
-	}
+		if result.Error != nil {
+			return result.Error
+		}
 
-	return nil
+		if result.RowsAffected == 0 {
+			return repository.ErrRecordNotFound
+		}
+
+		return nil
+	})
 }

@@ -271,7 +271,10 @@ func (suite *WishlistServiceTestSuite) TestGetSharedWishlist_Success() {
 		IsPublic:   true,
 	}
 
-	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, true).
+	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, false).
+		Return(wishlist, nil).Once()
+
+	suite.wishlistRepo.EXPECT().GetByID(suite.ctx, wishlist.ID, true).
 		Return(wishlist, nil).Once()
 
 	response, err := suite.wishlistService.GetSharedWishlist(suite.ctx, suite.shareToken)
@@ -288,7 +291,7 @@ func (suite *WishlistServiceTestSuite) TestGetSharedWishlist_PrivateWishlist() {
 		IsPublic:   false,
 	}
 
-	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, true).
+	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, false).
 		Return(wishlist, nil).Once()
 
 	response, err := suite.wishlistService.GetSharedWishlist(suite.ctx, suite.shareToken)
@@ -299,7 +302,7 @@ func (suite *WishlistServiceTestSuite) TestGetSharedWishlist_PrivateWishlist() {
 }
 
 func (suite *WishlistServiceTestSuite) TestGetSharedWishlist_WishlistNotFound() {
-	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, true).
+	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, false).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
 	response, err := suite.wishlistService.GetSharedWishlist(suite.ctx, suite.shareToken)
@@ -311,7 +314,7 @@ func (suite *WishlistServiceTestSuite) TestGetSharedWishlist_WishlistNotFound() 
 
 func (suite *WishlistServiceTestSuite) TestGetSharedWishlist_RepositoryError() {
 	dbErr := errors.New("db error")
-	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, true).
+	suite.wishlistRepo.EXPECT().GetByShareToken(suite.ctx, suite.shareToken, false).
 		Return(nil, dbErr).Once()
 
 	response, err := suite.wishlistService.GetSharedWishlist(suite.ctx, suite.shareToken)

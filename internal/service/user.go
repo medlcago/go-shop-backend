@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"go-shop-backend/internal/dto"
@@ -24,6 +25,19 @@ import (
 
 	"github.com/google/uuid"
 )
+
+const (
+	emailConfirmationCacheKeyPrefix = "email_confirmation"
+	revokeTokenCacheKeyPrefix       = "blacklist"
+)
+
+func emailConfirmationCacheKey(userID uuid.UUID) string {
+	return fmt.Sprintf("%s:%s", emailConfirmationCacheKeyPrefix, userID)
+}
+
+func revokeTokenCacheKey(tokenType string, tokenID string) string {
+	return fmt.Sprintf("%s:%s_%s", revokeTokenCacheKeyPrefix, tokenType, tokenID)
+}
 
 type UserEmailConfig struct {
 	EmailConfirmationCodeLength int
@@ -272,16 +286,6 @@ func (u *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*dto.U
 func (u *userService) SendEmailConfirmationCode(ctx context.Context, userID uuid.UUID) (*dto.SendEmailConfirmationResponse, error) {
 	const op = "userService.SendEmailConfirmationCode"
 
-	cacheKey := fmt.Sprintf("email_confirmation:%s", userID)
-	exists, err := u.cache.Exists(ctx, cacheKey)
-	if err != nil {
-		return nil, apperror.Wrap(op, err)
-	}
-
-	if exists {
-		return nil, apperror.Wrap(op, apperror.ErrEmailConfirmationCodeAlreadySent)
-	}
-
 	user, err := u.getUserByID(ctx, userID, repository.GetUserFilter{
 		IncludeDeleted: false,
 	})
@@ -298,8 +302,13 @@ func (u *userService) SendEmailConfirmationCode(ctx context.Context, userID uuid
 		return nil, apperror.Wrap(op, err)
 	}
 
-	if err := u.cache.Set(ctx, cacheKey, code, u.userEmailConfig.EmailConfirmationCodeTTL); err != nil {
+	cacheKey := emailConfirmationCacheKey(userID)
+	ok, err := u.cache.SetNX(ctx, cacheKey, code, u.userEmailConfig.EmailConfirmationCodeTTL)
+	if err != nil {
 		return nil, apperror.Wrap(op, err)
+	}
+	if !ok {
+		return nil, apperror.Wrap(op, apperror.ErrEmailConfirmationCodeAlreadySent)
 	}
 
 	payload := tasks.SendEmailConfirmationCodePayload{
@@ -680,8 +689,7 @@ func (u *userService) revokeToken(ctx context.Context, tokenID string, tokenType
 		return nil
 	}
 
-	key := fmt.Sprintf("blacklist:%s:%s", tokenType, tokenID)
-
+	key := revokeTokenCacheKey(tokenType, tokenID)
 	ok, err := u.cache.SetNX(ctx, key, "1", ttl)
 	if err != nil {
 		return apperror.Wrap(op, err)
@@ -710,9 +718,9 @@ func (u *userService) verifyPassword(password, passwordHash string) error {
 }
 
 func (u *userService) verifyEmailCode(ctx context.Context, userID uuid.UUID, inputCode string) error {
-	const op = "userService.verifyCode"
+	const op = "userService.verifyEmailCode"
 
-	cacheKey := fmt.Sprintf("email_confirmation:%s", userID)
+	cacheKey := emailConfirmationCacheKey(userID)
 	code, err := u.cache.Get(ctx, cacheKey)
 	switch {
 	case errors.Is(err, cache.ErrCacheMiss):
@@ -721,11 +729,19 @@ func (u *userService) verifyEmailCode(ctx context.Context, userID uuid.UUID, inp
 		return apperror.Wrap(op, err)
 	}
 
-	if inputCode != code {
+	if subtle.ConstantTimeCompare([]byte(inputCode), []byte(code)) != 1 {
 		return apperror.Wrap(op, apperror.ErrInvalidCode)
 	}
 
-	_ = u.cache.Delete(ctx, cacheKey)
+	if err := u.cache.Delete(ctx, cacheKey); err != nil {
+		u.logger.WarnContext(
+			ctx,
+			"failed to delete email confirmation code after success",
+			slog.String("cache_key", cacheKey),
+			logger.Op(op),
+			logger.Err(err),
+		)
+	}
 
 	return nil
 }

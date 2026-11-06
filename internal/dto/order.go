@@ -16,10 +16,10 @@ type OrderCheckoutRequest struct {
 }
 
 type OrderItemProductResponse struct {
-	ID     uuid.UUID `json:"id"`
-	Images []struct {
+	ID      uuid.UUID `json:"id"`
+	Uploads []struct {
 		URL string `json:"url"`
-	} `json:"images"`
+	} `json:"uploads"`
 }
 
 type OrderItemResponse struct {

@@ -26,7 +26,7 @@ type ProductResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 
 	Categories []ProductCategoryResponse `json:"categories"`
-	Images     []UploadResponse          `json:"images"`
+	Uploads    []UploadResponse          `json:"uploads"`
 }
 
 type ListProductRequest struct {

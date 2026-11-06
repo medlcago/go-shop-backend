@@ -71,7 +71,7 @@ type WishlistItemRepository interface {
 
 type AddressRepository interface {
 	Create(ctx context.Context, address *models.Address) error
-	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)
+	GetByUser(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]*models.Address, error)
 	Update(ctx context.Context, address *models.Address) error
 	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error

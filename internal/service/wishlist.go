@@ -116,7 +116,7 @@ func (w *wishlistService) GetSharedWishlist(
 ) (*dto.WishlistResponse, error) {
 	const op = "wishlistService.GetSharedWishlist"
 
-	wl, err := w.wishlistRepo.GetByShareToken(ctx, shareToken, true)
+	wl, err := w.wishlistRepo.GetByShareToken(ctx, shareToken, false)
 	switch {
 	case repository.IsRecordNotFound(err):
 		return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
@@ -128,7 +128,7 @@ func (w *wishlistService) GetSharedWishlist(
 		return nil, apperror.Wrap(op, apperror.ErrWishlistNotFound)
 	}
 
-	response, err := w.mapWishlist(wl)
+	response, err := w.getWishlistResponse(ctx, wl.ID)
 	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}

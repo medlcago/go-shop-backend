@@ -80,7 +80,9 @@ func ProductPriceBetween(min int64, max int64) func(db *gorm.DB) *gorm.DB {
 
 func ProductWithRelations() func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Preload("Images").Preload("Categories", func(tx *gorm.DB) *gorm.DB {
+		return db.Preload("Uploads", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("uploads.created_at DESC")
+		}).Preload("Categories", func(tx *gorm.DB) *gorm.DB {
 			return tx.Select("id", "name", "slug").Where("is_active = ?", true)
 		})
 	}
@@ -116,7 +118,7 @@ func OrderWithRelations() func(db *gorm.DB) *gorm.DB {
 			return tx.Order("order_items.created_at ASC").
 				Preload("Product", func(tx *gorm.DB) *gorm.DB {
 					return tx.Select("id").
-						Preload("Images", func(tx *gorm.DB) *gorm.DB {
+						Preload("Uploads", func(tx *gorm.DB) *gorm.DB {
 							return tx.Select("id", "object_key", "entity_id", "entity_type")
 						})
 				})

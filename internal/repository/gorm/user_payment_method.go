@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -74,10 +73,7 @@ func (p *userPaymentMethodRepository) GetListByUser(ctx context.Context, userID 
 func (p *userPaymentMethodRepository) SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	db := p.db.GetDB(ctx)
 
-	err := db.Transaction(func(tx *gorm.DB) error {
-		return SetDefault(tx, id, userID, &models.UserPaymentMethod{})
-	})
-
+	err := SetDefault[models.UserPaymentMethod](db, id, userID)
 	return repository.HandleError(err)
 }
 

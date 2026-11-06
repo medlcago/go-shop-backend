@@ -48,12 +48,12 @@ func (_m *MockAddressQuery) EXPECT() *MockAddressQuery_Expecter {
 	return &MockAddressQuery_Expecter{mock: &_m.Mock}
 }
 
-// GetByID provides a mock function for the type MockAddressQuery
-func (_mock *MockAddressQuery) GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error) {
+// GetByUser provides a mock function for the type MockAddressQuery
+func (_mock *MockAddressQuery) GetByUser(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error) {
 	ret := _mock.Called(ctx, id, userID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByID")
+		panic("no return value specified for GetByUser")
 	}
 
 	var r0 *models.Address
@@ -76,20 +76,20 @@ func (_mock *MockAddressQuery) GetByID(ctx context.Context, id uuid.UUID, userID
 	return r0, r1
 }
 
-// MockAddressQuery_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
-type MockAddressQuery_GetByID_Call struct {
+// MockAddressQuery_GetByUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByUser'
+type MockAddressQuery_GetByUser_Call struct {
 	*mock.Call
 }
 
-// GetByID is a helper method to define mock.On call
+// GetByUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - userID uuid.UUID
-func (_e *MockAddressQuery_Expecter) GetByID(ctx any, id any, userID any) *MockAddressQuery_GetByID_Call {
-	return &MockAddressQuery_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id, userID)}
+func (_e *MockAddressQuery_Expecter) GetByUser(ctx any, id any, userID any) *MockAddressQuery_GetByUser_Call {
+	return &MockAddressQuery_GetByUser_Call{Call: _e.mock.On("GetByUser", ctx, id, userID)}
 }
 
-func (_c *MockAddressQuery_GetByID_Call) Run(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID)) *MockAddressQuery_GetByID_Call {
+func (_c *MockAddressQuery_GetByUser_Call) Run(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID)) *MockAddressQuery_GetByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -112,12 +112,12 @@ func (_c *MockAddressQuery_GetByID_Call) Run(run func(ctx context.Context, id uu
 	return _c
 }
 
-func (_c *MockAddressQuery_GetByID_Call) Return(address *models.Address, err error) *MockAddressQuery_GetByID_Call {
+func (_c *MockAddressQuery_GetByUser_Call) Return(address *models.Address, err error) *MockAddressQuery_GetByUser_Call {
 	_c.Call.Return(address, err)
 	return _c
 }
 
-func (_c *MockAddressQuery_GetByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)) *MockAddressQuery_GetByID_Call {
+func (_c *MockAddressQuery_GetByUser_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error)) *MockAddressQuery_GetByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -7,7 +7,6 @@ import (
 	"go-shop-backend/pkg/database"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type addressRepository struct {
@@ -27,7 +26,7 @@ func (a *addressRepository) Create(ctx context.Context, address *models.Address)
 	return repository.HandleError(err)
 }
 
-func (a *addressRepository) GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error) {
+func (a *addressRepository) GetByUser(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Address, error) {
 	db := a.db.GetDB(ctx)
 
 	var address models.Address
@@ -76,9 +75,6 @@ func (a *addressRepository) Delete(ctx context.Context, id uuid.UUID, userID uui
 func (a *addressRepository) SetDefault(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	db := a.db.GetDB(ctx)
 
-	err := db.Transaction(func(tx *gorm.DB) error {
-		return SetDefault(tx, id, userID, &models.Address{})
-	})
-
+	err := SetDefault[models.Address](db, id, userID)
 	return repository.HandleError(err)
 }

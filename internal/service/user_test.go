@@ -905,16 +905,13 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_Success() {
 		Email: "test@example.com",
 	}
 
-	cacheKey := fmt.Sprintf("email_confirmation:%s", suite.userID)
-
-	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
-		Return(false, nil).Once()
+	cacheKey := emailConfirmationCacheKey(suite.userID)
 
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
-	suite.cache.EXPECT().Set(suite.ctx, cacheKey, mock.AnythingOfType("string"), suite.userEmailConfig.EmailConfirmationCodeTTL).
-		Return(nil).Once()
+	suite.cache.EXPECT().SetNX(suite.ctx, cacheKey, mock.AnythingOfType("string"), suite.userEmailConfig.EmailConfirmationCodeTTL).
+		Return(true, nil).Once()
 
 	suite.notificationTask.EXPECT().SendEmailConfirmationCode(suite.ctx, mock.MatchedBy(func(payload tasks.SendEmailConfirmationCodePayload) bool {
 		return payload.Email == user.Email && payload.Code != ""
@@ -929,10 +926,18 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_Success() {
 }
 
 func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_EmailConfirmationCodeAlreadySent() {
-	cacheKey := fmt.Sprintf("email_confirmation:%s", suite.userID)
+	user := &models.User{
+		ID:    suite.userID,
+		Email: "test@example.com",
+	}
 
-	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
-		Return(true, nil).Once()
+	cacheKey := emailConfirmationCacheKey(suite.userID)
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
+		Return(user, nil).Once()
+
+	suite.cache.EXPECT().SetNX(suite.ctx, cacheKey, mock.AnythingOfType("string"), suite.userEmailConfig.EmailConfirmationCodeTTL).
+		Return(false, nil).Once()
 
 	response, err := suite.userService.SendEmailConfirmationCode(suite.ctx, suite.userID)
 
@@ -948,11 +953,6 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_EmailAlreadyCon
 		EmailConfirmedAt: new(time.Now()),
 	}
 
-	cacheKey := fmt.Sprintf("email_confirmation:%s", suite.userID)
-
-	suite.cache.EXPECT().Exists(suite.ctx, cacheKey).
-		Return(false, nil).Once()
-
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(user, nil).Once()
 
@@ -964,9 +964,6 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_EmailAlreadyCon
 }
 
 func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_UserNotFound() {
-	suite.cache.EXPECT().Exists(suite.ctx, mock.AnythingOfType("string")).
-		Return(false, nil).Once()
-
 	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
 		Return(nil, repository.ErrRecordNotFound).Once()
 
@@ -978,14 +975,15 @@ func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_UserNotFound() 
 }
 
 func (suite *UserServiceTestSuite) TestSendEmailConfirmationCode_InternalError() {
-	cacheErr := errors.New("cache error")
-	suite.cache.EXPECT().Exists(suite.ctx, mock.AnythingOfType("string")).
-		Return(false, cacheErr).Once()
+	dbError := errors.New("database error")
+
+	suite.userRepo.EXPECT().GetByID(suite.ctx, suite.userID, repository.GetUserFilter{IncludeDeleted: false}).
+		Return(nil, dbError).Once()
 
 	response, err := suite.userService.SendEmailConfirmationCode(suite.ctx, suite.userID)
 
 	suite.Nil(response)
-	suite.ErrorIs(err, cacheErr)
+	suite.ErrorIs(err, dbError)
 	suite.ErrorContains(err, "userService.SendEmailConfirmationCode")
 }
 
@@ -1273,7 +1271,7 @@ func (suite *UserServiceTestSuite) TestRefreshToken_Success() {
 
 	claims := &token.UserClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute))}
 
-	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, userClaims.ID)
+	key := revokeTokenCacheKey(token.RefreshTokenType, userClaims.ID)
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(userClaims, nil).Once()
@@ -1371,7 +1369,7 @@ func (suite *UserServiceTestSuite) TestRefreshToken_TokenAlreadyRevoked() {
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
 
-	key := fmt.Sprintf("blacklist:%s:%s", token.RefreshTokenType, claims.ID)
+	key := revokeTokenCacheKey(token.RefreshTokenType, claims.ID)
 
 	suite.tokenManager.EXPECT().ValidateToken(tokenString).
 		Return(claims, nil).Once()
