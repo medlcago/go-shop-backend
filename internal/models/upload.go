@@ -7,12 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type UploadMediaType string
-
-const (
-	UploadMediaTypeDefault UploadMediaType = "default"
-)
-
 type EntityType string
 
 const (
@@ -24,17 +18,16 @@ type Upload struct {
 
 	ObjectKey string `gorm:"type:varchar(1024);not null;uniqueIndex:idx_uploads_object_key_unique,where:deleted_at IS NULL"`
 
-	EntityType EntityType `gorm:"type:varchar(255);not null;index:idx_uploads_entity_created_at,priority:1,where:deleted_at IS NULL;index:idx_uploads_entity_media_type,priority:1,where:deleted_at IS NULL"`
-	EntityID   uuid.UUID  `gorm:"type:uuid;not null;index:idx_uploads_entity_created_at,priority:2,where:deleted_at IS NULL;index:idx_uploads_entity_media_type,priority:2,where:deleted_at IS NULL"`
+	EntityType EntityType `gorm:"type:varchar(255);not null;index:idx_uploads_entity,priority:1,where:deleted_at IS NULL"`
+	EntityID   uuid.UUID  `gorm:"type:uuid;not null;index:idx_uploads_entity,priority:2,where:deleted_at IS NULL"`
 
 	FileSize    int64   `gorm:"not null"`
 	ContentType *string `gorm:"type:varchar(255)"`
+	Purpose     string  `gorm:"type:varchar(255);not null"`
 
-	MediaType UploadMediaType `gorm:"type:varchar(100);not null;default:'default';index:idx_uploads_entity_media_type,priority:3,where:deleted_at IS NULL"`
-
-	CreatedAt time.Time      `gorm:"type:timestamptz;default:now();not null;index:idx_uploads_entity_created_at,priority:3,sort:desc,where:deleted_at IS NULL"`
+	CreatedAt time.Time      `gorm:"type:timestamptz;default:now();not null"`
 	UpdatedAt time.Time      `gorm:"type:timestamptz;default:now();not null"`
-	DeletedAt gorm.DeletedAt `gorm:"type:timestamptz;index"`
+	DeletedAt gorm.DeletedAt `gorm:"type:timestamptz;index:idx_uploads_deleted_at"`
 
 	URL string `gorm:"-"`
 }

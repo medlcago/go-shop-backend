@@ -291,7 +291,7 @@ func (suite *ManagerTestSuite) TestAttach_Success() {
 			u.EntityID == suite.entityID &&
 			u.EntityType == models.EntityTypeProduct &&
 			*u.ContentType == detectedCT &&
-			u.MediaType != ""
+			u.Purpose == suite.purpose
 	})).Return(nil).Once()
 
 	url := "https://s3.example.com/img.png"

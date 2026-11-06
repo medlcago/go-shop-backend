@@ -125,16 +125,8 @@ func (m *uploadManager) Attach(ctx context.Context, req dto.AttachFileRequest) (
 		return nil, apperror.Wrap(op, err)
 	}
 
-	upload := &models.Upload{
-		ObjectKey:   req.ObjectKey,
-		EntityID:    req.Entity.ID,
-		EntityType:  models.EntityType(req.Entity.Type),
-		FileSize:    obj.Size,
-		ContentType: &contentType,
-		MediaType:   models.UploadMediaTypeDefault,
-	}
-
-	if err := m.uploadRepo.Create(ctx, upload); err != nil {
+	upload, err := m.createUpload(ctx, req, obj.Size, contentType, Purpose(req.Purpose))
+	if err != nil {
 		return nil, apperror.Wrap(op, err)
 	}
 
@@ -150,6 +142,31 @@ func (m *uploadManager) Attach(ctx context.Context, req dto.AttachFileRequest) (
 
 func (m *uploadManager) PublicURL(objectKey string) string {
 	return m.storage.PublicURL(objectKey)
+}
+
+func (m *uploadManager) createUpload(
+	ctx context.Context,
+	req dto.AttachFileRequest,
+	size int64,
+	contentType string,
+	purpose Purpose,
+) (*models.Upload, error) {
+	const op = "uploadManager.createUpload"
+
+	upload := &models.Upload{
+		ObjectKey:   req.ObjectKey,
+		EntityID:    req.Entity.ID,
+		EntityType:  models.EntityType(req.Entity.Type),
+		FileSize:    size,
+		ContentType: &contentType,
+		Purpose:     string(purpose),
+	}
+
+	if err := m.uploadRepo.Create(ctx, upload); err != nil {
+		return nil, apperror.Wrap(op, err)
+	}
+
+	return upload, nil
 }
 
 func (m *uploadManager) resolveRegistry(ctx context.Context, op string, purpose Purpose) (*Registration, error) {
