@@ -17,8 +17,9 @@ func HumanizeValidationError(err error) map[string]string {
 	}
 
 	for _, e := range ve {
-		field := strcase.ToSnake(e.Field())
-		result[field] = messageByTag(e)
+		namespace := e.StructNamespace()
+		fieldPath := formatNamespace(namespace)
+		result[fieldPath] = messageByTag(e)
 	}
 
 	return result
@@ -61,4 +62,19 @@ func messageByTag(e validator.FieldError) string {
 
 func join(param string) string {
 	return strings.Join(strings.Fields(param), ", ")
+}
+
+func formatNamespace(ns string) string {
+	parts := strings.Split(ns, ".")
+	if len(parts) <= 1 {
+		return ""
+	}
+
+	parts = parts[1:]
+
+	for i, part := range parts {
+		parts[i] = strcase.ToSnake(part)
+	}
+
+	return strings.Join(parts, ".")
 }
