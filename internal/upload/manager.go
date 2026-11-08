@@ -2,6 +2,7 @@ package upload
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"go-shop-backend/config"
@@ -79,13 +80,14 @@ func (m *uploadManager) SignURL(ctx context.Context, req dto.GeneratePresignedUR
 	}
 
 	response := &dto.GeneratePresignedURLResponse{
-		UploadID:    uploadID,
-		UploadURL:   result.URL,
-		Method:      MethodPOST,
-		Filename:    options.ObjectKey,
-		ContentType: req.ContentType,
-		ExpireDate:  expireDate,
-		FormData:    result.Fields,
+		UploadID:       uploadID,
+		UploadURL:      result.URL,
+		Method:         MethodPOST,
+		Filename:       options.ObjectKey,
+		ContentType:    req.ContentType,
+		ExpireDate:     expireDate,
+		ChecksumSHA256: options.ChecksumSHA256,
+		FormData:       result.Fields,
 	}
 
 	return response, nil
@@ -239,12 +241,13 @@ func (m *uploadManager) prepareUploadOptions(
 	}
 
 	options := storage.TemporaryUploadURLOptions{
-		ObjectKey:   objectKey,
-		ContentType: req.ContentType,
-		MinSize:     policy.MinSize,
-		MaxSize:     effectiveMaxSize,
-		Expires:     expireDate,
-		Metadata:    metadata,
+		ObjectKey:      objectKey,
+		ContentType:    req.ContentType,
+		MinSize:        policy.MinSize,
+		MaxSize:        effectiveMaxSize,
+		Expires:        expireDate,
+		ChecksumSHA256: req.ChecksumSHA256,
+		Metadata:       metadata,
 	}
 
 	return uploadID, expireDate, options
@@ -252,6 +255,15 @@ func (m *uploadManager) prepareUploadOptions(
 
 func (m *uploadManager) validateSignURLRequest(req dto.GeneratePresignedURLRequest, policy Policy) error {
 	const op = "uploadManager.validateSignURLRequest"
+
+	if req.ChecksumSHA256 == "" {
+		return apperror.Wrap(op, apperror.ErrInvalidChecksum)
+	}
+
+	_, err := base64.StdEncoding.DecodeString(req.ChecksumSHA256)
+	if err != nil {
+		return apperror.Wrap(op, apperror.ErrInvalidChecksum)
+	}
 
 	if !policy.IsValidExt(req.Ext, req.ContentType) {
 		return apperror.Wrap(op, apperror.ErrContentTypeMismatch)

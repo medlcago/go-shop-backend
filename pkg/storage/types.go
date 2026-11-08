@@ -8,12 +8,13 @@ type UploadOptions struct {
 }
 
 type TemporaryUploadURLOptions struct {
-	ObjectKey   string
-	ContentType string
-	MinSize     int64
-	MaxSize     int64
-	Expires     time.Time
-	Metadata    map[string]string
+	ObjectKey      string
+	ContentType    string
+	MinSize        int64
+	MaxSize        int64
+	Expires        time.Time
+	ChecksumSHA256 string
+	Metadata       map[string]string
 }
 
 type TemporaryUploadURL struct {

@@ -19,19 +19,21 @@ func NewUploadEntity(id uuid.UUID, entityType string) UploadEntity {
 }
 
 type GeneratePresignedURLRequest struct {
-	ContentType string       `json:"content_type" validate:"required"`
-	Entity      UploadEntity `json:"entity" validate:"required"`
-	Ext         string       `json:"ext" validate:"required"`
-	Purpose     string       `json:"purpose" validate:"required"`
+	ContentType    string       `json:"content_type" validate:"required"`
+	Entity         UploadEntity `json:"entity" validate:"required"`
+	Ext            string       `json:"ext" validate:"required"`
+	Purpose        string       `json:"purpose" validate:"required"`
+	ChecksumSHA256 string       `json:"checksum_sha_256" validate:"required,base64"`
 }
 
 type GeneratePresignedURLResponse struct {
-	UploadID    uuid.UUID `json:"upload_id"`
-	UploadURL   string    `json:"upload_url"`
-	Method      string    `json:"method"`
-	Filename    string    `json:"filename"`
-	ContentType string    `json:"content_type"`
-	ExpireDate  time.Time `json:"expire_date"`
+	UploadID       uuid.UUID `json:"upload_id"`
+	UploadURL      string    `json:"upload_url"`
+	Method         string    `json:"method"`
+	Filename       string    `json:"filename"`
+	ContentType    string    `json:"content_type"`
+	ExpireDate     time.Time `json:"expire_date"`
+	ChecksumSHA256 string    `json:"checksum_sha_256"`
 
 	FormData map[string]string `json:"form_data"`
 }

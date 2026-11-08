@@ -32,10 +32,11 @@ type ManagerTestSuite struct {
 	registry      *uploadMocks.MockRegistry
 	uploadManager upload.Manager
 
-	ctx      context.Context
-	uploadID uuid.UUID
-	entityID uuid.UUID
-	purpose  string
+	ctx            context.Context
+	uploadID       uuid.UUID
+	entityID       uuid.UUID
+	purpose        string
+	checksumSHA256 string
 }
 
 func (suite *ManagerTestSuite) SetupTest() {
@@ -61,6 +62,7 @@ func (suite *ManagerTestSuite) SetupTest() {
 	suite.uploadID = uuid.New()
 	suite.entityID = uuid.New()
 	suite.purpose = "test"
+	suite.checksumSHA256 = "BfnskDNHTOuiQr8r2HbxRuLvczAsT10QTvi7ZpNZWsQ="
 }
 
 func TestManagerTestSuite(t *testing.T) {
@@ -71,10 +73,11 @@ func TestManagerTestSuite(t *testing.T) {
 
 func (suite *ManagerTestSuite) TestSignURL_Success() {
 	req := dto.GeneratePresignedURLRequest{
-		ContentType: "image/png",
-		Entity:      dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
-		Ext:         "png",
-		Purpose:     suite.purpose,
+		ContentType:    "image/png",
+		Entity:         dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
+		Ext:            "png",
+		Purpose:        suite.purpose,
+		ChecksumSHA256: suite.checksumSHA256,
 	}
 
 	presignedPost := &storage.TemporaryUploadURL{
@@ -112,7 +115,8 @@ func (suite *ManagerTestSuite) TestSignURL_Success() {
 			opts.Metadata["Purpose"] == req.Purpose &&
 			opts.MinSize == 5<<10 &&
 			opts.MaxSize == 1<<20 &&
-			!opts.Expires.IsZero()
+			!opts.Expires.IsZero() &&
+			opts.ChecksumSHA256 != ""
 	})).Return(presignedPost, nil).Once()
 
 	response, err := suite.uploadManager.SignURL(suite.ctx, req)
@@ -123,12 +127,50 @@ func (suite *ManagerTestSuite) TestSignURL_Success() {
 	suite.Equal("image/png", response.ContentType)
 }
 
+func (suite *ManagerTestSuite) TestSignURL_InvalidChecksum() {
+	tests := []struct {
+		name           string
+		checksumSHA256 string
+	}{
+		{
+			name:           "empty checksum",
+			checksumSHA256: "",
+		},
+		{
+			name:           "invalid checksum",
+			checksumSHA256: "invalid",
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			req := dto.GeneratePresignedURLRequest{
+				Purpose:        suite.purpose,
+				ChecksumSHA256: tt.checksumSHA256,
+			}
+
+			suite.registry.EXPECT().Get(upload.Purpose(req.Purpose)).
+				Return(&upload.Registration{
+					Policy:  upload.Policy{},
+					Handler: suite.handler,
+				}, nil).Once()
+
+			response, err := suite.uploadManager.SignURL(suite.ctx, req)
+
+			suite.Nil(response)
+			suite.ErrorIs(err, apperror.ErrInvalidChecksum)
+			suite.ErrorContains(err, "uploadManager.SignURL")
+		})
+	}
+}
+
 func (suite *ManagerTestSuite) TestSignURL_Forbidden() {
 	req := dto.GeneratePresignedURLRequest{
-		ContentType: "image/png",
-		Entity:      dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
-		Ext:         "png",
-		Purpose:     suite.purpose,
+		ContentType:    "image/png",
+		Entity:         dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
+		Ext:            "png",
+		Purpose:        suite.purpose,
+		ChecksumSHA256: suite.checksumSHA256,
 	}
 
 	filePolicy := upload.Policy{
@@ -174,9 +216,10 @@ func (suite *ManagerTestSuite) TestSignURL_InvalidPurpose() {
 
 func (suite *ManagerTestSuite) TestSignURL_ContentTypeMismatch() {
 	req := dto.GeneratePresignedURLRequest{
-		ContentType: "video/mp4",
-		Ext:         "mp4",
-		Purpose:     suite.purpose,
+		ContentType:    "video/mp4",
+		Ext:            "mp4",
+		Purpose:        suite.purpose,
+		ChecksumSHA256: suite.checksumSHA256,
 	}
 
 	filePolicy := upload.Policy{
@@ -201,10 +244,11 @@ func (suite *ManagerTestSuite) TestSignURL_ContentTypeMismatch() {
 
 func (suite *ManagerTestSuite) TestSignURL_StorageError() {
 	req := dto.GeneratePresignedURLRequest{
-		Ext:         "png",
-		ContentType: "image/png",
-		Entity:      dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
-		Purpose:     suite.purpose,
+		Ext:            "png",
+		ContentType:    "image/png",
+		Entity:         dto.NewUploadEntity(suite.entityID, string(models.EntityTypeProduct)),
+		Purpose:        suite.purpose,
+		ChecksumSHA256: suite.checksumSHA256,
 	}
 
 	filePolicy := upload.Policy{

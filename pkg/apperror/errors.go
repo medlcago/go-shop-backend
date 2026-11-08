@@ -29,6 +29,7 @@ var (
 	ErrFileAlreadyUploaded = New(http.StatusConflict, "file already uploaded")
 	ErrFileTooLarge        = New(http.StatusRequestEntityTooLarge, "file too large")
 	ErrFileNotFound        = New(http.StatusNotFound, "file not found")
+	ErrInvalidChecksum     = New(http.StatusBadRequest, "invalid checksum")
 
 	ErrProductNotFound           = New(http.StatusNotFound, "product not found")
 	ErrProductImageLimitExceeded = New(http.StatusBadRequest, "product image limit exceeded")

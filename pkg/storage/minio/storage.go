@@ -202,6 +202,10 @@ func (s *Storage) newPostPolicy(opts storage.TemporaryUploadURLOptions) (*minio.
 		return nil, fmt.Errorf("%s: set expiry: %w", op, err)
 	}
 
+	if err := policy.SetChecksum(minio.NewChecksumString(minio.ChecksumSHA256, opts.ChecksumSHA256)); err != nil {
+		return nil, fmt.Errorf("%s: set checksum: %w", op, err)
+	}
+
 	for k, v := range opts.Metadata {
 		if err := policy.SetUserMetadata(k, v); err != nil {
 			return nil, fmt.Errorf("%s: set metadata %s: %w", op, k, err)
