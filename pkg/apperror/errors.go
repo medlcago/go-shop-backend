@@ -21,13 +21,12 @@ var (
 	ErrInvalidTokenType        = New(http.StatusUnauthorized, "invalid token type")
 
 	ErrInvalidFileType     = New(http.StatusBadRequest, "invalid file type")
-	ErrContentTypeMismatch = New(http.StatusBadRequest, "ext is not allowed for that content type")
 	ErrInvalidUploadID     = New(http.StatusBadRequest, "invalid upload id")
 	ErrInvalidEntityID     = New(http.StatusBadRequest, "invalid entity id")
 	ErrInvalidEntityType   = New(http.StatusBadRequest, "invalid entity type")
 	ErrInvalidPurpose      = New(http.StatusBadRequest, "invalid purpose")
 	ErrFileAlreadyUploaded = New(http.StatusConflict, "file already uploaded")
-	ErrFileTooLarge        = New(http.StatusRequestEntityTooLarge, "file too large")
+	ErrInvalidFileSize     = New(http.StatusBadRequest, "invalid file size")
 	ErrFileNotFound        = New(http.StatusNotFound, "file not found")
 	ErrInvalidChecksum     = New(http.StatusBadRequest, "invalid checksum")
 

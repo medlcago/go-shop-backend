@@ -21,8 +21,8 @@ func NewUploadEntity(id uuid.UUID, entityType string) UploadEntity {
 type GeneratePresignedURLRequest struct {
 	ContentType    string       `json:"content_type" validate:"required"`
 	Entity         UploadEntity `json:"entity" validate:"required"`
-	Ext            string       `json:"ext" validate:"required"`
 	Purpose        string       `json:"purpose" validate:"required"`
+	Size           int64        `json:"size" validate:"required,gt=0"`
 	ChecksumSHA256 string       `json:"checksum_sha_256" validate:"required,base64"`
 }
 

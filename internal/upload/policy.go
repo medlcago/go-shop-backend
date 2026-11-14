@@ -3,67 +3,82 @@ package upload
 import (
 	"errors"
 	"fmt"
+	"go-shop-backend/pkg/apperror"
 	"slices"
 )
 
-type Format struct {
-	Extensions  []string
+type File struct {
+	Size        int64
 	ContentType string
 }
 
 type Policy struct {
-	MinSize        int64
-	MaxSize        int64
-	AllowedFormats []Format
+	MinSize      int64
+	MaxSize      int64
+	MaxSizeLimit int64
+	AllowedMimes []string
 }
 
-func (p *Policy) CalculateEffectiveMaxSize(maxSize int64) int64 {
-	return min(p.MaxSize, maxSize)
-}
+func NewPolicy(
+	minSize int64,
+	maxSize int64,
+	maxSizeLimit int64,
+	mimes []string,
+) (Policy, error) {
+	effectiveMaxSize := calculateEffectiveMaxSize(maxSize, maxSizeLimit)
 
-func (p *Policy) IsValidExt(ext, ct string) bool {
-	for _, f := range p.AllowedFormats {
-		if f.ContentType == ct {
-			return slices.Contains(f.Extensions, ext)
-		}
+	p := Policy{
+		MinSize:      minSize,
+		MaxSize:      effectiveMaxSize,
+		AllowedMimes: slices.Clone(mimes),
 	}
-	return false
+
+	if err := p.validate(); err != nil {
+		return Policy{}, err
+	}
+
+	return p, nil
 }
 
-func (p *Policy) IsValidContentType(ct string) bool {
-	for _, f := range p.AllowedFormats {
-		if f.ContentType == ct {
-			return true
-		}
+func (p *Policy) Validate(f File) error {
+	if f.Size < p.MinSize {
+		return apperror.ErrInvalidFileSize
 	}
-	return false
+
+	if f.Size > p.MaxSize {
+		return apperror.ErrInvalidFileSize
+	}
+
+	if !slices.Contains(p.AllowedMimes, f.ContentType) {
+		return apperror.ErrInvalidFileType
+	}
+
+	return nil
+}
+
+func calculateEffectiveMaxSize(maxSize int64, maxSizeLimit int64) int64 {
+	effectiveMax := maxSize
+	if maxSizeLimit > 0 && (effectiveMax <= 0 || maxSizeLimit < effectiveMax) {
+		effectiveMax = maxSizeLimit
+	}
+	return effectiveMax
 }
 
 func (p *Policy) validate() error {
-	if p.MinSize < 0 {
-		return fmt.Errorf("min size must be >= 0, got %d", p.MinSize)
+	if p.MinSize <= 0 {
+		return fmt.Errorf("policy: min size must be > 0, got %d", p.MinSize)
 	}
 
 	if p.MaxSize <= 0 {
-		return fmt.Errorf("max size must be > 0, got %d", p.MaxSize)
+		return fmt.Errorf("policy: max size must be > 0, got %d", p.MaxSize)
 	}
 
 	if p.MinSize > p.MaxSize {
-		return fmt.Errorf("min size %d > max size %d", p.MinSize, p.MaxSize)
+		return fmt.Errorf("policy: min size %d > max size %d", p.MinSize, p.MaxSize)
 	}
 
-	if len(p.AllowedFormats) == 0 {
-		return errors.New("allowed formats must not be empty")
-	}
-
-	for i, f := range p.AllowedFormats {
-		if f.ContentType == "" {
-			return fmt.Errorf("format[%d]: empty content type", i)
-		}
-
-		if len(f.Extensions) == 0 {
-			return fmt.Errorf("format[%d]: no extensions", i)
-		}
+	if len(p.AllowedMimes) == 0 {
+		return errors.New("policy: allowed mimes must not be empty")
 	}
 
 	return nil

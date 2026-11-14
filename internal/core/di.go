@@ -254,7 +254,12 @@ func (c *Container) TaskFactory() *tasks.Factory {
 
 func (c *Container) UploadRegistry() upload.Registry {
 	return c.uploadRegistry.Get(func() upload.Registry {
-		return newUploadRegistry(c)
+		uploadRegistry, err := newUploadRegistry(c)
+		if err != nil {
+			logger.Fatal(c.Logger(), "failed to create upload registry", err)
+		}
+
+		return uploadRegistry
 	})
 }
 
