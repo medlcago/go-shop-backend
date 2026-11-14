@@ -8,6 +8,11 @@ import (
 	"reflect"
 )
 
+const (
+	kb = 1 << 10
+	mb = 1 << 20
+)
+
 func newUploadHandlers(container *Container) map[upload.Purpose]upload.Handler {
 	handlers := make(map[upload.Purpose]upload.Handler)
 
@@ -26,8 +31,8 @@ func newUploadPolicies(uploadConfig config.Upload) (map[upload.Purpose]upload.Po
 	policies := make(map[upload.Purpose]upload.Policy)
 
 	productImagePolicy, err := upload.NewPolicy(
-		5<<10, // 5 KB
-		5<<20, // 5 MB,
+		5*kb,
+		5*mb,
 		uploadConfig.MaxFileSize,
 		[]string{"image/jpeg", "image/png"},
 	)
